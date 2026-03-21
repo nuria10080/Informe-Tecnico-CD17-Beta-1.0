@@ -67,7 +67,9 @@ background:var(--neutral-light); color:var(--text-dark); padding:16px 12px; line
     z-index: 100; 
     max-height: 400px; 
     overflow-y: auto;
-    width: 80vw;
+    min-width: 100%;
+    
+   
 }
 
 #damasActivasContainer:hover .damas-dropdown,
@@ -167,63 +169,6 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
 
 /* Mobile: card-style activities */
 @media (max-width: 768px) {
-.damas-dropdown {
-    position: absolute; 
-    top: calc(100% - 10px); 
-    left: 0; 
-    right: 0; 
-    background: white; 
-    border-radius: 20px; 
-    box-shadow: 0 12px 30px rgba(0,0,0,0.15); 
-    padding: 12px 10px; 
-    border: 1px solid var(--accent); 
-    opacity: 0; 
-    visibility: hidden; 
-    transform: translateY(-10px); 
-    transition: opacity 0.2s ease, visibility 0.2s, transform 0.2s; 
-    pointer-events: none; 
-    z-index: 100; 
-    max-height: auto; 
-    overflow-y: auto;
-    max-width: 90vw;
-}
-
-#damasActivasContainer:hover .damas-dropdown,
-.damas-dropdown:hover,
-.damas-dropdown:focus-within {
-    opacity: 1; 
-    visibility: visible; 
-    transform: translateY(0); 
-    pointer-events: auto;
-}
-
-.damas-dropdown select:focus,
-.damas-dropdown input:focus,
-.damas-dropdown button:focus {
-    outline: none;
-}
-
-.damas-dropdown:focus-within {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-    pointer-events: auto;
-}
-
-.damas-dropdown select {
-    width: 100%;; 
-    padding: 10px; 
-    border-radius: 30px; 
-    border: 1px solid var(--accent); 
-    background: white; 
-    font-size: 0.75rem; 
-    margin-bottom: 12px;
-}
-#rolesActivosList{max-height:300px; max-width: 100%;overflow-y:auto; display:flex; flex-direction:column; gap:8px;}
-#rolesActivosList div{background:var(--neutral-light); border-radius:16px; padding:10px; border:1px solid var(--neutral-border); display:flex; justify-content:space-between; align-items:center;}
-#rolesActivosList button{background:var(--warning); color:white; border:none; border-radius:30px; padding:4px 10px; font-size:0.6rem; font-weight:600; cursor:pointer; transition:0.1s; margin-left:4px;}
-#rolesActivosList button:first-of-type{background:var(--accent);}
-.section-title {
     .activities-table { display: none; }
     .activities-section {
         background: white;
@@ -335,6 +280,10 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
         font-size: 0.7rem;
         font-weight: 600;
         cursor: pointer;
+    }
+    .damas-dropdown{
+        width: 80vw;
+       
     }
 }
 
@@ -753,7 +702,7 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
     <div class="kpi-label">⚡ Damas Activas</div>
     <div class="kpi-value" id="totalDamasActivas">0</div>
     <div class="damas-dropdown">
-        <div style="display:flex; flex-direction: column;gap:6px; margin-bottom:10px;">
+        <div style="display:flex; flex-direction: column; gap:6px; margin-bottom:10px;">
             <select id="damasRoles" style="flex:2;">
                 <option value="">Seleccionar rol</option>
             </select>
@@ -987,7 +936,7 @@ function actualizarListaDamas() {
     damasActivas.forEach(dama => {
         const div = document.createElement('div');
         div.innerHTML = `
-            <div style="display:flex; flex-direction:column; align-items:flex-start; gap:2px;">
+            <div style="display:flex; flex-direction:row; align-items:flex-start;width:100%; gap:2px;">
                 <strong style="font-size:0.8rem;">${dama.nombre}</strong>
                 <small style="color:var(--text-medium);">${dama.rolNombre}</small>
             </div>
@@ -1017,7 +966,9 @@ function agregarDama() {
     nombreInput.value = '';
     actualizarListaDamas();
     saveAllToStorage();
-    updateCharts();
+     setTimeout(() => {
+        updateCharts();
+    }, 100);
 }
 
 function eliminarDama(id) {
@@ -1246,9 +1197,9 @@ function createActivityForm(formId) {
             <div id="extendedFields_${formId}" style="display:none;">
                 <!-- Damas and Beneficiaries -->
                 <div style="display:flex; gap:8px; margin-bottom:10px;">
-                    <input type="number" id="newVoluntarias_${formId}" placeholder="Damas" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
-                    <input type="number" id="newBenMujeres_${formId}" placeholder="Mujeres" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
-                    <input type="number" id="newBenHombres_${formId}" placeholder="Hombres" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
+                    <input type="number" id="newVoluntarias_${formId}" placeholder="Damas Voluntaria" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
+                    <input type="number" id="newBenMujeres_${formId}" placeholder="Beneficiarios Femeninos" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
+                    <input type="number" id="newBenHombres_${formId}" placeholder="Beneficiarios Masculinos" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
                 </div>
                 
                 <!-- Links Section -->
@@ -1442,10 +1393,12 @@ function addColaboradorToForm(formId) {
     container.appendChild(newRow);
 }
 
-
 // ===== 1. Pie Chart - Women vs Men Beneficiaries =====
 function updateBeneficiariesPieChart() {
-    const ctx = document.getElementById('chartBeneficiados').getContext('2d');
+    const canvas = document.getElementById('chartBeneficiados');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
 
     let totalWomen = 0;
     let totalMen = 0;
@@ -1461,12 +1414,20 @@ function updateBeneficiariesPieChart() {
 
     const total = totalWomen + totalMen;
 
-    if (window.beneficiariesChart) window.beneficiariesChart.destroy();
+    // Safely destroy existing chart
+    if (window.beneficiariesChart) {
+        try {
+            window.beneficiariesChart.destroy();
+        } catch(e) {
+            console.warn('Chart destroy error:', e);
+        }
+        window.beneficiariesChart = null;
+    }
 
     window.beneficiariesChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Mujeres', 'Hombres'],
+            labels: ['F', 'M'],
             datasets: [{
                 data: [totalWomen, totalMen],
                 backgroundColor: ['#E34A2F', '#1E3A5F'],
@@ -1482,7 +1443,7 @@ function updateBeneficiariesPieChart() {
                 legend: { 
                     display: true, 
                     position: 'bottom', 
-                    labels: { color: '#1E1E1E', font: { size: 13, weight: '500' } } 
+                    labels: { color: '#1E1E1E', font: { size: 10, weight: '400' } } 
                 },
                 tooltip: {
                     titleColor: '#1E1E1E',
@@ -1500,6 +1461,7 @@ function updateBeneficiariesPieChart() {
         }
     });
 
+    // Update chart title
     const chartBox = document.getElementById('chartBeneficiados').parentNode;
     let titleEl = chartBox.querySelector('.chart-title');
     if (!titleEl) {
@@ -1514,7 +1476,10 @@ function updateBeneficiariesPieChart() {
 
 // ===== 2. Horizontal Bar Chart - Top Activities by Hours =====
 function updateHoursBarChart() {
-    const ctx = document.getElementById('chartHoras').getContext('2d');
+    const canvas = document.getElementById('chartHoras');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
 
     const activityTotals = {};
     activities.forEach(a => {
@@ -1535,7 +1500,15 @@ function updateHoursBarChart() {
         ? (activities.reduce((sum, a) => sum + (a.horas || 0), 0) / activities.length).toFixed(1)
         : 0;
 
-    if (window.hoursChart) window.hoursChart.destroy();
+    // Safely destroy existing chart
+    if (window.hoursChart) {
+        try {
+            window.hoursChart.destroy();
+        } catch(e) {
+            console.warn('Chart destroy error:', e);
+        }
+        window.hoursChart = null;
+    }
 
     window.hoursChart = new Chart(ctx, {
         type: 'bar',
@@ -1543,8 +1516,8 @@ function updateHoursBarChart() {
             labels, 
             datasets: [{
                 data,
-                backgroundColor: '#1E3A5F', // dark blue fill
-                borderColor: '#00FF00',     // lime green outline
+                backgroundColor: '#1E3A5F',
+                borderColor: '#00FF00',
                 borderWidth: 1,
                 borderRadius: 5,
                 barPercentage: 0.6,
@@ -1566,17 +1539,11 @@ function updateHoursBarChart() {
             scales: {
                 x: { 
                     beginAtZero: true, 
-                    ticks: { 
-                        color: '#000000', 
-                        font: { family: 'Times New Roman, Tahoma, sans-serif', size: 12, weight: '500' } 
-                    }, 
+                    ticks: { color: '#000000', font: { size: 12, weight: '500' } }, 
                     grid: { color: '#D9E2EC' } 
                 },
                 y: { 
-                    ticks: { 
-                        color: '#000000', 
-                        font: { family: 'Times New Roman, Tahoma, sans-serif', size: 12, weight: '500' } 
-                    }, 
+                    ticks: { color: '#000000', font: { size: 12, weight: '500' } }, 
                     grid: { display: false } 
                 }
             }
@@ -1597,34 +1564,40 @@ function updateHoursBarChart() {
 
 // ===== 3. Horizontal Bar Chart - Damas / Colaboradores per Project =====
 function updateCollaboratorsBarChart() {
-    const ctx = document.getElementById('chartDamas').getContext('2d');
+    const canvas = document.getElementById('chartDamas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
 
-    const orgTotals = {}; // Bars: Damas per org/project
-    let totalCollaborators = 0; // Sum of all collaborators including Damas
+    const orgTotals = {};
+    let totalCollaborators = 0;
 
     activities.forEach(a => {
-        // Count Damas for chart bars
         if (a.voluntarias && a.voluntarias > 0) {
             const orgName = a.name || 'Sin nombre';
             if (!orgTotals[orgName]) orgTotals[orgName] = 0;
             orgTotals[orgName] += a.voluntarias;
         }
-
-        // Count all collaborators
         if (Array.isArray(a.colaboradores)) {
             a.colaboradores.forEach(c => {
                 totalCollaborators += c.cant || 0;
             });
         }
-
-        // Include Damas in total collaborators
         totalCollaborators += a.voluntarias || 0;
     });
 
     const labels = Object.keys(orgTotals);
     const data = Object.values(orgTotals);
 
-    if (window.collabChart) window.collabChart.destroy();
+    // Safely destroy existing chart
+    if (window.collabChart) {
+        try {
+            window.collabChart.destroy();
+        } catch(e) {
+            console.warn('Chart destroy error:', e);
+        }
+        window.collabChart = null;
+    }
 
     window.collabChart = new Chart(ctx, {
         type: 'bar',
@@ -1678,11 +1651,20 @@ function updateCollaboratorsBarChart() {
     titleEl.innerHTML = `Damas por proyecto <span>👥 ${totalCollaborators} colaboradores</span>`;
 }
 
+// Main update function - with safety checks
 function updateCharts() {
-    updateBeneficiariesPieChart();
-    updateHoursBarChart();
-    updateCollaboratorsBarChart();
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+        try {
+            updateBeneficiariesPieChart();
+            updateHoursBarChart();
+            updateCollaboratorsBarChart();
+        } catch(e) {
+            console.error('Chart update error:', e);
+        }
+    }, 50);
 }
+
 function submitActivityForm(formId) {
     console.log('Submitting form:', formId);
     
@@ -1764,9 +1746,10 @@ const newActivity = {
     sortActivitiesByDate();
     renderActivities();
     saveAllToStorage();
-    
     updateCharts();
-
+    setTimeout(() => {
+    updateCharts();
+}, 100);
     alert('✅ Actividad agregada');
 }
 
@@ -1784,13 +1767,28 @@ function getQRCodeData(activity) {
 
     // ❌ No link → NO QR
     return null;
-}
-function renderActivities() {
+}function renderActivities() {
+    // Inject print styles if not already present
+    if (!document.getElementById('print-gps-styles')) {
+        const style = document.createElement('style');
+        style.id = 'print-gps-styles';
+        style.textContent = `
+            @media print {
+                .gps-thumb { display: none !important; }
+                .gps-coords-print { display: inline !important; }
+            }
+            @media screen {
+                .gps-coords-print { display: none !important; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
     const tbody = document.getElementById('activitiesBody');
     tbody.innerHTML = '';
 
     let totalHoras = 0, totalF = 0, totalM = 0, totalBen = 0;
-    // NEW: Add counters for filial and campo hours
+    // Counters for filial and campo hours
     let totalHorasFilial = 0, totalHorasCampo = 0;
 
     activities.forEach((a, idx) => {
@@ -1800,19 +1798,32 @@ function renderActivities() {
         totalF += a.beneficiadas_mujeres || 0;
         totalM += a.beneficiados_hombres || 0;
         
-        // NEW: Add hours to appropriate category based on actionType
+        // Add hours to appropriate category based on actionType
         const horas = a.horas || 0;
         if (a.actionType === 'filial') {
             totalHorasFilial += horas;
         } else {
-            totalHorasCampo += horas; // Default to campo if not specified
+            totalHorasCampo += horas;
         }
 
         const qrId = `qr_${a.id || idx}`;
         const qrData = getQRCodeData(a);
 
-        // Add this after calculating qrData
-        const gpsBadge = (a.lat && a.lng) ? `<div class="gps-badge">📌 <a href="https://maps.google.com/?q=${a.lat},${a.lng}" target="_blank" style="color:var(--success); text-decoration:none;"></a></div>` : '';
+        // GPS badge with thumbtack (screen) and coordinates (print)
+        let gpsBadge = '';
+        if (a.lat && a.lng) {
+            gpsBadge = `
+                <div class="gps-badge">
+                    <a href="https://maps.google.com/?q=${a.lat},${a.lng}" 
+                       target="_blank" 
+                       class="gps-thumb" 
+                       style="color:var(--success); text-decoration:none;">
+                        📌
+                    </a>
+                    <span class="gps-coords-print" style="font-size:0.75rem;">${a.lat}, ${a.lng}</span>
+                </div>
+            `;
+        }
 
         // Colaboradores
         let colaboradoresHtml = '<div class="org-badge-container">';
@@ -1860,12 +1871,10 @@ function renderActivities() {
             qrCellHtml = `<span style="color:var(--text-light);">—</span>`;
         }
 
-        // OPTIONAL: If you want to show the action type in the table, uncomment the line with the action type
-        // and make sure your table header has an extra <th>Acción</th>
+        // Build table row
         tbody.innerHTML += `<tr>
             <td>${formatDateForDisplay(a.date)}</td>
             <td style="text-align:left">${a.name}</td>
-            
             <td>${a.voluntarias || 0}</td>
             <td>${a.horas || 0}</td>
             <td>${a.beneficiadas_mujeres || 0}</td>
@@ -1875,13 +1884,13 @@ function renderActivities() {
             <td>${gpsBadge}</td>
             <td>${qrCellHtml}</td>
             <td><button onclick="deleteActivity(${idx})" style="border:none;background:none;color:var(--warning);">🗑️</button></td>
-        </tr>`;
+        　`;
     });
 
-    // Totals - Update ALL summary displays
+    // Totals - Update all summary displays
     document.getElementById('totalHoras').innerText = totalHoras;
     
-    // NEW: Update subcategory totals (make sure these elements exist in your HTML)
+    // Update subcategory totals
     const totalHorasFilialEl = document.getElementById('totalHorasFilial');
     const totalHorasCampoEl = document.getElementById('totalHorasCampo');
     
@@ -1900,7 +1909,7 @@ function renderActivities() {
 
         activities.forEach((a, idx) => {
             const qrData = getQRCodeData(a);
-            if (!qrData) return; // Skip if no link
+            if (!qrData) return;
 
             const qrId = `qr_${a.id || idx}`;
             const qrDiv = document.getElementById(qrId);
@@ -1927,7 +1936,11 @@ function deleteActivity(idx) {
     activities.splice(idx, 1);
     renderActivities();
     saveAllToStorage();
-    updateCharts();
+    
+    // Small delay to ensure charts update properly
+    setTimeout(() => {
+        updateCharts();
+    }, 100);
 }
 
 function saveData() {
