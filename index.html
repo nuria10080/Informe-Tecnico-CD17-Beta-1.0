@@ -67,6 +67,7 @@ background:var(--neutral-light); color:var(--text-dark); padding:16px 12px; line
     z-index: 100; 
     max-height: 400px; 
     overflow-y: auto;
+    width: 80vw;
 }
 
 #damasActivasContainer:hover .damas-dropdown,
@@ -166,6 +167,63 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
 
 /* Mobile: card-style activities */
 @media (max-width: 768px) {
+.damas-dropdown {
+    position: absolute; 
+    top: calc(100% - 10px); 
+    left: 0; 
+    right: 0; 
+    background: white; 
+    border-radius: 20px; 
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15); 
+    padding: 12px 10px; 
+    border: 1px solid var(--accent); 
+    opacity: 0; 
+    visibility: hidden; 
+    transform: translateY(-10px); 
+    transition: opacity 0.2s ease, visibility 0.2s, transform 0.2s; 
+    pointer-events: none; 
+    z-index: 100; 
+    max-height: auto; 
+    overflow-y: auto;
+    max-width: 90vw;
+}
+
+#damasActivasContainer:hover .damas-dropdown,
+.damas-dropdown:hover,
+.damas-dropdown:focus-within {
+    opacity: 1; 
+    visibility: visible; 
+    transform: translateY(0); 
+    pointer-events: auto;
+}
+
+.damas-dropdown select:focus,
+.damas-dropdown input:focus,
+.damas-dropdown button:focus {
+    outline: none;
+}
+
+.damas-dropdown:focus-within {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.damas-dropdown select {
+    width: 100%;; 
+    padding: 10px; 
+    border-radius: 30px; 
+    border: 1px solid var(--accent); 
+    background: white; 
+    font-size: 0.75rem; 
+    margin-bottom: 12px;
+}
+#rolesActivosList{max-height:300px; max-width: 100%;overflow-y:auto; display:flex; flex-direction:column; gap:8px;}
+#rolesActivosList div{background:var(--neutral-light); border-radius:16px; padding:10px; border:1px solid var(--neutral-border); display:flex; justify-content:space-between; align-items:center;}
+#rolesActivosList button{background:var(--warning); color:white; border:none; border-radius:30px; padding:4px 10px; font-size:0.6rem; font-weight:600; cursor:pointer; transition:0.1s; margin-left:4px;}
+#rolesActivosList button:first-of-type{background:var(--accent);}
+.section-title {
     .activities-table { display: none; }
     .activities-section {
         background: white;
@@ -695,7 +753,7 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
     <div class="kpi-label">⚡ Damas Activas</div>
     <div class="kpi-value" id="totalDamasActivas">0</div>
     <div class="damas-dropdown">
-        <div style="display:flex; gap:6px; margin-bottom:10px;">
+        <div style="display:flex; flex-direction: column;gap:6px; margin-bottom:10px;">
             <select id="damasRoles" style="flex:2;">
                 <option value="">Seleccionar rol</option>
             </select>
@@ -792,6 +850,19 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
 <script>
 let activities = [];
 let damasActivas = [];
+
+let rolesDisponibles = [
+    { id:'directora', nombre:'Directora', descripcion:'aprueba actividades' },
+    { id:'subdirectora', nombre:'Subdirectora', descripcion:'planifica y delega' },
+    { id:'coord_fondos', nombre:'Coordinadora Recaudación', descripcion:'gestiona recursos' },
+    { id:'coord_encuestas_local', nombre:'Coordinadora Encuestas y Local.', descripcion:'encuestas/localización' },
+    { id:'coord_encuestas_capacitacion', nombre:'Coordinadora Encuestas y Capac.', descripcion:'datos y talleres' },
+    { id:'coord_gestion_damas', nombre:'Gestión y Recuperacion Damas', descripcion:'reincorporación' },
+    { id:'coord_comunicacion', nombre:'Técnico Comunicación', descripcion:'medios digitales' },
+    { id:'coord_eventos', nombre:'Ferias & Excursiones', descripcion:'ferias, excursiones' },
+    { id:'coord_observacion', nombre:'Técnico Observación', descripcion:'monitoreo' }
+];
+
 
 // Timer variables
 let timerInterval = null;
@@ -907,6 +978,25 @@ function getWeekNumber(date) {
     return Math.ceil((dayOfMonth + firstDayOfMonth.getDay()) / 7);
 }
 
+function actualizarListaDamas() {
+    document.getElementById('totalDamasActivas').innerText = damasActivas.length;
+    
+    const lista = document.getElementById('rolesActivosList');
+    lista.innerHTML = '';
+    
+    damasActivas.forEach(dama => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:flex-start; gap:2px;">
+                <strong style="font-size:0.8rem;">${dama.nombre}</strong>
+                <small style="color:var(--text-medium);">${dama.rolNombre}</small>
+            </div>
+            <button onclick="eliminarDama(${dama.id})" style="background:var(--warning);">🗑️</button>
+        `;
+        lista.appendChild(div);
+    });
+}
+
 function agregarDama() {
     const rolSelect = document.getElementById('damasRoles');
     const nombreInput = document.getElementById('nuevaDamaNombre');
@@ -937,36 +1027,6 @@ function eliminarDama(id) {
     updateCharts();
 }
 
-function actualizarListaDamas() {
-    document.getElementById('totalDamasActivas').innerText = damasActivas.length;
-    
-    const lista = document.getElementById('rolesActivosList');
-    lista.innerHTML = '';
-    
-    damasActivas.forEach(dama => {
-        const div = document.createElement('div');
-        div.innerHTML = `
-            <div style="display:flex; flex-direction:column; align-items:flex-start; gap:2px;">
-                <strong style="font-size:0.8rem;">${dama.nombre}</strong>
-                <small style="color:var(--text-medium);">${dama.rolNombre}</small>
-            </div>
-            <button onclick="eliminarDama(${dama.id})" style="background:var(--warning);">🗑️</button>
-        `;
-        lista.appendChild(div);
-    });
-}
-
-let rolesDisponibles = [
-    { id:'directora', nombre:'Directora', descripcion:'aprueba actividades' },
-    { id:'subdirectora', nombre:'Subdirectora', descripcion:'planifica y delega' },
-    { id:'coord_fondos', nombre:'Coordinadora Recaudación', descripcion:'gestiona recursos' },
-    { id:'coord_encuestas_local', nombre:'Coordinadora Encuestas y Local.', descripcion:'encuestas/localización' },
-    { id:'coord_encuestas_capacitacion', nombre:'Coordinadora Encuestas y Capac.', descripcion:'datos y talleres' },
-    { id:'coord_gestion_damas', nombre:'Gestión y Recuperacion Damas', descripcion:'reincorporación' },
-    { id:'coord_comunicacion', nombre:'Técnico Comunicación', descripcion:'medios digitales' },
-    { id:'coord_eventos', nombre:'Ferias & Excursiones', descripcion:'ferias, excursiones' },
-    { id:'coord_observacion', nombre:'Técnico Observación', descripcion:'monitoreo' }
-];
 
 function formatDateForDisplay(d, includeTime = false) {
     if (!d) return '';
@@ -1990,25 +2050,7 @@ const state = {
 document.addEventListener('input', state.save);
 // Load when opening
 window.addEventListener('load', state.load);
-document.addEventListener('DOMContentLoaded', () => {
-    const container = document.getElementById('damasActivasContainer');
-    if (container) {
-        container.addEventListener('click', function(e) {
-            const dropdown = this.querySelector('.damas-dropdown');
-            // Toggle visibility manually for mobile reliability
-            if (dropdown.style.opacity === "1") {
-                dropdown.style.opacity = "0";
-                dropdown.style.visibility = "hidden";
-                dropdown.style.pointerEvents = "none";
-            } else {
-                dropdown.style.opacity = "1";
-                dropdown.style.visibility = "visible";
-                dropdown.style.pointerEvents = "auto";
-            }
-            e.stopPropagation(); // Prevents immediate closing
-        });
-    }
-});
+
 
 // --- AUTO-SAVE PATCH ---
 // Ensures that every time you type in the textareas, it saves immediately
