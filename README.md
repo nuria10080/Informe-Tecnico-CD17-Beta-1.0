@@ -1,5 +1,3 @@
-# Informe-Tecnico-CD17-Beta-1.0
-Informe-Tecnico-CD-17-Beta-1.0. Optimized for directors to monitor project hours, volunteer requirements, and field impact in real-time. This always-accessible tool replaces paperwork with instant, sharable, and printable reports. Focus on what matters most: tracking scope, difficulties, and outcomes without the reporting hassle.
 # 🔴 Informe Técnico CD-17 (Versión Beta)
 
 **Una solución progresiva para la gestión de voluntariado y reportes de impacto en tiempo real.**
@@ -44,4 +42,3 @@ Este sistema ha sido diseñado para modernizar el flujo de trabajo de los comit�
 
 ---
 *Desarrollado para la optimización de procesos técnicos y operativos del comité.*
-

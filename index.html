@@ -1,0 +1,2078 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#E34A2F">
+<title>Informe Técnico · CD-17 </title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root{
+--primary-dark:#0A1A2F; --primary:#1E3A5F; --accent:#4F7CAC; --secondary:#E34A2F;
+--success:#2E7D32; --warning:#ED6A5E; --info:#36A2EB; --neutral-light:#F4F7FB;
+--neutral-border:#D9E2EC; --text-dark:#1E2B3A; --text-medium:#4A5A6E; --white:#FFFFFF;
+--shadow:0 8px 20px rgba(0,20,40,0.06); --gender-f:#E83F6F; --gender-m:#2C7DA0;
+}
+body { font-family:'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+background:var(--neutral-light); color:var(--text-dark); padding:16px 12px; line-height:1.4; -webkit-tap-highlight-color:transparent;}
+.dashboard-card{max-width:1280px; margin:0 auto; background:var(--white); border-radius:28px; box-shadow:var(--shadow); padding:20px 16px;}
+.report-header{display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:20px; padding-bottom:10px; border-bottom:2px solid var(--secondary);}
+.logo-area{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+.logo-area img{height:85px; width:auto; border-radius:0px; background:white; padding:4px; border:none;}
+.title-section h1{font-size:1.5rem;font-weight:700;letter-spacing:-0.3px;color:var(--primary-dark);}
+.title-section h1 span{color:var(--secondary);}
+.subhead{font-size:0.7rem;color:var(--text-medium);font-weight:500;margin-top:2px;}
+.badge{background:var(--primary-dark);color:white;padding:6px 16px;border-radius:40px;font-weight:600;font-size:0.75rem;margin-left:auto;border-left:3px solid var(--secondary);}
+.badge span:last-child {
+    font-size: 0.7rem;
+    margin-left: 8px;
+    padding-left: 8px;
+    border-left: 1px solid var(--accent);
+}
+.kpi-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:25px;}
+.kpi-item{background:var(--neutral-light);border-radius:20px;padding:14px 6px;text-align:center;border:1px solid var(--neutral-border);position:relative;}
+.kpi-label{font-size:0.7rem;font-weight:600;text-transform:uppercase;color:var(--text-medium);letter-spacing:0.3px;margin-bottom:4px;}
+.kpi-value{font-size:1.8rem;font-weight:700;color:var(--primary-dark); line-height:1.2;}
+.gender-breakdown{display:flex; justify-content:center; gap:10px; font-size:0.7rem; font-weight:600; margin-top:4px;}
+.gender-f{color:var(--gender-f);}
+.gender-m{color:var(--gender-m);}
+#damasActivasContainer {
+    position: relative; 
+    cursor: default; 
+    z-index: 30; 
+    padding-bottom: 20px;
+}
+
+.damas-dropdown {
+    position: absolute; 
+    top: calc(100% - 10px); 
+    left: 0; 
+    right: 0; 
+    background: white; 
+    border-radius: 20px; 
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15); 
+    padding: 12px 10px; 
+    border: 1px solid var(--accent); 
+    opacity: 0; 
+    visibility: hidden; 
+    transform: translateY(-10px); 
+    transition: opacity 0.2s ease, visibility 0.2s, transform 0.2s; 
+    pointer-events: none; 
+    z-index: 100; 
+    max-height: 400px; 
+    overflow-y: auto;
+}
+
+#damasActivasContainer:hover .damas-dropdown,
+.damas-dropdown:hover,
+.damas-dropdown:focus-within {
+    opacity: 1; 
+    visibility: visible; 
+    transform: translateY(0); 
+    pointer-events: auto;
+}
+
+.damas-dropdown select:focus,
+.damas-dropdown input:focus,
+.damas-dropdown button:focus {
+    outline: none;
+}
+
+.damas-dropdown:focus-within {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.damas-dropdown select {
+    width: 100%; 
+    padding: 10px; 
+    border-radius: 30px; 
+    border: 1px solid var(--accent); 
+    background: white; 
+    font-size: 0.75rem; 
+    margin-bottom: 12px;
+}
+#rolesActivosList{max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;}
+#rolesActivosList div{background:var(--neutral-light); border-radius:16px; padding:10px; border:1px solid var(--neutral-border); display:flex; justify-content:space-between; align-items:center;}
+#rolesActivosList button{background:var(--warning); color:white; border:none; border-radius:30px; padding:4px 10px; font-size:0.6rem; font-weight:600; cursor:pointer; transition:0.1s; margin-left:4px;}
+#rolesActivosList button:first-of-type{background:var(--accent);}
+.section-title {
+    font-size: 1.1rem; 
+    font-weight: 600; 
+    color: var(--primary-dark); 
+    margin: 20px 0 12px 0;
+    display: flex; 
+    align-items: center; 
+    cursor: pointer;
+    scroll-margin-top: 20px;
+    transition: margin 0.3s ease;
+}
+
+.section-title::after {
+    content: ''; 
+    flex: 1; 
+    height: 2px; 
+    background: linear-gradient(90deg, var(--accent), transparent); 
+    margin-left: 14px;
+}
+
+.section-title.bookmark-mode {
+    margin-top: 40px;
+}
+.logros-container{background:var(--neutral-light); border-radius:24px; padding:12px 14px; margin-bottom:12px; border:1px solid var(--neutral-border);}
+textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); border-radius:20px; font-size:0.85rem; background:white; resize:vertical; font-family:inherit;}
+.char-count{text-align:right; font-size:0.65rem; color:var(--text-medium); margin-top:4px;}
+
+/* ===== MOBILE-OPTIMIZED ACTIVITIES SECTION ===== */
+.activities-section {
+    margin: 18px 0;
+    border-radius: 20px;
+    border: 1px solid var(--neutral-border);
+    overflow: hidden;
+}
+
+/* Desktop: horizontal scrollable table */
+.activities-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    min-width: 1200px;
+}
+
+.activities-table th {
+    background: var(--primary-dark);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 10px 4px;
+    white-space: nowrap;
+}
+
+.activities-table td {
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--neutral-border);
+    text-align: center;
+    font-size: 0.75rem;
+    vertical-align: middle;
+}
+
+/* Mobile: card-style activities */
+@media (max-width: 768px) {
+    .activities-table { display: none; }
+    .activities-section {
+        background: white;
+        padding: 12px;
+        overflow: visible;
+    }
+    .mobile-activities-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .activity-card {
+        background: var(--neutral-light);
+        border-radius: 20px;
+        padding: 16px;
+        border: 1px solid var(--neutral-border);
+        position: relative;
+    }
+    .activity-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px dashed var(--accent);
+    }
+    .activity-date {
+        font-weight: 700;
+        color: var(--primary-dark);
+        background: white;
+        padding: 4px 12px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        border: 1px solid var(--accent);
+    }
+    .activity-name {
+        font-weight: 700;
+        color: var(--primary-dark);
+        font-size: 1rem;
+        flex: 1;
+        margin-left: 12px;
+    }
+    .activity-delete {
+        background: none;
+        border: none;
+        color: var(--warning);
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 4px 8px;
+    }
+    .activity-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    .stat-item {
+        background: white;
+        border-radius: 16px;
+        padding: 8px 4px;
+        text-align: center;
+        border: 1px solid var(--neutral-border);
+    }
+    .stat-label {
+        font-size: 0.6rem;
+        color: var(--text-medium);
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+    .stat-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+    }
+    .activity-colabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 12px 0;
+        padding: 8px 0;
+        border-top: 1px solid var(--neutral-border);
+        border-bottom: 1px solid var(--neutral-border);
+    }
+    .activity-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+    }
+    .activity-qr {
+        width: 60px;
+        height: 60px;
+        background: white;
+        border-radius: 12px;
+        padding: 4px;
+        border: 1px solid var(--neutral-border);
+    }
+    .activity-links {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .activity-link-btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 30px;
+        padding: 6px 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+}
+
+/* Mobile-optimized input row */
+@media (max-width: 600px) {
+    .compact-input-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #newDate, #newActName, #newVoluntarias, #newHoras, #newBenMujeres, #newBenHombres {
+        max-width: 100% !important;
+        width: 100% !important;
+        flex: 1 1 auto !important;
+    }
+    .links-mini-grid { grid-template-columns: 1fr; }
+    .colaborador-row {
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+    }
+    .colaborador-row select,
+    .colaborador-row input { width: 100%; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .report-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .badge {
+        margin-left: 0;
+        width: 100%;
+        text-align: center;
+    }
+    .logo-area {
+        width: 100%;
+        justify-content: center;
+    }
+    .logo-area img { height: 70px; }
+    .title-section h1 { font-size: 1.2rem; }
+    .desc-grid { grid-template-columns: 1fr; }
+}
+
+.org-badge {
+    background: transparent;
+    color: var(--primary-dark);
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    display: inline-block;
+    margin: 2px;
+    border: 1.5px dashed var(--accent);
+    white-space: nowrap;
+}
+.org-badge-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    max-width: 200px;
+}
+.link-badge {
+    background: var(--info);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 30px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    display: inline-block;
+    margin: 2px;
+    text-decoration: none;
+}
+.add-activity-row{background:transparent; padding:16px 14px; border:none;}
+.compact-input-row{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:12px;}
+.compact-input-row input,.compact-input-row select{padding:10px 8px; border-radius:30px; border:1px solid var(--neutral-border); background:white; font-size:0.8rem; height:42px; flex:1 0 auto;}
+#newDate{max-width:130px; flex:1; }
+#newActName{flex:3; max-width:310px; }
+#newVoluntarias,#newHoras{width:75px; flex:0 0 auto;}
+#newBenMujeres,#newBenHombres{width:65px; flex:0 0 auto;}
+.colaboradores-section{margin-top:14px;}
+.colaborador-row{display:flex; gap:8px; background:white; padding:6px 12px; border-radius:40px; border:1px solid var(--neutral-border); margin-bottom:8px;}
+.colaborador-row select{flex:2; border:none; background:transparent; font-weight:500; font-size:0.8rem; padding:6px 0;}
+.colaborador-row input{width:70px; border-radius:30px; border:1px solid var(--neutral-border); padding:6px; text-align:center;}
+.add-colab-btn{background:white; border:1px dashed var(--accent); padding:8px 16px; border-radius:40px; font-size:0.8rem; font-weight:600; color:var(--accent); cursor:pointer; margin-top:5px; width:fit-content;}
+.links-mini-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; background:white; padding:14px; border-radius:22px; margin:12px 0;}
+.link-box{background:var(--neutral-light); border-radius:18px; padding:8px;}
+.link-box input{width:100%; padding:8px; border-radius:30px; border:1px solid var(--neutral-border); font-size:0.7rem;}
+
+.btn-add-row {
+    background: #1E3A5F; /* navy blue */
+    color: white;
+    border: none;
+    border-radius: 50%; /* circular */
+    width: 45px;
+    height: 45px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+}
+
+.btn-add-row:hover {
+    background: #162d49; /* darker navy */
+    transform: scale(1.1);
+}
+
+.btn-add-row:active {
+    transform: scale(0.95);
+}
+.add-activity-btn:disabled{background:var(--neutral-border); color:var(--text-medium); cursor:not-allowed;}
+.collaboradores-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(100px,1fr)); gap:10px; margin:15px 0;}
+.collaborador-card{background:var(--neutral-light); border-radius:22px; padding:12px 6px; text-align:center; border:1px solid var(--neutral-border);}
+.collaborador-card h4{font-size:0.8rem;}
+.collaborador-count{font-size:1.6rem; font-weight:700; color:var(--primary);}
+.hours-summary{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; background:linear-gradient(145deg,var(--primary-dark),#12344d); color:white; border-radius:30px; padding:16px 8px; margin:20px 0;}
+.hours-stat{text-align:center;}
+.hours-stat .label{font-size:0.6rem; opacity:0.8; display:block;}
+.hours-stat .value{font-size:1.5rem; font-weight:700; display:block;}
+.footer-info{display:flex; justify-content:space-between; font-size:0.7rem; margin:15px 0 5px; border-top:1px dashed var(--neutral-border); padding-top:12px;}
+.action-buttons{display:flex; flex-wrap:wrap; gap:8px; margin-top:15px;}
+.action-button{flex:1 0 120px; padding:12px 6px; border:none; border-radius:40px; font-weight:600; font-size:0.7rem; background:var(--primary-dark); color:white; cursor:pointer;}
+.action-button.save{background:var(--success);}
+.action-button.clear{background:var(--warning);}
+.action-button.export{background:var(--accent);}
+.qr-ampliada-modal{display:none; position:fixed; background:rgba(0,0,0,0.95); inset:0; z-index:2000; justify-content:center; align-items:center;}
+.desc-section { margin: 20px 0 10px; padding: 16px; background: var(--neutral-light); border-radius: 24px; border: 1px solid var(--neutral-border); }
+.desc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.desc-item { background: white; border-radius: 20px; padding: 12px; }
+.desc-item label { font-weight: 700; font-size: 0.75rem; color: var(--primary-dark); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 6px; }
+.desc-item textarea { width: 100%; min-height: 100px; max-height: 200px; font-size: 0.8rem; }
+.char-counter { font-size: 0.6rem; color: var(--text-medium); text-align: right; margin-top: 4px; }
+.gps-badge {
+    font-size: 1rem;
+    color: var(--success);
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+/* Charts Container */
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 24px 0 16px;
+}
+.chart-box {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 12px;
+    border: 1px solid var(--neutral-border);
+    box-shadow: none;
+    height: 200px;
+    position: relative;
+}
+.chart-box canvas {
+    width: 100% !important;
+    height: 180px !important;
+    display: block;
+}
+.chart-box:hover {
+    transform: none;
+    box-shadow: none;
+}
+.chart-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--primary-dark);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.chart-title span {
+    color: var(--text-medium);
+    font-weight: 500;
+    font-size: 0.7rem;
+    text-transform: none;
+}
+  .desc-item .print-text {
+        display: block !important;
+        font: 12pt 'Times New Roman', serif !important;
+        font-weight: normal !important;
+        text-align: justify !important;          /* ✅ fully justified */
+        line-height: 1.6 !important;
+        color: #000000 !important;
+        white-space: pre-wrap !important;
+        word-wrap: break-word !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    
+/* Responsive */
+@media (max-width: 800px) {
+    .charts-container { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 500px) {
+    .charts-container { grid-template-columns: 1fr; }
+    .chart-box { height: 220px; }
+}
+@media (max-width:600px){ .desc-grid { grid-template-columns: 1fr; } }
+
+/* ===== PRINT STYLES - KEEP HEADERS EXACT, PLAIN TEXT DESCRIPTION ===== */
+@media print {
+    /* Hide interactive elements */
+    .add-activity-row, 
+    .damas-dropdown,
+    .add-colab-btn, 
+    .char-counter, 
+    .char-count,
+    .action-buttons,
+    .char-counter, 
+    .char-count,
+    .compact-input-row,
+    .links-mini-grid,
+    .colaboradores-section,
+    .qr-ampliada-modal,
+    button:not(.activity-link-btn) {
+        display: none !important;
+    }
+    
+    /* Keep all headers, KPIs, charts, table exactly as on screen */
+    .report-header { order: 1 !important; margin-bottom: 10px !important; }
+    .kpi-grid,
+    .kpi-item,
+    .activities-section,
+    .activities-table,
+    
+    .footer-info,
+    .section-title,
+    .org-badge,
+    .org-badge-container,
+    .activity-link-btn,
+    .gender-f,
+    .gender-m,
+    .badge,
+    .logo-area,
+    .title-section {
+        display: block !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    /* Make the activities table fit A4 width (scale down if needed) */
+    .activities-table {
+        min-width: 0 !important;
+        width: 100% !important;
+        font-size: 8pt !important; /* slightly smaller to fit more columns */
+        table-layout: auto !important;
+        word-break: break-word !important;
+    }
+    .activities-table th,
+    .activities-table td {
+        padding: 4px 2px !important;
+        white-space: normal !important;
+    }
+    /* Keep QR codes visible but smaller */
+    .activities-table td div[id^="qr_"] {
+        width: 40px !important;
+        height: 40px !important;
+        margin: 0 auto !important;
+    }
+     .activities-table td div[id^="qr_"] {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 20px !important; /* Significant physical space between QRs */
+        padding: 10px 0 !important;
+    }
+    .activities-table td div[id^="qr_"] canvas{width: 25px; height:25px;}
+    .activities-table td div[id^="qr_"] img {
+        width: 80px !important; /* Increased size */
+        height: 80px !important;
+        display: block !important;
+        border: 1px solid #eee !important; /* Subtle boundary */
+    }
+      .activities-table td div[id^="qr_"] img {
+        display: none !important; 
+    }
+    /* Keep charts grid exactly as on screen (3 columns) */
+    .charts-container {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8px !important;
+    }
+    .chart-box {
+        height: 160px !important; /* slightly shorter for print */
+        padding: 6px !important;
+    }
+    .chart-box canvas {
+        height: 120px !important;
+    }
+    
+    /* Keep KPI cards as four columns */
+    .kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 8px !important;
+    }
+    
+    /* ===== DESCRIPTION TEXT: 12pt Times New Roman, plain ===== */
+    .desc-section {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 30px 0 !important;
+    }
+    .desc-grid {
+        display: block !important;
+        grid-template-columns: none !important;
+        gap: 0 !important;
+    }
+    .desc-item {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 0 30px 0 !important;
+        border-radius: 0 !important;
+        page-break-inside: avoid; /* keep each description together if possible */
+    }
+    .desc-item label {
+        /* keep label styling as on screen (header) */
+        font-weight: 700 !important;
+        font-size: 11pt !important;
+        color: var(--primary-dark) !important;
+        text-transform: uppercase !important;
+        margin-bottom: 6px !important;
+        border-bottom: 2px solid var(--secondary) !important;
+        display: block !important;
+    }
+    .desc-item textarea {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+    width: 100% !important;
+    font: 12pt 'Times New Roman', serif !important;
+    font-weight: normal !important;          /* ensures text is not bold */
+    text-align: justify !important;          /* 🔹 ADD THIS LINE */
+    text-transform: none !important;
+    line-height: 1.6 !important;
+    color: #000000 !important;
+    resize: none !important;
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    box-shadow: none !important;
+    -webkit-appearance: none !important;
+}.desc-item textarea {
+        display: none !important;
+    }
+    /* Hide mobile cards in print (show only the table) */
+    .mobile-activities-cards {
+        display: none !important;
+    }
+    
+    /* Page setup */
+    @page {
+        size: A4;
+        margin: 1.8cm;
+    }
+    
+    body {
+        background: white !important;
+        padding: 0 !important;
+    }
+    
+    .dashboard-card {
+        max-width: 100% !important;
+        box-shadow: none !important;
+        padding: 15px 12px !important;
+    }
+}
+
+</style>
+</head>
+<body>
+<div class="dashboard-card">
+<div class="report-header">
+    <div class="logo-area">
+        <!-- HONDURAN RED CROSS LOGO -->
+        <img src="https://iconape.com/wp-content/files/mi/258264/png/cruz_roja_hondure__a-logo.png" 
+             alt="Cruz Roja Hondureña" 
+             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Crect width=\'100\' height=\'100\' fill=\'%23E34A2F\'/%3E%3Cpath d=\'M50 20 L50 80 M20 50 L80 50\' stroke=\'white\' stroke-width=\'15\'/%3E%3C/svg%3E'">
+        
+        <div class="title-section">
+            <h1>INFORME TÉCNICO <span>CD-17</span></h1>
+            <div class="subhead">Comité de Damas · Registro de Actividades</div>
+        </div>
+    </div>
+    <div class="badge">
+        <span>Intibucá</span>
+        <span id="currentDate"></span> 
+        
+    </div>
+</div>
+
+<div class="kpi-grid">
+<div class="kpi-item" id="damasActivasContainer">
+    <div class="kpi-label">⚡ Damas Activas</div>
+    <div class="kpi-value" id="totalDamasActivas">0</div>
+    <div class="damas-dropdown">
+        <div style="display:flex; gap:6px; margin-bottom:10px;">
+            <select id="damasRoles" style="flex:2;">
+                <option value="">Seleccionar rol</option>
+            </select>
+            <input type="text" id="nuevaDamaNombre" placeholder="Nombre" style="flex:3; padding:8px; border-radius:30px; border:1px solid var(--accent);">
+            <button onclick="agregarDama()" style="background:var(--accent); color:white; border:none; border-radius:30px; padding:8px 12px; font-weight:bold;">➕</button>
+        </div>
+        <div id="rolesActivosList"></div>
+    </div>
+</div>
+<div class="kpi-item"><div class="kpi-label">👥 Beneficiados</div><div class="kpi-value" id="totalBeneficiados">0</div><div class="gender-breakdown"><span class="gender-f" id="totalMujeresBen">0</span> · <span class="gender-m" id="totalHombresBen">0</span></div></div>
+<div class="kpi-item"><div class="kpi-label">⏱️ Total Horas</div><div class="kpi-value" id="totalHoras">0</div>
+<div style="display: flex; gap: 15px; margin-top: 5px; font-size: 0.9rem; align-items: center; justify-content: center;">
+    <div>
+        <span style="color: var(--text-medium);">🏢 Filial:</span>
+        <span id="totalHorasFilial" style="font-weight: 600; color: var(--primary-dark);">0</span>
+    </div>
+    <div>
+        <span style="color: var(--text-medium);">🌐 Campo:</span>
+        <span id="totalHorasCampo" style="font-weight: 600; color: var(--primary-dark);">0</span>
+    </div>
+</div>
+</div>
+<div class="kpi-item"><div class="kpi-label">📋 Actividades</div><div class="kpi-value" id="totalActividades">0</div></div>
+</div>
+<!-- charts -->
+<div class="charts-container">
+    <div class="chart-box"><canvas id="chartDamas"></canvas></div>
+    <div class="chart-box"><canvas id="chartBeneficiados"></canvas></div>
+    <div class="chart-box"><canvas id="chartHoras"></canvas></div>
+</div>
+<div class="section-title" onclick="addActivity()">➕ Actividad Realizada</div>
+<div class="activities-section">
+<table class="activities-table">
+<thead><tr><th>Fecha</th><th>Actividad</th><th>Damas</th><th>Horas</th><th>F</th><th>M</th><th>Total</th><th>Colaboradores</th><th>Ubicación</th><th>QR</th><th>Acción</th></tr></thead>
+<tbody id="activitiesBody"></tbody>
+</table>
+</div>
+<!-- new activity row -->
+<div class="add-activity-row">
+    <div style="display: flex;  align-items: center; margin-bottom: 10px;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center;  margin-bottom: 10px;">
+            
+            <button type="button" class="btn-add-row" onclick="addNewActivityForm()">+</button>
+        </div>
+    </div>
+    
+    <!-- Container for multiple activity forms - initially empty -->
+    <div id="activityFormsContainer">
+        <!-- Forms will be dynamically added here by JavaScript -->
+    </div>
+</div>
+
+
+
+
+<div class="desc-item">
+  <label>🎯 Alcance / Scope</label>
+  <textarea id="scopeText" maxlength="1300" placeholder="Describa el alcance de las actividades..."></textarea>
+  <div class="print-text" id="print_scope"></div>
+</div>
+
+<div class="desc-item">
+  <label>⚠️ Dificultades </label>
+  <textarea id="difficultiesText" maxlength="1300" placeholder="Describa dificultades encontradas..."></textarea>
+  <div class="print-text" id="print_difficulties"></div>
+</div>
+
+<div class="desc-item">
+  <label>📈 Recomendaciones</label>
+  <textarea id="recommendationsText" maxlength="1300" placeholder="Recomendaciones..."></textarea>
+  <div class="print-text" id="print_recommendations"></div>
+</div>
+
+<div class="desc-item">
+  <label>💥 Impacto</label>
+  <textarea id="impactText" maxlength="1300" placeholder="Impacto observado..."></textarea>
+  <div class="print-text" id="print_impact"></div>
+</div>
+
+<!-- footer -->
+<div class="footer-info">
+    <span>Cruz Roja Hondureña CD-17 · Comité de Damas</span>
+    <span id="footerDate"></span>
+</div>
+
+<div class="action-buttons">
+<button class="action-button print" onclick="exportPDF()">📄 Imprimir</button>
+<button class="action-button save" onclick="saveData()">💾 Guardar</button>
+<button class="action-button clear" onclick="clearData()">🗑️ Borrar</button>
+</div>
+
+</div>
+<script>
+let activities = [];
+let damasActivas = [];
+
+// Timer variables
+let timerInterval = null;
+let timerStartTime = null;
+let activeTimerActivityId = null;
+
+// Multiple forms variables
+let activityFormCount = 0;
+let timers = {}; // Store timer intervals per form
+
+// Get current month-year key
+function getCurrentMonthKey() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// Check if month has changed and clear if needed
+function checkAndClearMonthChange() {
+    
+    const currentMonthKey = getCurrentMonthKey();
+    const lastMonthKey = localStorage.getItem('lastMonthKey');
+    
+    if (lastMonthKey && lastMonthKey !== currentMonthKey) {
+        // Month has changed - clear all data for previous month
+        // But keep the data accessible with month keys
+        activities = [];
+        damasActivas = [];
+        document.getElementById('scopeText').value = '';
+        document.getElementById('difficultiesText').value = '';
+        document.getElementById('recommendationsText').value = '';
+        document.getElementById('impactText').value = '';
+        updateCharCounts();
+    }
+    
+    // Update the last month key
+    localStorage.setItem('lastMonthKey', currentMonthKey);
+    return currentMonthKey;
+}
+
+// Save all data with month key
+function saveAllToStorage() {
+    const monthKey = getCurrentMonthKey();
+    
+    // Save activities with month key
+    localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
+    
+    // Save damas with month key
+    localStorage.setItem(`damas_${monthKey}`, JSON.stringify(damasActivas));
+    
+    // Save descriptions with month key
+    const desc = {
+        scope: document.getElementById('scopeText').value,
+        difficulties: document.getElementById('difficultiesText').value,
+        recommendations: document.getElementById('recommendationsText').value,
+        impact: document.getElementById('impactText').value
+    };
+    localStorage.setItem(`desc_${monthKey}`, JSON.stringify(desc));
+    
+    // Update month indicator
+    document.getElementById('monthIndicator').innerText = formatDateForDisplay(new Date());
+}
+
+// Sort activities by date (oldest to newest)
+function sortActivitiesByDate() {
+    activities.sort((a, b) => {
+        const dateA = new Date(a.date + 'T12:00:00').getTime();
+        const dateB = new Date(b.date + 'T12:00:00').getTime();
+        return dateA - dateB; // Oldest first
+    });
+}
+
+// Load data for current month
+function loadCurrentMonthData() {
+    const monthKey = getCurrentMonthKey();
+    
+    // Load activities
+    const savedActivities = localStorage.getItem(`activities_${monthKey}`);
+    if (savedActivities) {
+        activities = JSON.parse(savedActivities);
+        sortActivitiesByDate(); // Sort after loading
+    }
+    
+    // Load damas
+    const savedDamas = localStorage.getItem(`damas_${monthKey}`);
+    if (savedDamas) {
+        damasActivas = JSON.parse(savedDamas);
+    }
+    
+    // Load descriptions
+    const savedDesc = localStorage.getItem(`desc_${monthKey}`);
+    if (savedDesc) {
+        const d = JSON.parse(savedDesc);
+        document.getElementById('scopeText').value = d.scope || '';
+        document.getElementById('difficultiesText').value = d.difficulties || '';
+        document.getElementById('recommendationsText').value = d.recommendations || '';
+        document.getElementById('impactText').value = d.impact || '';
+    }
+    
+    // Update displays
+    actualizarListaDamas();
+    renderActivities();
+    updateCharts();
+    updateCharCounts();
+    document.getElementById('monthIndicator').innerText = formatDateForDisplay(new Date());
+}
+//// ========== CHARTS SECTION FIXED & STYLED ======
+
+
+
+function getWeekNumber(date) {
+    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const dayOfMonth = date.getDate();
+    return Math.ceil((dayOfMonth + firstDayOfMonth.getDay()) / 7);
+}
+
+function agregarDama() {
+    const rolSelect = document.getElementById('damasRoles');
+    const nombreInput = document.getElementById('nuevaDamaNombre');
+    
+    if (!rolSelect.value || !nombreInput.value.trim()) {
+        alert('Selecciona un rol y escribe un nombre');
+        return;
+    }
+    
+    const rol = rolesDisponibles.find(r => r.id === rolSelect.value);
+    damasActivas.push({
+        id: Date.now() + Math.random(),
+        rolId: rol.id,
+        rolNombre: rol.nombre,
+        nombre: nombreInput.value.trim()
+    });
+    
+    nombreInput.value = '';
+    actualizarListaDamas();
+    saveAllToStorage();
+    updateCharts();
+}
+
+function eliminarDama(id) {
+    damasActivas = damasActivas.filter(d => d.id !== id);
+    actualizarListaDamas();
+    saveAllToStorage();
+    updateCharts();
+}
+
+function actualizarListaDamas() {
+    document.getElementById('totalDamasActivas').innerText = damasActivas.length;
+    
+    const lista = document.getElementById('rolesActivosList');
+    lista.innerHTML = '';
+    
+    damasActivas.forEach(dama => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:flex-start; gap:2px;">
+                <strong style="font-size:0.8rem;">${dama.nombre}</strong>
+                <small style="color:var(--text-medium);">${dama.rolNombre}</small>
+            </div>
+            <button onclick="eliminarDama(${dama.id})" style="background:var(--warning);">🗑️</button>
+        `;
+        lista.appendChild(div);
+    });
+}
+
+let rolesDisponibles = [
+    { id:'directora', nombre:'Directora', descripcion:'aprueba actividades' },
+    { id:'subdirectora', nombre:'Subdirectora', descripcion:'planifica y delega' },
+    { id:'coord_fondos', nombre:'Coordinadora Recaudación', descripcion:'gestiona recursos' },
+    { id:'coord_encuestas_local', nombre:'Coordinadora Encuestas y Local.', descripcion:'encuestas/localización' },
+    { id:'coord_encuestas_capacitacion', nombre:'Coordinadora Encuestas y Capac.', descripcion:'datos y talleres' },
+    { id:'coord_gestion_damas', nombre:'Gestión y Recuperacion Damas', descripcion:'reincorporación' },
+    { id:'coord_comunicacion', nombre:'Técnico Comunicación', descripcion:'medios digitales' },
+    { id:'coord_eventos', nombre:'Ferias & Excursiones', descripcion:'ferias, excursiones' },
+    { id:'coord_observacion', nombre:'Técnico Observación', descripcion:'monitoreo' }
+];
+
+function formatDateForDisplay(d, includeTime = false) {
+    if (!d) return '';
+    
+    // Handle if d is a string (like from date input)
+    if (typeof d === 'string') {
+        // Check if it's just a date (YYYY-MM-DD) without time
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+            // Parse the date parts and create date in local timezone at noon
+            const [year, month, day] = d.split('-').map(Number);
+            const date = new Date(year, month - 1, day, 12, 0, 0); // Use noon to avoid timezone issues
+            if (!isNaN(date)) {
+                d = date;
+            } else {
+                return d;
+            }
+        } else {
+            // It might be a full ISO string
+            const date = new Date(d);
+            if (!isNaN(date)) {
+                d = date;
+            } else {
+                return d;
+            }
+        }
+    }
+    
+    // Ensure we're working with a Date object
+    const date = d instanceof Date ? d : new Date(d);
+    if (isNaN(date)) return '';
+    
+    // Spanish months array as backup
+    const spanishMonths = [
+        'ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN',
+        'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'
+    ];
+    
+    try {
+        // Format based on whether we want time included
+        const options = {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            timeZone: 'America/Tegucigalpa' // Force Honduras timezone
+        };
+        
+        // Add time if requested - force 24-hour format with hourCycle
+        if (includeTime) {
+            options.hour = '2-digit';
+            options.minute = '2-digit';
+            options.hourCycle = 'h23';
+            options.hour12 = false;
+            options.timeZoneName = 'short';
+        }
+        
+        const formatter = new Intl.DateTimeFormat('es-ES', options);
+        let formatted = formatter.format(date).toUpperCase();
+        // Remove any dots that might appear
+        formatted = formatted.replace(/\./g, '');
+        
+        // Double-check if it's still showing English months
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = date.getMonth();
+        const year = date.getFullYear();
+        
+        // If formatted string contains English month abbreviations, use our backup
+        if (formatted.includes('JAN') || formatted.includes('FEB') || 
+            formatted.includes('MAR') || formatted.includes('APR') || 
+            formatted.includes('MAY') || formatted.includes('JUN') ||
+            formatted.includes('JUL') || formatted.includes('AUG') || 
+            formatted.includes('SEP') || formatted.includes('OCT') ||
+            formatted.includes('NOV') || formatted.includes('DEC')) {
+            
+            let result = `${day} ${spanishMonths[month]} ${year}`;
+            if (includeTime) {
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                result += ` ${hours}:${minutes}`;
+                
+                // Add timezone manually in fallback
+                const offset = -date.getTimezoneOffset() / 60;
+                const offsetStr = offset >= 0 ? `+${offset}` : `${offset}`;
+                result += ` GMT${offsetStr}`;
+            }
+            return result;
+        }
+        
+        return formatted;
+        
+    } catch (e) {
+        // Fallback to manual formatting
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = date.getMonth();
+        const year = date.getFullYear();
+        let result = `${day} ${spanishMonths[month]} ${year}`;
+        
+        if (includeTime) {
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            result += ` ${hours}:${minutes}`;
+            
+            // Add timezone manually in catch block
+            const offset = -date.getTimezoneOffset() / 60;
+            const offsetStr = offset >= 0 ? `+${offset}` : `${offset}`;
+            result += ` GMT${offsetStr}`;
+        }
+        
+        return result;
+    }
+}
+
+//just month and year only
+function formatMonthYearForDisplay(d) {
+    if (!d) return '';
+    
+    const date = d instanceof Date ? d : new Date(d);
+    if (isNaN(date)) return '';
+    
+    // Spanish months array
+    const spanishMonths = [
+        'ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN',
+        'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'
+    ];
+    
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    
+    return `${spanishMonths[month]} ${year}`;
+}
+// GPS Location Function
+function getLocation(formId) {
+    const statusEl = document.getElementById(`gpsStatus_${formId}`);
+    const latInput = document.getElementById(`lat_${formId}`);
+    const lngInput = document.getElementById(`lng_${formId}`);
+    
+    if (!navigator.geolocation) {
+        statusEl.innerHTML = '⚠️ Geolocalización no soportada';
+        return;
+    }
+    
+    statusEl.innerHTML = '📌 Obteniendo ubicación...';
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude.toFixed(6);
+            const lng = position.coords.longitude.toFixed(6);
+            latInput.value = lat;
+            lngInput.value = lng;
+            statusEl.innerHTML = `✅ Ubicación registrada: ${lat}, ${lng}`;
+            setTimeout(() => { 
+                statusEl.innerHTML = '📌 Ubicación registrada ✓'; 
+            }, 3000);
+        },
+        (error) => {
+            console.error('GPS error:', error);
+            let msg = '❌ Error al obtener ubicación';
+            if(error.code === 1) msg = '❌ Permiso denegado. Activa ubicación.';
+            else if(error.code === 2) msg = '❌ Ubicación no disponible';
+            else if(error.code === 3) msg = '❌ Tiempo de espera agotado';
+            statusEl.innerHTML = msg;
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+}
+
+// ========== MULTIPLE ACTIVITY FORMS FUNCTIONS ==========
+// Create a new activity form HTML
+function createActivityForm(formId) {
+    return `
+        <div class="activity-form" id="activityForm_${formId}" style="background:var(--neutral-light); border-radius:20px; padding:16px; margin-bottom:20px; border:1px solid var(--neutral-border); position:relative;">
+            <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:10px;">
+                <button type="button" onclick="removeActivityForm(${formId})" style="background:none; border:none; color:var(--warning); font-size:1.2rem; cursor:pointer;">✖</button>
+            </div>
+            
+            <!-- Basic Info Row (Always Visible) WITH ACTION TYPE -->
+            <div style="display: flex; gap: 8px; margin-bottom:10px; flex-wrap: wrap;">
+                <input type="date" id="newDate_${formId}" class="activity-date" style="flex: 1 1 120px;" onchange="checkDateForTimer(${formId})">
+                <select id="newActName_${formId}" style="flex: 2 1 200px;">
+                    <option value="">-- actividad --</option>
+                    <option value="Mantenimiento y Adecuación">Mantenimiento y Adecuación</option>
+                    <option value="Colaboración en Actividades">Colaboración en Actividades</option>
+                    <option value="Jornada de Salud">Jornada de Salud</option>
+                    <option value="Estrategias Digitales">Estrategias Digitales</option>
+                    <option value="Capacitación Interna">Capacitación Interna</option>
+                    <option value="Encuesta y Capacitación">Encuesta y Capacitación</option>
+                    <option value="Encuesta y Localización">Encuesta y Localización</option>
+                    <option value="Gestión y Recuperación">Gestión y Recuperación</option>
+                    <option value="Gestión y Coordinación">Gestión y Coordinación</option>
+                    <option value="Recaudación Fondos">Recaudación Fondos</option>
+                    <option value="Planificación">Planificación</option>
+                    <option value="Trabajo Comunitario">Trabajo Comunitario</option>
+                    <option value="Jornadas Integración">Jornadas Integración</option>
+                    <option value="Asesoria & Alinamiento">Asesoria & Alineación</option>
+                    <option value="Gestion de Acuerdos">Gestión de Acuerdos</option>
+                    <option value="Visita y Planificación">Visita y Planificación</option>
+                    <option value="Convocatorio">Convocatorio</option>
+                    <option value="Reunion por Video Llamada/Whatsaap">Reunion por Video Llamada/Whatsaap</option>
+                    <option value="Junta Directiva">Junta Directiva</option>
+                </select>
+                <!-- NEW: Action Type Selector with Filial as default -->
+                <select id="newActionType_${formId}" style="flex: 0 1 100px; padding:8px; border-radius:30px; border:1px solid var(--accent);">
+                    <option value="filial" selected>🏢 Filial</option>
+                    <option value="campo">🌐 Campo</option>
+                </select>
+            </div>
+            
+            <!-- Timer / Hours Section (Always Visible) -->
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom:10px; padding:8px; background:white; border-radius:30px;">
+                <span style="font-size:0.8rem; font-weight:600; color:var(--primary-dark);">⏱️ Horas:</span>
+                <input type="number" id="newHoras_${formId}" placeholder="Horas" min="0" step="0.01" style="width: 80px; padding:6px; border-radius:20px; border:1px solid var(--accent);" oninput="checkHoursInput(${formId})">
+                <button type="button" id="startTimerBtn_${formId}" onclick="startTimer(${formId})" style="background:var(--success); color:white; border:none; border-radius:30px; padding:6px 10px; font-size:0.7rem; font-weight:bold; display:none; cursor:pointer;">▶ Iniciar</button>
+                <button type="button" id="stopTimerBtn_${formId}" onclick="stopTimer(${formId})" style="background:var(--warning); color:white; border:none; border-radius:30px; padding:6px 10px; font-size:0.7rem; font-weight:bold; display:none; cursor:pointer;">⏹ Detener</button>
+                <span id="timerDisplay_${formId}" style="font-size:0.8rem; font-weight:600; color:var(--primary); background:var(--neutral-light); padding:4px 12px; border-radius:20px; border:1px solid var(--accent); display:none;">00:00:00</span>
+            </div>
+            
+            <!-- Extended Fields (Hidden until hours are entered) -->
+            <div id="extendedFields_${formId}" style="display:none;">
+                <!-- Damas and Beneficiaries -->
+                <div style="display:flex; gap:8px; margin-bottom:10px;">
+                    <input type="number" id="newVoluntarias_${formId}" placeholder="Damas" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
+                    <input type="number" id="newBenMujeres_${formId}" placeholder="Mujeres" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
+                    <input type="number" id="newBenHombres_${formId}" placeholder="Hombres" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
+                </div>
+                
+                <!-- Links Section -->
+                <div class="links-mini-grid" style="margin-bottom:10px;">
+                    <div class="link-box"><input type="text" placeholder="Link 1" class="linkInput_${formId}" id="link1_${formId}"></div>
+                    <div class="link-box"><input type="text" placeholder="Link 2" class="linkInput_${formId}" id="link2_${formId}"></div>
+                </div>
+                
+                <!-- Colaboradores Section -->
+                <div class="colaboradores-section" id="colabsContainer_${formId}">
+                    <div class="colaborador-row">
+                        <select class="colab-org_${formId}" id="colabOrg1_${formId}">
+                            <option value="">-- Colaborador --</option>
+                            <option value="Voluntariado">Voluntariado</option>
+                            <option value="Juventud">Juventud</option>
+                            <option value="Soccorismo">Soccorismo</option>
+                            <option value="Junta Directiva CD-17">Junta Directiva CD-17</option>
+                            <option value="Bomberos">Bomberos</option>
+                            <option value="Alcaldía Local">Alcaldía Local</option>
+                            <option value="Autoridad Competente">Autoridad Competente</option>
+                            <option value="Iglesia Local">Iglesia Local</option>
+                            <option value="Hospital Regional">Hospital Regional</option>
+                            <option value="Damas Regional">Damas Regional</option>
+                            <option value="Cede Central">Cede Central</option>
+                            <option value="Centro Educativo">Centro Educativo</option>
+                            <option value="ONG">ONG</option>
+                        </select>
+                        <input type="number" class="colab-cant_${formId}" placeholder="Cant." min="0" style="width:70px;">
+                    </div>
+                </div>
+                <button type="button" class="add-colab-btn" onclick="addColaboradorToForm(${formId})">+ Colaborador</button>
+            </div>
+            
+            <!-- GPS Drop Pin Section -->
+            <div style="margin-top:15px; border-top: 1px solid var(--neutral-border); padding-top:10px;">
+                <button type="button" id="gpsBtn_${formId}" onclick="getLocation(${formId})" style="width:100%; background:var(--accent); color:white; border:none; border-radius:30px; padding:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">
+                    📌 Registrar Ubicación Actual
+                </button>
+                <p id="gpsStatus_${formId}" style="font-size:0.6rem; color:var(--text-medium); text-align:center; margin-top:4px;">Opcional: Captura coordenadas para actividades de campo</p>
+                <input type="hidden" id="lat_${formId}">
+                <input type="hidden" id="lng_${formId}">
+            </div>
+
+            <!-- Submit Button -->
+            <div style="display:flex; justify-content:flex-end; margin-top:15px;">
+                <button type="button" onclick="submitActivityForm(${formId})" style="background:var(--primary); color:white; border:none; border-radius:30px; padding:10px 20px; font-weight:bold; cursor:pointer;">
+                    ✅ Agregar Actividad
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function addNewActivityForm() {
+    activityFormCount++;
+    const container = document.getElementById('activityFormsContainer');
+    container.insertAdjacentHTML('beforeend', createActivityForm(activityFormCount));
+}
+// Simple remove function (keep this for the X button)
+function removeActivityForm(formId) {
+    const form = document.getElementById(`activityForm_${formId}`);
+    if (form) {
+        if (timers[formId]) {
+            clearInterval(timers[formId]);
+            delete timers[formId];
+            delete timers[`${formId}_startTime`];
+        }
+        form.remove();
+    }
+}
+
+// Check date for timer visibility
+function checkDateForTimer(formId) {
+    const dateInput = document.getElementById(`newDate_${formId}`);
+    const startBtn = document.getElementById(`startTimerBtn_${formId}`);
+    const hoursInput = document.getElementById(`newHoras_${formId}`);
+    
+    if (!dateInput || !startBtn || !hoursInput) return;
+    
+    const selectedDate = new Date(dateInput.value + 'T12:00:00');
+    const today = new Date();
+    const isToday = selectedDate.toDateString() === today.toDateString();
+    
+    if (isToday && !hoursInput.value) {
+        startBtn.style.display = 'inline-block';
+    } else {
+        startBtn.style.display = 'none';
+    }
+}
+
+// Check hours input to show extended fields
+function checkHoursInput(formId) {
+    const hoursInput = document.getElementById(`newHoras_${formId}`);
+    const extendedFields = document.getElementById(`extendedFields_${formId}`);
+    const startBtn = document.getElementById(`startTimerBtn_${formId}`);
+    
+    if (hoursInput.value && hoursInput.value > 0) {
+        extendedFields.style.display = 'block';
+        startBtn.style.display = 'none';
+    } else {
+        extendedFields.style.display = 'none';
+        // Check if we should show timer button
+        const dateInput = document.getElementById(`newDate_${formId}`);
+        if (dateInput) {
+            const selectedDate = new Date(dateInput.value + 'T12:00:00');
+            const today = new Date();
+            const isToday = selectedDate.toDateString() === today.toDateString();
+            if (isToday) {
+                startBtn.style.display = 'inline-block';
+            }
+        }
+    }
+}
+
+// Start timer for specific form
+function startTimer(formId) {
+    if (timers[formId]) return;
+    
+    const startTime = Date.now();
+    
+    // Hide hours input, show timer
+    document.getElementById(`newHoras_${formId}`).style.display = 'none';
+    document.getElementById(`startTimerBtn_${formId}`).style.display = 'none';
+    document.getElementById(`stopTimerBtn_${formId}`).style.display = 'inline-block';
+    document.getElementById(`timerDisplay_${formId}`).style.display = 'inline-block';
+    
+    // Start timer display
+    timers[formId] = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const hours = Math.floor(elapsed / 3600000).toString().padStart(2, '0');
+        const minutes = Math.floor((elapsed % 3600000) / 60000).toString().padStart(2, '0');
+        const seconds = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
+        document.getElementById(`timerDisplay_${formId}`).innerText = `${hours}:${minutes}:${seconds}`;
+    }, 1000);
+    
+    // Store timer data
+    timers[`${formId}_startTime`] = startTime;
+}
+
+// Stop timer for specific form
+function stopTimer(formId) {
+    if (!timers[formId]) return;
+    
+    clearInterval(timers[formId]);
+    delete timers[formId];
+    
+    // Calculate hours
+    const elapsed = Date.now() - timers[`${formId}_startTime`];
+    const hoursDecimal = (elapsed / 3600000).toFixed(2);
+    
+    // Show hours input with value
+    const hoursInput = document.getElementById(`newHoras_${formId}`);
+    hoursInput.style.display = 'inline-block';
+    hoursInput.value = hoursDecimal;
+    
+    // Hide timer controls
+    document.getElementById(`startTimerBtn_${formId}`).style.display = 'none';
+    document.getElementById(`stopTimerBtn_${formId}`).style.display = 'none';
+    document.getElementById(`timerDisplay_${formId}`).style.display = 'none';
+    
+    // Show extended fields
+    document.getElementById(`extendedFields_${formId}`).style.display = 'block';
+    
+    delete timers[`${formId}_startTime`];
+}
+
+// Add colaborador to specific form
+function addColaboradorToForm(formId) {
+    const container = document.getElementById(`colabsContainer_${formId}`);
+    const newRow = document.createElement('div');
+    newRow.className = 'colaborador-row';
+    newRow.innerHTML = `
+        <select class="colab-org_${formId}">
+            <option value="">-- Colaborador --</option>
+            <option value="Voluntariado">Voluntariado</option>
+            <option value="Juventud">Juventud</option>
+            <option value="Soccorismo">Soccorismo</option>
+            <option value="Junta Directiva CD-17">Junta Directiva CD-17</option>
+            <option value="Bomberos">Bomberos</option>
+            <option value="Alcaldía Local">Alcaldía Local</option>
+            <option value="Autoridad Competente">Autoridad Competente</option>
+            <option value="Iglesia Local">Iglesia Local</option>
+            <option value="Hospital Regional">Hospital Regional</option>
+            <option value="Damas Regional">Damas Regional</option>
+            <option value="Cede Central">Cede Central</option>
+            <option value="Centro Educativo">Centro Educativo</option>
+            <option value="ONG">ONG</option>
+        </select>
+        <input type="number" class="colab-cant_${formId}" placeholder="Cant." min="0" style="width:70px;">
+    `;
+    container.appendChild(newRow);
+}
+
+
+// ===== 1. Pie Chart - Women vs Men Beneficiaries =====
+function updateBeneficiariesPieChart() {
+    const ctx = document.getElementById('chartBeneficiados').getContext('2d');
+
+    let totalWomen = 0;
+    let totalMen = 0;
+    let maxActivity = { name: '', total: 0 };
+
+    activities.forEach(act => {
+        const women = act.beneficiadas_mujeres || 0;
+        const men = act.beneficiados_hombres || 0;
+        totalWomen += women;
+        totalMen += men;
+        if (women + men > maxActivity.total) maxActivity = { name: act.name, total: women + men };
+    });
+
+    const total = totalWomen + totalMen;
+
+    if (window.beneficiariesChart) window.beneficiariesChart.destroy();
+
+    window.beneficiariesChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Mujeres', 'Hombres'],
+            datasets: [{
+                data: [totalWomen, totalMen],
+                backgroundColor: ['#E34A2F', '#1E3A5F'],
+                borderColor: '#FFFFFF',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: { 
+                    display: true, 
+                    position: 'bottom', 
+                    labels: { color: '#1E1E1E', font: { size: 13, weight: '500' } } 
+                },
+                tooltip: {
+                    titleColor: '#1E1E1E',
+                    bodyColor: '#1E1E1E',
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${context.label}: ${value} (${percent}%)`;
+                        },
+                        afterBody: () => `Mayor actividad: ${maxActivity.name} (${maxActivity.total})`
+                    }
+                }
+            }
+        }
+    });
+
+    const chartBox = document.getElementById('chartBeneficiados').parentNode;
+    let titleEl = chartBox.querySelector('.chart-title');
+    if (!titleEl) {
+        titleEl = document.createElement('div');
+        titleEl.className = 'chart-title';
+        chartBox.insertBefore(titleEl, chartBox.firstChild);
+    }
+    titleEl.style.fontWeight = '600';
+    titleEl.style.color = '#1E1E1E';
+    titleEl.innerHTML = `Beneficiarios <span>⚤ ${total} total</span>`;
+}
+
+// ===== 2. Horizontal Bar Chart - Top Activities by Hours =====
+function updateHoursBarChart() {
+    const ctx = document.getElementById('chartHoras').getContext('2d');
+
+    const activityTotals = {};
+    activities.forEach(a => {
+        if (a.horas && a.horas > 0) {
+            if (!activityTotals[a.name]) activityTotals[a.name] = 0;
+            activityTotals[a.name] += a.horas;
+        }
+    });
+
+    const sortedActivities = Object.entries(activityTotals)
+        .sort(([, h1], [, h2]) => h2 - h1)
+        .slice(0, 5);
+
+    const labels = sortedActivities.map(([name]) => name.length > 20 ? name.substr(0, 17)+'...' : name);
+    const data = sortedActivities.map(([, hours]) => hours);
+
+    const avgHours = activities.length
+        ? (activities.reduce((sum, a) => sum + (a.horas || 0), 0) / activities.length).toFixed(1)
+        : 0;
+
+    if (window.hoursChart) window.hoursChart.destroy();
+
+    window.hoursChart = new Chart(ctx, {
+        type: 'bar',
+        data: { 
+            labels, 
+            datasets: [{
+                data,
+                backgroundColor: '#1E3A5F', // dark blue fill
+                borderColor: '#00FF00',     // lime green outline
+                borderWidth: 1,
+                borderRadius: 5,
+                barPercentage: 0.6,
+                categoryPercentage: 0.7
+            }] 
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: false }, 
+                tooltip: { 
+                    titleColor: '#1E1E1E', 
+                    bodyColor: '#1E1E1E',
+                    callbacks: { label: t => `${t.raw} h` } 
+                } 
+            },
+            scales: {
+                x: { 
+                    beginAtZero: true, 
+                    ticks: { 
+                        color: '#000000', 
+                        font: { family: 'Times New Roman, Tahoma, sans-serif', size: 12, weight: '500' } 
+                    }, 
+                    grid: { color: '#D9E2EC' } 
+                },
+                y: { 
+                    ticks: { 
+                        color: '#000000', 
+                        font: { family: 'Times New Roman, Tahoma, sans-serif', size: 12, weight: '500' } 
+                    }, 
+                    grid: { display: false } 
+                }
+            }
+        }
+    });
+
+    const chartBox = document.getElementById('chartHoras').parentNode;
+    let titleEl = chartBox.querySelector('.chart-title');
+    if (!titleEl) {
+        titleEl = document.createElement('div');
+        titleEl.className = 'chart-title';
+        chartBox.insertBefore(titleEl, chartBox.firstChild);
+    }
+    titleEl.style.fontWeight = '600';
+    titleEl.style.color = '#1E1E1E';
+    titleEl.innerHTML = `Duración actividades <span>⏱️ ${avgHours}h prom.</span>`;
+}
+
+// ===== 3. Horizontal Bar Chart - Damas / Colaboradores per Project =====
+function updateCollaboratorsBarChart() {
+    const ctx = document.getElementById('chartDamas').getContext('2d');
+
+    const orgTotals = {}; // Bars: Damas per org/project
+    let totalCollaborators = 0; // Sum of all collaborators including Damas
+
+    activities.forEach(a => {
+        // Count Damas for chart bars
+        if (a.voluntarias && a.voluntarias > 0) {
+            const orgName = a.name || 'Sin nombre';
+            if (!orgTotals[orgName]) orgTotals[orgName] = 0;
+            orgTotals[orgName] += a.voluntarias;
+        }
+
+        // Count all collaborators
+        if (Array.isArray(a.colaboradores)) {
+            a.colaboradores.forEach(c => {
+                totalCollaborators += c.cant || 0;
+            });
+        }
+
+        // Include Damas in total collaborators
+        totalCollaborators += a.voluntarias || 0;
+    });
+
+    const labels = Object.keys(orgTotals);
+    const data = Object.values(orgTotals);
+
+    if (window.collabChart) window.collabChart.destroy();
+
+    window.collabChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                data,
+                backgroundColor: '#1E3A5F',
+                borderColor: '#E34A2F',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    titleColor: '#1E1E1E',
+                    bodyColor: '#1E1E1E',
+                    callbacks: {
+                        label: t => `${t.raw} damas`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: { color: '#1E1E1E', font: { size: 12, weight: '500' } },
+                    grid: { color: '#D9E2EC' }
+                },
+                y: {
+                    ticks: { color: '#1E1E1E', font: { size: 12, weight: '500' } },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+
+    const chartBox = document.getElementById('chartDamas').parentNode;
+    let titleEl = chartBox.querySelector('.chart-title');
+    if (!titleEl) {
+        titleEl = document.createElement('div');
+        titleEl.className = 'chart-title';
+        chartBox.insertBefore(titleEl, chartBox.firstChild);
+    }
+    titleEl.style.fontWeight = '600';
+    titleEl.style.color = '#1E1E1E';
+    titleEl.innerHTML = `Damas por proyecto <span>👥 ${totalCollaborators} colaboradores</span>`;
+}
+
+function updateCharts() {
+    updateBeneficiariesPieChart();
+    updateHoursBarChart();
+    updateCollaboratorsBarChart();
+}
+function submitActivityForm(formId) {
+    console.log('Submitting form:', formId);
+    
+    const formElement = document.getElementById(`activityForm_${formId}`);
+    if (!formElement) return;
+
+    const date = document.getElementById(`newDate_${formId}`).value;
+    const name = document.getElementById(`newActName_${formId}`).value;
+    const actionType= document.getElementById(`newActionType_${formId}`).value; 
+    const voluntarias = parseInt(document.getElementById(`newVoluntarias_${formId}`).value) || 0;
+    const horas = parseFloat(document.getElementById(`newHoras_${formId}`).value) || 0;
+    const mujeres = parseInt(document.getElementById(`newBenMujeres_${formId}`).value) || 0;
+    const hombres = parseInt(document.getElementById(`newBenHombres_${formId}`).value) || 0;
+
+    if (!date || !name) {
+        alert('Selecciona fecha y actividad');
+        return;
+    }
+
+    if (horas === 0) {
+        alert('Ingresa las horas o usa el timer');
+        return;
+    }
+
+    // Colaboradores
+    const colabRows = document.querySelectorAll(`#colabsContainer_${formId} .colaborador-row`);
+    const colaboradores = [];
+    colabRows.forEach(row => {
+        const org = row.querySelector(`.colab-org_${formId}`)?.value || '';
+        const cant = parseInt(row.querySelector(`.colab-cant_${formId}`)?.value) || 0;
+        if (org && cant) colaboradores.push({ org, cant });
+    });
+
+    // Links
+    const links = [];
+    const link1 = document.getElementById(`link1_${formId}`)?.value;
+    const link2 = document.getElementById(`link2_${formId}`).value;
+
+    if (link1 && link1.trim()) links.push(link1.trim());
+    if (link2 && link2.trim()) links.push(link2.trim());
+
+    const formattedLinks = links.map(link =>
+        (link.startsWith('http://') || link.startsWith('https://')) ? link : 'https://' + link
+    );
+
+    // ✅ CREATE ACTIVITY FIRST
+    const activityId = Date.now() + Math.random().toString(36).substr(2, 9);
+
+    const lat = document.getElementById(`lat_${formId}`)?.value || '';
+const lng = document.getElementById(`lng_${formId}`)?.value || '';
+
+const newActivity = {
+    id: activityId,
+    date,
+    name,
+    actionType: document.getElementById(`newActionType_${formId}`).value, 
+    voluntarias,
+    horas,
+    beneficiadas_mujeres: mujeres,
+    beneficiados_hombres: hombres,
+    colaboradores,
+    links: formattedLinks,
+    lat: lat,
+    lng: lng
+};
+
+    // ✅ 🔥 REMOVE FORM BEFORE ANY RENDERING
+    formElement.remove();
+
+    // ✅ Stop timer cleanly
+    if (timers[formId]) {
+        clearInterval(timers[formId]);
+        delete timers[formId];
+        delete timers[`${formId}_startTime`];
+    }
+
+    // ✅ NOW update data + UI
+    activities.push(newActivity);
+    sortActivitiesByDate();
+    renderActivities();
+    saveAllToStorage();
+    
+    updateCharts();
+
+    alert('✅ Actividad agregada');
+}
+
+function getQRCodeData(activity) {
+    // ✅ Only return a QR value if a valid link exists
+    if (
+        activity.links &&
+        Array.isArray(activity.links) &&
+        activity.links.length > 0 &&
+        activity.links[0] &&
+        activity.links[0].trim() !== ''
+    ) {
+        return activity.links[0];
+    }
+
+    // ❌ No link → NO QR
+    return null;
+}
+function renderActivities() {
+    const tbody = document.getElementById('activitiesBody');
+    tbody.innerHTML = '';
+
+    let totalHoras = 0, totalF = 0, totalM = 0, totalBen = 0;
+    // NEW: Add counters for filial and campo hours
+    let totalHorasFilial = 0, totalHorasCampo = 0;
+
+    activities.forEach((a, idx) => {
+        const tBen = (a.beneficiadas_mujeres || 0) + (a.beneficiados_hombres || 0);
+        totalBen += tBen;
+        totalHoras += a.horas || 0;
+        totalF += a.beneficiadas_mujeres || 0;
+        totalM += a.beneficiados_hombres || 0;
+        
+        // NEW: Add hours to appropriate category based on actionType
+        const horas = a.horas || 0;
+        if (a.actionType === 'filial') {
+            totalHorasFilial += horas;
+        } else {
+            totalHorasCampo += horas; // Default to campo if not specified
+        }
+
+        const qrId = `qr_${a.id || idx}`;
+        const qrData = getQRCodeData(a);
+
+        // Add this after calculating qrData
+        const gpsBadge = (a.lat && a.lng) ? `<div class="gps-badge">📌 <a href="https://maps.google.com/?q=${a.lat},${a.lng}" target="_blank" style="color:var(--success); text-decoration:none;"></a></div>` : '';
+
+        // Colaboradores
+        let colaboradoresHtml = '<div class="org-badge-container">';
+        if (a.colaboradores && a.colaboradores.length > 0) {
+            a.colaboradores.forEach(col => {
+                colaboradoresHtml += `<span class="org-badge">${col.org} (${col.cant})</span>`;
+            });
+        } else {
+            colaboradoresHtml += '<span class="org-badge">—</span>';
+        }
+        colaboradoresHtml += '</div>';
+
+        // Links
+        let linksHtml = '';
+        if (a.links && a.links.length > 0) {
+            linksHtml = '<div style="display:flex; flex-wrap:wrap; gap:4px;">';
+            a.links.forEach(link => {
+                let fullLink = link;
+                if (!link.startsWith('http://') && !link.startsWith('https://')) {
+                    fullLink = 'https://' + link;
+                }
+                linksHtml += `
+                    <button onclick="window.open('${fullLink}', '_blank')" 
+                        style="background:var(--accent); color:white; border:none; 
+                               border-radius:4px; padding:2px 8px; font-size:0.7rem;
+                               cursor:pointer;">
+                        🔗 Link
+                    </button>`;
+            });
+            linksHtml += '</div>';
+        } else {
+            linksHtml = '<span style="color:var(--text-light);">—</span>';
+        }
+
+        // QR CELL
+        let qrCellHtml = '';
+        if (qrData) {
+            qrCellHtml = `
+                <div id="${qrId}" 
+                     style="width:80px; height:80px; background:white; gap:20px; cursor:pointer;" 
+                     onclick="window.open('${qrData}', '_blank')" 
+                     title="Abrir enlace">
+                </div>`;
+        } else {
+            qrCellHtml = `<span style="color:var(--text-light);">—</span>`;
+        }
+
+        // OPTIONAL: If you want to show the action type in the table, uncomment the line with the action type
+        // and make sure your table header has an extra <th>Acción</th>
+        tbody.innerHTML += `<tr>
+            <td>${formatDateForDisplay(a.date)}</td>
+            <td style="text-align:left">${a.name}</td>
+            
+            <td>${a.voluntarias || 0}</td>
+            <td>${a.horas || 0}</td>
+            <td>${a.beneficiadas_mujeres || 0}</td>
+            <td>${a.beneficiados_hombres || 0}</td>
+            <td>${tBen}</td>
+            <td>${colaboradoresHtml}</td>
+            <td>${gpsBadge}</td>
+            <td>${qrCellHtml}</td>
+            <td><button onclick="deleteActivity(${idx})" style="border:none;background:none;color:var(--warning);">🗑️</button></td>
+        </tr>`;
+    });
+
+    // Totals - Update ALL summary displays
+    document.getElementById('totalHoras').innerText = totalHoras;
+    
+    // NEW: Update subcategory totals (make sure these elements exist in your HTML)
+    const totalHorasFilialEl = document.getElementById('totalHorasFilial');
+    const totalHorasCampoEl = document.getElementById('totalHorasCampo');
+    
+    if (totalHorasFilialEl) totalHorasFilialEl.innerText = totalHorasFilial;
+    if (totalHorasCampoEl) totalHorasCampoEl.innerText = totalHorasCampo;
+    
+    document.getElementById('totalBeneficiados').innerText = totalBen;
+    document.getElementById('totalMujeresBen').innerText = totalF;
+    document.getElementById('totalHombresBen').innerText = totalM;
+    document.getElementById('totalActividades').innerText = activities.length;
+    document.getElementById('footerDate').innerText = formatDateForDisplay(new Date(), true);
+
+    // Generate QR codes for activities with links
+    setTimeout(() => {
+        if (typeof QRCode === 'undefined') return;
+
+        activities.forEach((a, idx) => {
+            const qrData = getQRCodeData(a);
+            if (!qrData) return; // Skip if no link
+
+            const qrId = `qr_${a.id || idx}`;
+            const qrDiv = document.getElementById(qrId);
+
+            if (qrDiv) {
+                qrDiv.innerHTML = '';
+                try {
+                    new QRCode(qrDiv, {
+                        text: qrData,
+                        width: 60,
+                        height: 60,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.L
+                    });
+                } catch (e) {
+                    console.error('QR error:', e);
+                }
+            }
+        });
+    }, 300);
+}
+function deleteActivity(idx) {
+    activities.splice(idx, 1);
+    renderActivities();
+    saveAllToStorage();
+    updateCharts();
+}
+
+function saveData() {
+    sortActivitiesByDate();
+    saveAllToStorage();
+    alert('✅ Datos guardados para el mes actual.');
+}
+
+function clearData() {
+    if (confirm('Borrar toda la información del mes actual?')) {
+        const monthKey = getCurrentMonthKey();
+        activities = [];
+        damasActivas = [];
+        localStorage.removeItem(`activities_${monthKey}`);
+        localStorage.removeItem(`damas_${monthKey}`);
+        localStorage.removeItem(`desc_${monthKey}`);
+        document.getElementById('scopeText').value = '';
+        document.getElementById('difficultiesText').value = '';
+        document.getElementById('recommendationsText').value = '';
+        document.getElementById('impactText').value = '';
+        updateCharCounts();
+        actualizarListaDamas();
+        renderActivities();
+        updateCharts();
+        document.getElementById('monthIndicator').innerText = formatDateForDisplay(new Date());
+        alert('🗑️ Datos del mes actual borrados.');
+    }
+}
+
+function exportPDF() {
+    window.print();
+}
+function syncPrintText() {
+    document.getElementById('print_scope').innerText = document.getElementById('scopeText').value;
+    document.getElementById('print_difficulties').innerText = document.getElementById('difficultiesText').value;
+    document.getElementById('print_recommendations').innerText = document.getElementById('recommendationsText').value;
+    document.getElementById('print_impact').innerText = document.getElementById('impactText').value;
+}
+
+window.addEventListener('beforeprint', syncPrintText);
+
+function loadSavedData() {
+    loadCurrentMonthData();
+}
+
+function updateCharCounts() {
+    const scopeCount = document.getElementById('scopeCount');
+    const difficultiesCount = document.getElementById('difficultiesCount');
+    const recommendationsCount = document.getElementById('recommendationsCount');
+    const impactCount = document.getElementById('impactCount');
+    
+    if (scopeCount) scopeCount.innerText = document.getElementById('scopeText').value.length;
+    if (difficultiesCount) difficultiesCount.innerText = document.getElementById('difficultiesText').value.length;
+    if (recommendationsCount) recommendationsCount.innerText = document.getElementById('recommendationsText').value.length;
+    if (impactCount) impactCount.innerText = document.getElementById('impactText').value.length;
+}
+
+document.getElementById('scopeText').addEventListener('input', function() {
+    updateCharCounts();
+    saveAllToStorage();
+});
+document.getElementById('difficultiesText').addEventListener('input', function() {
+    updateCharCounts();
+    saveAllToStorage();
+});
+document.getElementById('recommendationsText').addEventListener('input', function() {
+    updateCharCounts();
+    saveAllToStorage();
+});
+document.getElementById('impactText').addEventListener('input', function() {
+    updateCharCounts();
+    saveAllToStorage();
+});
+
+
+// Single DOMContentLoaded event - NO initial form
+document.addEventListener('DOMContentLoaded', () => {
+    checkAndClearMonthChange();
+    
+    document.getElementById('currentDate').innerText = formatMonthYearForDisplay(new Date());
+    
+    // NO initial form - start with just the button
+    // addNewActivityForm(); // This line is commented out
+    
+    rolesDisponibles.forEach(r => {
+        const sel = document.getElementById('damasRoles');
+        const opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = r.nombre;
+        sel.appendChild(opt);
+    });
+    
+    loadCurrentMonthData();
+    updateCharCounts();
+    
+    setInterval(saveAllToStorage, 30000);
+    window.addEventListener('beforeunload', saveAllToStorage);
+});
+// Add this to your existing script section
+const state = {
+    save: () => {
+        const data = {
+            logros: document.querySelector('textarea')?.value,
+            // Add other fields here like kpi-values
+        };
+        localStorage.setItem('rc_tracker_data', JSON.stringify(data));
+    },
+    load: () => {
+        const saved = localStorage.getItem('rc_tracker_data');
+        if (saved) {
+            const data = JSON.parse(saved);
+            if (document.querySelector('textarea')) {
+                document.querySelector('textarea').value = data.logros || '';
+            }
+        }
+    }
+};
+
+// Auto-save when typing
+document.addEventListener('input', state.save);
+// Load when opening
+window.addEventListener('load', state.load);
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('damasActivasContainer');
+    if (container) {
+        container.addEventListener('click', function(e) {
+            const dropdown = this.querySelector('.damas-dropdown');
+            // Toggle visibility manually for mobile reliability
+            if (dropdown.style.opacity === "1") {
+                dropdown.style.opacity = "0";
+                dropdown.style.visibility = "hidden";
+                dropdown.style.pointerEvents = "none";
+            } else {
+                dropdown.style.opacity = "1";
+                dropdown.style.visibility = "visible";
+                dropdown.style.pointerEvents = "auto";
+            }
+            e.stopPropagation(); // Prevents immediate closing
+        });
+    }
+});
+
+// --- AUTO-SAVE PATCH ---
+// Ensures that every time you type in the textareas, it saves immediately
+document.querySelectorAll('textarea').forEach(textarea => {
+    textarea.addEventListener('input', () => {
+        saveAllToStorage(); // Uses your existing function
+    });
+});
+
+// --- PRINT LAYOUT PATCH ---
+// Injects CSS dynamically to fix the QR code spacing when printing
+const printStyle = document.createElement('style');
+printStyle.innerHTML = `
+    @media print {
+        .activity-card { 
+            page-break-inside: avoid !important; 
+            display: block !important; 
+            margin-bottom: 30px !important;
+            border: 1px solid #000 !important;
+        }
+        .qrcode-container, canvas, img { 
+            display: block !important; 
+            margin: 10px auto !important; 
+        }
+        button, .damas-dropdown { display: none !important; }
+    }
+`;
+
+
+document.head.appendChild(printStyle);
+let newWorker;
+
+function applyUpdate() {
+  if (newWorker) {
+    newWorker.postMessage({ type: 'SKIP_WAITING' });
+  }
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    // This part checks if you uploaded a new version to GitHub
+    reg.onupdatefound = () => {
+      newWorker = reg.installing;
+      newWorker.onstatechange = () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          const banner = document.getElementById('update-banner');
+          if (banner) banner.style.display = 'block';
+        }
+      };
+    };
+  });
+
+  // This reloads the app automatically once the update is applied
+  let refreshing;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    window.location.reload();
+    refreshing = true;
+  });
+}
+  
+
+</script>
+
+
+</body>
+</html>
