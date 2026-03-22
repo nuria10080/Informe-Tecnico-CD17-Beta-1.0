@@ -153,9 +153,9 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
 .activities-table th {
     background: var(--primary-dark);
     color: white;
-    font-size: 0.7rem;
+    font-size: 0.5rem;
     font-weight: 600;
-    padding: 10px 4px;
+    padding: 10px 0px;margin-right:auto;margin-left:auto;
     white-space: nowrap;
 }
 
@@ -163,8 +163,9 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
     padding: 10px 4px;
     border-bottom: 1px solid var(--neutral-border);
     text-align: center;
-    font-size: 0.75rem;
+    font-size: 0.95rem;
     vertical-align: middle;
+    margin-right:auto;margin-left:auto;
 }
 
 /* Mobile: card-style activities */
@@ -430,30 +431,56 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
     gap: 4px;
 }
 /* Charts Container */
-.charts-container {
+charts-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, minmax(320px, 1fr));
     gap: 16px;
     margin: 24px 0 16px;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 12px;
 }
+
+/* Individual chart boxes - ensure they can scroll internally if needed */
+
+    .charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    margin: 24px 0 16px;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 12px;
+}
+
+/* Individual chart boxes */
 .chart-box {
     background: var(--white);
     border-radius: 16px;
     padding: 12px;
     border: 1px solid var(--neutral-border);
     box-shadow: none;
-    height: 200px;
+    min-height: 220px;
+    height: auto;
     position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
 }
+
+/* Canvas inside chart */
 .chart-box canvas {
-    width: 100% !important;
+    min-width: 100%;
     height: 180px !important;
+    width: auto !important;
     display: block;
 }
-.chart-box:hover {
-    transform: none;
-    box-shadow: none;
-}
+
+/* Chart titles */
 .chart-title {
     font-size: 0.75rem;
     font-weight: 600;
@@ -466,6 +493,29 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chart-title span {
+    color: var(--text-medium);
+    font-weight: 500;
+    font-size: 0.7rem;
+    text-transform: none;
+    white-space: normal;
+}
+
+.chart-title span {
+    color: var(--text-medium);
+    font-weight: 500;
+    font-size: 0.7rem;
+    text-transform: none;
+    white-space: normal;
+}
+
+.chart-box:hover {
+    transform: none;
+    box-shadow: none;
 }
 .chart-title span {
     color: var(--text-medium);
@@ -490,11 +540,40 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
 
     
 /* Responsive */
+@media (max-width: 900px) and (min-width: 601px) {
+    .charts-container {
+        grid-template-columns: repeat(2, minmax(320px, 1fr));
+        overflow-x: auto;
+    }
+}
+
 @media (max-width: 800px) {
-    .charts-container { grid-template-columns: repeat(2, 1fr); }
+     .charts-container {
+        grid-template-columns: repeat(2, minmax(260px, 1fr));
+        padding-bottom: 8px;
+    }
 }
 @media (max-width: 500px) {
-    .charts-container { grid-template-columns: 1fr; }
+    .charts-container {
+        grid-template-columns: repeat(3, minmax(320px, 320px));
+        gap: 12px;
+        padding-bottom: 12px;
+    }
+    
+    .chart-box {
+        min-width: 300px;
+        padding: 10px;
+    }
+    
+    .chart-box canvas {
+        min-width: 280px;
+        height: 160px !important;
+    }
+    
+    .chart-title {
+        font-size: 0.7rem;
+        white-space: normal;
+    }
     .chart-box { height: 220px; }
 }
 @media (max-width:600px){ .desc-grid { grid-template-columns: 1fr; } }
@@ -703,11 +782,12 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
     <div class="kpi-value" id="totalDamasActivas">0</div>
     <div class="damas-dropdown">
         <div style="display:flex; flex-direction: column; gap:6px; margin-bottom:10px;">
-            <select id="damasRoles" style="flex:2;">
+            <select id="damasRoles" style="width:100%; padding:8px; border-radius:30px; border:1px solid var(--accent);">
                 <option value="">Seleccionar rol</option>
             </select>
-            <input type="text" id="nuevaDamaNombre" placeholder="Nombre" style="flex:3; padding:8px; border-radius:30px; border:1px solid var(--accent);">
-            <button onclick="agregarDama()" style="background:var(--accent); color:white; border:none; border-radius:30px; padding:8px 12px; font-weight:bold;">➕</button>
+            <input type="text" id="nuevaDamaNombre" placeholder="Nombre completo" style="width:100%; padding:8px; border-radius:30px; border:1px solid var(--accent);">
+            <input type="text" id="identidadDama" placeholder="Últimos 6 dígitos (opcional)" maxlength="6" style="width:100%; padding:8px; border-radius:30px; border:1px solid var(--accent); font-size:0.8rem;">
+            <button onclick="agregarDama()" style="background:var(--accent); color:white; border:none; border-radius:30px; padding:8px 12px; font-weight:bold; cursor:pointer;">➕ Agregar Dama</button>
         </div>
         <div id="rolesActivosList"></div>
     </div>
@@ -732,11 +812,12 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
     <div class="chart-box"><canvas id="chartDamas"></canvas></div>
     <div class="chart-box"><canvas id="chartBeneficiados"></canvas></div>
     <div class="chart-box"><canvas id="chartHoras"></canvas></div>
+    <div class="chart-box"><canvas id="chartActiveDamas"></canvas></div>
 </div>
 <div class="section-title" onclick="addActivity()">➕ Actividad Realizada</div>
 <div class="activities-section">
 <table class="activities-table">
-<thead><tr><th>Fecha</th><th>Actividad</th><th>Damas</th><th>Horas</th><th>F</th><th>M</th><th>Total</th><th>Colaboradores</th><th>Ubicación</th><th>QR</th><th>Acción</th></tr></thead>
+<thead><th>Fecha</th><th>Actividad</th><th>Damas</th><th>HR</th><th>F</th><th>M</th><th>Total</th><th>Colaboradores</th><th>Ubicación</th><th>QR</th><th>Acción</th></tr></thead>
 <tbody id="activitiesBody"></tbody>
 </table>
 </div>
@@ -754,6 +835,30 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
     <div id="activityFormsContainer">
         <!-- Forms will be dynamically added here by JavaScript -->
     </div>
+    <!-- QR Import Modal -->
+<div id="qrImportModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); z-index:10000; justify-content:center; align-items:center; flex-direction:column;">
+    <div style="background:white; border-radius:28px; padding:24px; max-width:90%; width:400px; text-align:center;">
+        <h3 style="margin-bottom:16px; color:var(--primary-dark);">📷 Escanear QR</h3>
+        <p style="margin-bottom:16px; font-size:0.85rem;">Escanea el código QR que muestra la dama desde su app</p>
+        
+        <div id="qrScannerContainer" style="width:100%; min-height:250px; background:#f0f0f0; border-radius:16px; margin-bottom:16px; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+            <div id="qrPreview" style="width:100%;"></div>
+            <p id="qrStatus" style="font-size:0.75rem; color:var(--text-medium); margin-top:12px;">Listo para escanear</p>
+        </div>
+        
+        <div style="display:flex; gap:12px; margin-top:16px;">
+            <button onclick="startQRScanner()" style="flex:1; background:var(--accent); color:white; border:none; border-radius:30px; padding:12px; font-weight:bold; cursor:pointer;">📷 Iniciar Cámara</button>
+            <button onclick="closeQRImportModal()" style="flex:1; background:var(--warning); color:white; border:none; border-radius:30px; padding:12px; font-weight:bold; cursor:pointer;">❌ Cancelar</button>
+        </div>
+        
+        <!-- Manual entry fallback -->
+        <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--neutral-border);">
+            <p style="font-size:0.7rem; margin-bottom:8px;">¿No puedes escanear? Ingresa manualmente:</p>
+            <textarea id="manualQRData" rows="2" placeholder="Pega el código aquí..." style="width:100%; padding:8px; border-radius:16px; border:1px solid var(--neutral-border); font-size:0.7rem;"></textarea>
+            <button onclick="processManualQR()" style="margin-top:8px; background:var(--primary); color:white; border:none; border-radius:30px; padding:8px 16px; font-size:0.7rem; cursor:pointer;">Procesar</button>
+        </div>
+    </div>
+</div>
 </div>
 
 
@@ -788,29 +893,15 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
     <span>Cruz Roja Hondureña CD-17 · Comité de Damas</span>
     <span id="footerDate"></span>
 </div>
-
 <div class="action-buttons">
-<button class="action-button print" onclick="exportPDF()">📄 Imprimir</button>
-<button class="action-button save" onclick="saveData()">💾 Guardar</button>
-<button class="action-button clear" onclick="clearData()">🗑️ Borrar</button>
+    <button class="action-button" onclick="showImportQRModal()" style="background: var(--info);">📷 Importar QR</button>
+    <button class="action-button print" onclick="exportPDF()">📄 Imprimir</button>
+    <button class="action-button save" onclick="saveData()">💾 Guardar</button>
+    <button class="action-button clear" onclick="clearData()">🗑️ Borrar</button>
 </div>
 
 </div>
 <script>
-let activities = [];
-let damasActivas = [];
-
-let rolesDisponibles = [
-    { id:'directora', nombre:'Directora', descripcion:'aprueba actividades' },
-    { id:'subdirectora', nombre:'Subdirectora', descripcion:'planifica y delega' },
-    { id:'coord_fondos', nombre:'Coordinadora Recaudación', descripcion:'gestiona recursos' },
-    { id:'coord_encuestas_local', nombre:'Coordinadora Encuestas y Local.', descripcion:'encuestas/localización' },
-    { id:'coord_encuestas_capacitacion', nombre:'Coordinadora Encuestas y Capac.', descripcion:'datos y talleres' },
-    { id:'coord_gestion_damas', nombre:'Gestión y Recuperacion Damas', descripcion:'reincorporación' },
-    { id:'coord_comunicacion', nombre:'Técnico Comunicación', descripcion:'medios digitales' },
-    { id:'coord_eventos', nombre:'Ferias & Excursiones', descripcion:'ferias, excursiones' },
-    { id:'coord_observacion', nombre:'Técnico Observación', descripcion:'monitoreo' }
-];
 
 
 // Timer variables
@@ -926,6 +1017,21 @@ function getWeekNumber(date) {
     const dayOfMonth = date.getDate();
     return Math.ceil((dayOfMonth + firstDayOfMonth.getDay()) / 7);
 }
+let activities = [];
+let damasActivas = [];
+
+let rolesDisponibles = [
+    { id:'directora', nombre:'Directora', descripcion:'aprueba actividades' },
+    { id:'subdirectora', nombre:'Subdirectora', descripcion:'planifica y delega' },
+    { id:'coord_fondos', nombre:'Coordinadora Recaudación', descripcion:'gestiona recursos' },
+    { id:'coord_encuestas_local', nombre:'Coordinadora Encuestas y Local.', descripcion:'encuestas/localización' },
+    { id:'coord_encuestas_capacitacion', nombre:'Coordinadora Encuestas y Capac.', descripcion:'datos y talleres' },
+    { id:'coord_gestion_damas', nombre:'Gestión y Recuperacion Damas', descripcion:'reincorporación' },
+    { id:'coord_comunicacion', nombre:'Técnico Comunicación', descripcion:'medios digitales' },
+    { id:'coord_eventos', nombre:'Ferias & Excursiones', descripcion:'ferias, excursiones' },
+    { id:'coord_observacion', nombre:'Técnico Observación', descripcion:'monitoreo' }
+];
+
 
 function actualizarListaDamas() {
     document.getElementById('totalDamasActivas').innerText = damasActivas.length;
@@ -935,20 +1041,42 @@ function actualizarListaDamas() {
     
     damasActivas.forEach(dama => {
         const div = document.createElement('div');
+        div.style.cssText = 'background:var(--neutral-light); border-radius:16px; padding:10px; border:1px solid var(--neutral-border); display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;';
+        
+        // Show ID status badge
+        const idBadge = (dama.identidadSuffix && dama.identidadSuffix !== '000000') ? 
+            `<span style="background:#4caf50; color:white; font-size:0.6rem; padding:2px 8px; border-radius:12px; margin-left:6px;">✓ ID:${dama.identidadSuffix}</span>` : 
+            `<span style="background:#ff9800; color:white; font-size:0.6rem; padding:2px 8px; border-radius:12px; margin-left:6px;">⚡ temporal</span>`;
+        
         div.innerHTML = `
-            <div style="display:flex; flex-direction:row; align-items:flex-start;width:100%; gap:2px;">
-                <strong style="font-size:0.8rem;">${dama.nombre}</strong>
+            <div style="display:flex; flex-direction:column; align-items:flex-start; gap:4px;">
+                <div style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
+                    <strong style="font-size:0.85rem;">${escapeHtml(dama.nombre)}</strong>
+                    ${idBadge}
+                </div>
                 <small style="color:var(--text-medium);">${dama.rolNombre}</small>
             </div>
-            <button onclick="eliminarDama(${dama.id})" style="background:var(--warning);">🗑️</button>
+            <button onclick="eliminarDama('${dama.id}')" style="background:var(--warning); border:none; border-radius:30px; padding:6px 12px; color:white; cursor:pointer;">🗑️</button>
         `;
         lista.appendChild(div);
+    });
+}
+
+// Helper function to prevent XSS
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
     });
 }
 
 function agregarDama() {
     const rolSelect = document.getElementById('damasRoles');
     const nombreInput = document.getElementById('nuevaDamaNombre');
+    const identidadInput = document.getElementById('identidadDama'); // New field
     
     if (!rolSelect.value || !nombreInput.value.trim()) {
         alert('Selecciona un rol y escribe un nombre');
@@ -956,26 +1084,131 @@ function agregarDama() {
     }
     
     const rol = rolesDisponibles.find(r => r.id === rolSelect.value);
+    
+    // Generate temporary ID with zeros (placeholder)
+    const identidadSuffix = identidadInput?.value?.trim() || '000000';
+    const tempId = `temp_${Date.now()}_${identidadSuffix}`;
+    
     damasActivas.push({
-        id: Date.now() + Math.random(),
+        id: tempId,                    // Temporary ID
+        identidadSuffix: identidadSuffix, // Last 6 digits (or 000000)
+        nombre: nombreInput.value.trim(),
         rolId: rol.id,
         rolNombre: rol.nombre,
-        nombre: nombreInput.value.trim()
+        totalHoras: 0,
+        actividadesCount: 0,
+        isPlaceholder: identidadSuffix === '000000', // Mark as placeholder
+        mergedFrom: [] // Track which sources merged into this
     });
     
     nombreInput.value = '';
-    actualizarListaDamas();
-    saveAllToStorage();
-     setTimeout(() => {
-        updateCharts();
-    }, 100);
-}
-
-function eliminarDama(id) {
-    damasActivas = damasActivas.filter(d => d.id !== id);
+    if (identidadInput) identidadInput.value = '';
     actualizarListaDamas();
     saveAllToStorage();
     updateCharts();
+}
+
+function createNewDama(imported) {
+    const newId = imported.identidadSuffix && imported.identidadSuffix !== '000000' 
+        ? `verified_${imported.identidadSuffix}_${Date.now()}`
+        : `temp_${Date.now()}_${imported.identidadSuffix || '000000'}`;
+    
+    const newDama = {
+        id: newId,
+        identidadSuffix: imported.identidadSuffix || '000000',
+        nombre: imported.nombre,
+        rolId: imported.rolId || 'voluntaria',
+        rolNombre: imported.rolNombre || 'Voluntaria',
+        totalHoras: imported.totalHoras || 0,
+        actividadesCount: imported.actividadesCount || 0,
+        isPlaceholder: !imported.identidadSuffix || imported.identidadSuffix === '000000',
+        mergedFrom: [{
+            sourceId: imported.id,
+            date: new Date().toISOString(),
+            horas: imported.totalHoras,
+            actividades: imported.actividadesCount
+        }]
+    };
+    
+    damasActivas.push(newDama);
+    console.log(`✨ Created new dama: ${imported.nombre}`);
+    return newDama;
+}
+
+// Smart merge when importing data
+function mergeDamaData(importedDama) {
+    // Strategy 1: Match by identidad suffix (if not zeros)
+    if (importedDama.identidadSuffix && importedDama.identidadSuffix !== '000000') {
+        const existingByID = damasActivas.find(d => 
+            d.identidadSuffix === importedDama.identidadSuffix
+        );
+        if (existingByID) {
+            return mergeIntoExisting(existingByID, importedDama);
+        }
+    }
+    
+    // Strategy 2: Match by name (case-insensitive, trim spaces)
+    const existingByName = damasActivas.find(d => 
+        d.nombre.toLowerCase().trim() === importedDama.nombre.toLowerCase().trim()
+    );
+    
+    if (existingByName) {
+        // If name matches but we have better ID info, update the ID
+        if (importedDama.identidadSuffix && importedDama.identidadSuffix !== '000000') {
+            existingByName.identidadSuffix = importedDama.identidadSuffix;
+            existingByName.id = `verified_${importedDama.identidadSuffix}_${existingByName.id}`;
+            existingByName.isPlaceholder = false;
+        }
+        return mergeIntoExisting(existingByName, importedDama);
+    }
+    
+    // Strategy 3: No match - create new dama
+    return createNewDama(importedDama);
+}
+
+function mergeIntoExisting(existing, imported) {
+    // Merge hours and activities
+    existing.totalHoras = (existing.totalHoras || 0) + (imported.totalHoras || 0);
+    existing.actividadesCount = (existing.actividadesCount || 0) + (imported.actividadesCount || 0);
+    
+    // Track merge history
+    if (!existing.mergedFrom) existing.mergedFrom = [];
+    existing.mergedFrom.push({
+        sourceId: imported.id,
+        date: new Date().toISOString(),
+        horas: imported.totalHoras,
+        actividades: imported.actividadesCount
+    });
+    
+    // Update role if imported has more specific role
+    if (imported.rolId && imported.rolId !== 'voluntaria' && existing.rolId === 'voluntaria') {
+        existing.rolId = imported.rolId;
+        existing.rolNombre = imported.rolNombre;
+    }
+    
+    console.log(`✅ Merged data for ${existing.nombre}: +${imported.totalHoras} horas`);
+    return existing;
+}
+
+function eliminarDama(id) {
+    console.log('Intentando eliminar dama con ID:', id);
+    
+    // Find the dama to show confirmation
+    const damaToDelete = damasActivas.find(d => d.id === id);
+    
+    if (!damaToDelete) {
+        console.error('No se encontró dama con ID:', id);
+        alert('Error: No se pudo encontrar la dama');
+        return;
+    }
+    
+    if (confirm(`¿Eliminar a ${damaToDelete.nombre} de la lista de damas activas?`)) {
+        damasActivas = damasActivas.filter(d => d.id !== id);
+        actualizarListaDamas();
+        saveAllToStorage();
+        updateCharts();
+        alert(`✅ ${damaToDelete.nombre} ha sido eliminada`);
+    }
 }
 
 
@@ -1651,6 +1884,195 @@ function updateCollaboratorsBarChart() {
     titleEl.innerHTML = `Damas por proyecto <span>👥 ${totalCollaborators} colaboradores</span>`;
 }
 
+// ===== 4. Vertical Bar Chart - Most Active Damas by Hours =====
+function updateActiveDamasChart() {
+    const canvas = document.getElementById('chartActiveDamas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Calculate hours per dama from activities
+    const damaHours = {};
+    
+    // Initialize with all registered damas
+    damasActivas.forEach(dama => {
+        damaHours[dama.id] = {
+            nombre: dama.nombre,
+            horas: dama.totalHoras || 0,  // Use stored total if available
+            actividades: dama.actividadesCount || 0,
+            rol: dama.rolNombre,
+            isPlaceholder: dama.isPlaceholder || false
+        };
+    });
+    
+    // Also calculate from activities (for backward compatibility and real-time updates)
+    activities.forEach(activity => {
+        // If activity has participantes array (future feature)
+        if (activity.participantes && Array.isArray(activity.participantes)) {
+            activity.participantes.forEach(p => {
+                // Try to find matching dama by ID or name
+                let dama = damasActivas.find(d => d.id === p.damaId);
+                if (!dama) {
+                    dama = damasActivas.find(d => d.nombre === p.nombre);
+                }
+                if (dama && damaHours[dama.id]) {
+                    damaHours[dama.id].horas += p.horas || 0;
+                    damaHours[dama.id].actividades++;
+                }
+            });
+        } 
+        // If activity has voluntarias count but no participantes, distribute evenly (temporary)
+        else if (activity.voluntarias > 0 && damasActivas.length > 0) {
+            const horasPerDama = (activity.horas || 0) / damasActivas.length;
+            damasActivas.forEach(dama => {
+                if (damaHours[dama.id]) {
+                    damaHours[dama.id].horas += horasPerDama;
+                    damaHours[dama.id].actividades++;
+                }
+            });
+        }
+    });
+    
+    // Filter out damas with zero hours and sort by hours (highest first)
+    const activeDamas = Object.values(damaHours)
+        .filter(d => d.horas > 0)
+        .sort((a, b) => b.horas - a.horas)
+        .slice(0, 8); // Show top 8 most active
+    
+    const labels = activeDamas.map(d => {
+        // Truncate long names
+        let name = d.nombre.length > 12 ? d.nombre.substring(0, 10) + '...' : d.nombre;
+        // Add role initial indicator
+        const roleIcon = d.rol === 'Directora' ? '👑 ' : 
+                        d.rol === 'Subdirectora' ? '⭐ ' : '👤 ';
+        return roleIcon + name;
+    });
+    
+    const data = activeDamas.map(d => Math.round(d.horas * 10) / 10);
+    const totalHours = data.reduce((sum, h) => sum + h, 0);
+    const avgHours = activeDamas.length ? (totalHours / activeDamas.length).toFixed(1) : 0;
+    
+    // Safely destroy existing chart
+    if (window.activeDamasChart) {
+        try {
+            window.activeDamasChart.destroy();
+        } catch(e) {
+            console.warn('Chart destroy error:', e);
+        }
+        window.activeDamasChart = null;
+    }
+    
+    // Only create chart if there's data
+    if (activeDamas.length === 0) {
+        // Show empty state message
+        const chartBox = document.getElementById('chartActiveDamas').parentNode;
+        let titleEl = chartBox.querySelector('.chart-title');
+        if (!titleEl) {
+            titleEl = document.createElement('div');
+            titleEl.className = 'chart-title';
+            chartBox.insertBefore(titleEl, chartBox.firstChild);
+        }
+        titleEl.innerHTML = `Damas Más Activas <span>⏱️ 0 horas</span>`;
+        
+        // Draw empty chart placeholder
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '12px Inter, sans-serif';
+        ctx.fillStyle = '#4A5A6E';
+        ctx.textAlign = 'center';
+        ctx.fillText('Agrega actividades para ver damas activas', canvas.width/2, canvas.height/2);
+        return;
+    }
+    
+    window.activeDamasChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Horas',
+                data: data,
+                backgroundColor: [
+                    '#E34A2F', '#1E3A5F', '#4F7CAC', '#2E7D32',
+                    '#ED6A5E', '#36A2EB', '#9C27B0', '#FF9800'
+                ],
+                borderColor: '#FFFFFF',
+                borderWidth: 2,
+                borderRadius: 6,
+                barPercentage: 0.65,
+                categoryPercentage: 0.8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { 
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    titleColor: '#FFFFFF',
+                    bodyColor: '#FFFFFF',
+                    callbacks: {
+                        label: (context) => {
+                            const dama = activeDamas[context.dataIndex];
+                            return [
+                                `📊 Horas: ${context.raw} h`,
+                                `📋 Actividades: ${dama.actividades}`,
+                                `🎭 Rol: ${dama.rol}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { 
+                        font: { size: 11, weight: '500' },
+                        color: '#1E3A5F',
+                        maxRotation: 45,
+                        minRotation: 35
+                    },
+                    grid: { display: false },
+                    title: {
+                        display: true,
+                        text: 'Damas',
+                        font: { size: 10, weight: '500' },
+                        color: '#4A5A6E'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { 
+                        font: { size: 10 },
+                        callback: (value) => value + 'h'
+                    },
+                    grid: { color: '#D9E2EC' },
+                    title: {
+                        display: true,
+                        text: 'Horas trabajadas',
+                        font: { size: 10, weight: '500' },
+                        color: '#4A5A6E'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Update chart title
+    const chartBox = document.getElementById('chartActiveDamas').parentNode;
+    let titleEl = chartBox.querySelector('.chart-title');
+    if (!titleEl) {
+        titleEl = document.createElement('div');
+        titleEl.className = 'chart-title';
+        chartBox.insertBefore(titleEl, chartBox.firstChild);
+    }
+    titleEl.style.fontWeight = '600';
+    titleEl.style.color = '#1E1E1E';
+    titleEl.innerHTML = `Damas Más Activas <span>⏱️ ${Math.round(totalHours * 10) / 10} horas totales · ${activeDamas.length} damas activas</span>`;
+}
+
+
+// Main update function - with safety checks
 // Main update function - with safety checks
 function updateCharts() {
     // Small delay to ensure DOM is ready
@@ -1659,12 +2081,12 @@ function updateCharts() {
             updateBeneficiariesPieChart();
             updateHoursBarChart();
             updateCollaboratorsBarChart();
+            updateActiveDamasChart(); // Add the new chart
         } catch(e) {
             console.error('Chart update error:', e);
         }
     }, 50);
 }
-
 function submitActivityForm(formId) {
     console.log('Submitting form:', formId);
     
@@ -1858,18 +2280,23 @@ function getQRCodeData(activity) {
             linksHtml = '<span style="color:var(--text-light);">—</span>';
         }
 
-        // QR CELL
+        
+        // QR CELL - Clickable even in PDFs
         let qrCellHtml = '';
         if (qrData) {
             qrCellHtml = `
-                <div id="${qrId}" 
-                     style="width:80px; height:80px; background:white; gap:20px; cursor:pointer;" 
-                     onclick="window.open('${qrData}', '_blank')" 
-                     title="Abrir enlace">
+                <div style="text-align:center;">
+                    <a href="${qrData}" target="_blank" style="text-decoration:none; display:inline-block;">
+                        <div id="${qrId}" 
+                            style="width:80px; height:80px; background:white; margin:0 auto; cursor:pointer;" 
+                            title="Abrir enlace">
+                        </div>
+                    </a>
                 </div>`;
         } else {
-            qrCellHtml = `<span style="color:var(--text-light);">—</span>`;
+            qrCellHtml = '<span style="color:var(--text-light);">—</span>';
         }
+
 
         // Build table row
         tbody.innerHTML += `<tr>
@@ -2094,6 +2521,349 @@ printStyle.innerHTML = `
     }
 `;
 
+//master app only
+// ========== QR IMPORT FUNCTIONS (Director's App) ==========
+let qrScanner = null;
+let qrStream = null;
+
+function showImportQRModal() {
+    document.getElementById('qrImportModal').style.display = 'flex';
+}
+
+function closeQRImportModal() {
+    if (qrStream) {
+        qrStream.getTracks().forEach(track => track.stop());
+        qrStream = null;
+    }
+    document.getElementById('qrImportModal').style.display = 'none';
+    document.getElementById('qrPreview').innerHTML = '';
+    document.getElementById('qrStatus').innerHTML = 'Listo para escanear';
+}
+
+function startQRScanner() {
+    const preview = document.getElementById('qrPreview');
+    preview.innerHTML = '<video id="qrVideo" style="width:100%; border-radius:16px;"></video>';
+    
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => {
+            qrStream = stream;
+            const video = document.getElementById('qrVideo');
+            video.srcObject = stream;
+            video.play();
+            
+            // Simple QR detection (using canvas polling)
+            scanQRFromVideo(video);
+        })
+        .catch(err => {
+            console.error('Camera error:', err);
+            document.getElementById('qrStatus').innerHTML = '❌ No se pudo acceder a la cámara. Usa entrada manual.';
+        });
+}
+
+function scanQRFromVideo(video) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    
+    function scanFrame() {
+        if (!qrStream) return;
+        
+        if (video.videoWidth > 0) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, canvas.width, canvas.height);
+            
+            if (code) {
+                // QR detected!
+                document.getElementById('qrStatus').innerHTML = '✅ QR detectado! Procesando...';
+                stopQRScanner();
+                processImportedData(code.data);
+                return;
+            }
+        }
+        requestAnimationFrame(scanFrame);
+    }
+    scanFrame();
+}
+
+function stopQRScanner() {
+    if (qrStream) {
+        qrStream.getTracks().forEach(track => track.stop());
+        qrStream = null;
+    }
+}
+
+function processManualQR() {
+    const data = document.getElementById('manualQRData').value.trim();
+    if (data) {
+        processImportedData(data);
+    } else {
+        alert('Ingresa el código QR manualmente');
+    }
+}
+
+// Main import processor
+function processImportedData(encodedData) {
+    try {
+        // Decode the QR data
+        const jsonStr = decodeURIComponent(encodedData);
+        const importData = JSON.parse(jsonStr);
+        
+        // Validate import format
+        if (importData.type !== 'dama_export') {
+            alert('Formato de datos no válido');
+            closeQRImportModal();
+            return;
+        }
+        
+        // Show processing indicator
+        document.getElementById('qrStatus').innerHTML = '🔄 Procesando datos...';
+        
+        // Process the import
+        const result = importDamaData(importData);
+        
+        // Show result
+        alert(`✅ Importación completada!\n\n👤 Dama: ${importData.dama.nombre}\n📊 Horas: ${importData.data.totalHoras}\n📋 Actividades: ${importData.data.actividadesCount}\n\n${result.newActivities} actividades nuevas agregadas`);
+        
+        // Refresh UI
+        renderActivities();
+        updateCharts();
+        actualizarListaDamas();
+        saveAllToStorage();
+        
+        // Close modal
+        closeQRImportModal();
+        
+    } catch (e) {
+        console.error('Import error:', e);
+        alert('❌ Error al procesar los datos. Verifica que el QR sea válido.');
+        document.getElementById('qrStatus').innerHTML = '❌ Error al procesar';
+    }
+}
+
+// Core import function
+// Core import function with SMART MERGE (MAX values)
+function importDamaData(importData) {
+    let newActivitiesCount = 0;
+    let updatedActivitiesCount = 0;
+    
+    // 1. Find or create dama
+    let dama = damasActivas.find(d => d.id === importData.dama.id);
+    
+    if (!dama) {
+        // Try to match by name or ID
+        dama = damasActivas.find(d => 
+            d.nombre.toLowerCase() === importData.dama.nombre.toLowerCase() ||
+            (importData.dama.identidadSuffix !== '000000' && d.identidadSuffix === importData.dama.identidadSuffix)
+        );
+    }
+    
+    if (!dama) {
+        // Create new dama
+        dama = {
+            id: importData.dama.id,
+            identidadSuffix: importData.dama.identidadSuffix || '000000',
+            nombre: importData.dama.nombre,
+            rolId: importData.dama.rolId,
+            rolNombre: importData.dama.rolNombre,
+            totalHoras: 0,
+            actividadesCount: 0,
+            isPlaceholder: importData.dama.identidadSuffix === '000000',
+            mergedFrom: []
+        };
+        damasActivas.push(dama);
+        console.log(`✨ Created new dama: ${dama.nombre}`);
+    } else {
+        console.log(`📌 Found existing dama: ${dama.nombre}`);
+        // Update ID if we have better info
+        if (importData.dama.identidadSuffix !== '000000' && dama.identidadSuffix === '000000') {
+            dama.identidadSuffix = importData.dama.identidadSuffix;
+            dama.isPlaceholder = false;
+            console.log(`  🔄 Updated dama ID to: ${dama.identidadSuffix}`);
+        }
+    }
+    
+    // 2. Process each activity from volunteer with SMART MERGE
+    importData.data.actividades.forEach(importedAct => {
+        // Look for existing activity by date and name
+        const existingActivity = activities.find(act => 
+            act.date === importedAct.date && 
+            act.name === importedAct.name
+        );
+        
+        if (existingActivity) {
+            // ========== MERGE - Activity already exists ==========
+            let changes = false;
+            console.log(`🔄 Merging activity: ${existingActivity.name} on ${existingActivity.date}`);
+            
+            // 2.1 MERGE COLLABORATORS - Take the MAXIMUM count for each organization
+            if (importedAct.colaboradores && importedAct.colaboradores.length > 0) {
+                if (!existingActivity.colaboradores) existingActivity.colaboradores = [];
+                
+                importedAct.colaboradores.forEach(newColab => {
+                    const existingColab = existingActivity.colaboradores.find(c => c.org === newColab.org);
+                    if (existingColab) {
+                        // Take the MAXIMUM count (most complete data)
+                        const maxCount = Math.max(existingColab.cant || 0, newColab.cant || 0);
+                        if (maxCount !== existingColab.cant) {
+                            existingColab.cant = maxCount;
+                            changes = true;
+                            console.log(`    📊 ${newColab.org}: ${existingColab.cant} → ${maxCount} (max)`);
+                        }
+                    } else if (newColab.org && newColab.cant) {
+                        // Add new collaborator not previously recorded
+                        existingActivity.colaboradores.push({...newColab});
+                        changes = true;
+                        console.log(`    ➕ New collaborator: ${newColab.org}: ${newColab.cant}`);
+                    }
+                });
+            }
+            
+            // 2.2 MERGE BENEFICIARIES - Take the MAXIMUM
+            if (importedAct.beneficiadas_mujeres !== undefined) {
+                const currentMujeres = existingActivity.beneficiadas_mujeres || 0;
+                const maxMujeres = Math.max(currentMujeres, importedAct.beneficiadas_mujeres);
+                if (maxMujeres !== currentMujeres) {
+                    existingActivity.beneficiadas_mujeres = maxMujeres;
+                    changes = true;
+                    console.log(`    👩 Mujeres: ${currentMujeres} → ${maxMujeres}`);
+                }
+            }
+            
+            if (importedAct.beneficiados_hombres !== undefined) {
+                const currentHombres = existingActivity.beneficiados_hombres || 0;
+                const maxHombres = Math.max(currentHombres, importedAct.beneficiados_hombres);
+                if (maxHombres !== currentHombres) {
+                    existingActivity.beneficiados_hombres = maxHombres;
+                    changes = true;
+                    console.log(`    👨 Hombres: ${currentHombres} → ${maxHombres}`);
+                }
+            }
+            
+            // 2.3 MERGE HOURS - Take the MAXIMUM
+            if (importedAct.horas !== undefined) {
+                const currentHoras = existingActivity.horas || 0;
+                const maxHoras = Math.max(currentHoras, importedAct.horas);
+                if (maxHoras !== currentHoras) {
+                    existingActivity.horas = maxHoras;
+                    changes = true;
+                    console.log(`    ⏱️ Horas: ${currentHoras} → ${maxHoras}`);
+                }
+            }
+            
+            // 2.4 MERGE LINKS - UNION (add all unique links)
+            if (importedAct.link && importedAct.link.trim()) {
+                if (!existingActivity.links) existingActivity.links = [];
+                if (!existingActivity.links.includes(importedAct.link)) {
+                    existingActivity.links.push(importedAct.link);
+                    changes = true;
+                    console.log(`    🔗 Added link: ${importedAct.link.substring(0, 30)}...`);
+                }
+            }
+            
+            // 2.5 MERGE GPS - Take the FIRST that has data
+            if (importedAct.lat && importedAct.lng && !existingActivity.lat) {
+                existingActivity.lat = importedAct.lat;
+                existingActivity.lng = importedAct.lng;
+                changes = true;
+                console.log(`    📍 Added GPS location`);
+            }
+            
+            // 2.6 Track that this dama contributed to this activity
+            if (!existingActivity.contributingDamas) existingActivity.contributingDamas = [];
+            if (!existingActivity.contributingDamas.includes(importData.dama.id)) {
+                existingActivity.contributingDamas.push(importData.dama.id);
+                changes = true;
+                console.log(`    👥 Added contributor: ${importData.dama.nombre}`);
+            }
+            
+            // 2.7 Track import source
+            if (!existingActivity.importedFrom) existingActivity.importedFrom = [];
+            if (!existingActivity.importedFrom.includes(importData.dama.id)) {
+                existingActivity.importedFrom.push(importData.dama.id);
+                changes = true;
+            }
+            
+            if (changes) {
+                updatedActivitiesCount++;
+                console.log(`  ✅ Activity updated: ${existingActivity.name}`);
+            } else {
+                console.log(`  ℹ️ No changes needed for: ${existingActivity.name}`);
+            }
+            
+        } else {
+            // ========== NEW ACTIVITY - Add it ==========
+            console.log(`✨ Adding new activity: ${importedAct.name} on ${importedAct.date}`);
+            const newActivity = {
+                id: Date.now() + Math.random(),
+                date: importedAct.date,
+                name: importedAct.name,
+                actionType: importedAct.actionType || 'campo',
+                horas: importedAct.horas || 0,
+                beneficiadas_mujeres: importedAct.beneficiadas_mujeres || 0,
+                beneficiados_hombres: importedAct.beneficiados_hombres || 0,
+                voluntarias: 1, // This dama contributed
+                colaboradores: importedAct.colaboradores || [],
+                links: importedAct.link ? [importedAct.link] : [],
+                lat: importedAct.lat || '',
+                lng: importedAct.lng || '',
+                importedFrom: [importData.dama.id],
+                contributingDamas: [importData.dama.id],
+                originalSource: importData.dama.nombre
+            };
+            activities.push(newActivity);
+            newActivitiesCount++;
+        }
+    });
+    
+    // 3. Update dama totals (ADD her personal hours, not MAX)
+    const previousHours = dama.totalHoras || 0;
+    dama.totalHoras = previousHours + importData.data.totalHoras;
+    dama.actividadesCount = (dama.actividadesCount || 0) + importData.data.actividadesCount;
+    console.log(`📊 Dama ${dama.nombre}: ${previousHours}h → ${dama.totalHoras}h (+${importData.data.totalHoras}h)`);
+    
+    // Track merge history
+    if (!dama.mergedFrom) dama.mergedFrom = [];
+    dama.mergedFrom.push({
+        sourceId: importData.dama.id,
+        date: new Date().toISOString(),
+        horas: importData.data.totalHoras,
+        actividades: importData.data.actividadesCount,
+        newActivities: newActivitiesCount,
+        updatedActivities: updatedActivitiesCount
+    });
+    
+    // Sort activities
+    sortActivitiesByDate();
+    
+    // Show detailed result
+    let message = `✅ Importación completada!\n\n👤 Dama: ${importData.dama.nombre}\n📊 Horas agregadas: ${importData.data.totalHoras}\n📋 Total horas dama: ${dama.totalHoras}h`;
+    if (newActivitiesCount > 0) message += `\n📋 Actividades nuevas: ${newActivitiesCount}`;
+    if (updatedActivitiesCount > 0) message += `\n🔄 Actividades actualizadas: ${updatedActivitiesCount}`;
+    alert(message);
+    
+    return { 
+        newActivities: newActivitiesCount, 
+        updatedActivities: updatedActivitiesCount,
+        damaUpdated: dama.nombre
+    };
+}
+// Helper: Get current dama from localStorage (for Dama's app)
+function getCurrentDamaFromLocalStorage() {
+    const damas = JSON.parse(localStorage.getItem('damas_activas') || '[]');
+    return damas[0] || { id: 'dama_unknown', nombre: 'Usuario', identidadSuffix: '000000' };
+}
+
+// Helper: Get activities for current dama (for Dama's app)
+function getMyActivities() {
+    // In Dama's app, each dama only sees their own activities
+    // This would need to be implemented based on how you track per-dama activities
+    return activities;
+}
+//end master app only
+
 
 document.head.appendChild(printStyle);
 let newWorker;
@@ -2130,6 +2900,6 @@ if ('serviceWorker' in navigator) {
 
 </script>
 
-
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </body>
 </html>
