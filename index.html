@@ -1902,7 +1902,9 @@ function getQRCodeData(activity) {
     document.getElementById('totalHombresBen').innerText = totalM;
     document.getElementById('totalActividades').innerText = activities.length;
     document.getElementById('footerDate').innerText = formatDateForDisplay(new Date(), true);
-
+    updateBeneficiariesPieChart();
+    updateHoursBarChart();
+    updateCollaboratorsBarChart();
     // Generate QR codes for activities with links
     setTimeout(() => {
         if (typeof QRCode === 'undefined') return;
