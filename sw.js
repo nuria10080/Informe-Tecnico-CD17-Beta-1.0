@@ -1,29 +1,21 @@
-const CACHE_NAME = 'Informe-Tecnico-Beta-1.0';
-const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
+const CACHE_NAME = 'cd17-v2';
+const urlsToCache = [
+  '/Informe-Tecnico-CD17-Beta-1.0/',
+  '/Informe-Tecnico-CD17-Beta-1.0/index.html',
+  '/Informe-Tecnico-CD17-Beta-1.0/manifest.json',
+  '/Informe-Tecnico-CD17-Beta-1.0/icon-192.png',
+  '/Informe-Tecnico-CD17-Beta-1.0/icon-512.png',
   'https://cdn.jsdelivr.net/npm/chart.js',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
 ];
 
-// Install: Cache all core files
+// Install: Cache all required files
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing...');
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      console.log('Caching assets...');
-      for (const asset of ASSETS) {
-        try {
-          await cache.add(asset);
-          console.log('Cached:', asset);
-        } catch (e) {
-          console.error('Failed to cache:', asset, e);
-        }
-      }
-      return cache;
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('Caching files...');
+      return cache.addAll(urlsToCache);
     })
   );
   self.skipWaiting();
@@ -33,61 +25,69 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   console.log('Service Worker activating...');
   event.waitUntil(
-    caches.keys().then((keys) => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => {
-          console.log('Deleting old cache:', key);
-          return caches.delete(key);
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
         })
       );
     }).then(() => {
-      console.log('Now controlling clients');
+      console.log('Now controlling all clients');
       return self.clients.claim();
     })
   );
 });
 
-// Fetch: Try cache first for static assets, network first for others
+// Fetch: Serve from cache first, then network
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
-  // Handle HTML navigation requests specially
+  // For navigation (HTML pages) - always serve from cache first
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      caches.match('./index.html').then(response => {
+      caches.match('/Informe-Tecnico-CD17-Beta-1.0/index.html').then((response) => {
         if (response) {
           console.log('Serving index.html from cache');
           return response;
         }
-        return fetch(event.request);
+        // If not in cache, fetch from network
+        return fetch(event.request).then((networkResponse) => {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put('/Informe-Tecnico-CD17-Beta-1.0/index.html', responseToCache);
+          });
+          return networkResponse;
+        });
+      }).catch(() => {
+        return new Response('Offline - please connect to internet to load the app', {
+          status: 503,
+          statusText: 'Service Unavailable'
+        });
       })
     );
     return;
   }
   
-  // For other requests, try cache first, then network
+  // For other requests (images, JS, CDN) - try cache first, then network
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      if (cachedResponse) {
+    caches.match(event.request).then((response) => {
+      if (response) {
         console.log('Serving from cache:', event.request.url);
-        return cachedResponse;
+        return response;
       }
       console.log('Fetching from network:', event.request.url);
-      return fetch(event.request).then(networkResponse => {
-        // Cache successful responses for future offline use
+      return fetch(event.request).then((networkResponse) => {
+        // Cache successful responses for offline use
         if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => {
+          caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
           });
         }
         return networkResponse;
-      }).catch(() => {
-        // If both cache and network fail, return a fallback
-        if (event.request.destination === 'image') {
-          return new Response('', { status: 404, statusText: 'Image not found' });
-        }
-        return new Response('Offline - content not available', { status: 503 });
       });
     })
   );
