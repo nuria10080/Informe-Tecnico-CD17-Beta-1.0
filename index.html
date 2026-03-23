@@ -853,31 +853,32 @@ charts-container {
 </div>
 </div>
 
-
-
-
 <div class="desc-item">
   <label>🎯 Alcance / Scope</label>
   <textarea id="scopeText" maxlength="1300" placeholder="Describa el alcance de las actividades..."></textarea>
   <div class="print-text" id="print_scope"></div>
+  <div id="scopeFeedback" style="margin-top:12px; padding:8px; background:var(--neutral-light); border-radius:16px; display:none;"></div>
 </div>
 
 <div class="desc-item">
   <label>⚠️ Dificultades </label>
   <textarea id="difficultiesText" maxlength="1300" placeholder="Describa dificultades encontradas..."></textarea>
   <div class="print-text" id="print_difficulties"></div>
+  <div id="difficultiesFeedback" style="margin-top:12px; padding:8px; background:var(--neutral-light); border-radius:16px; display:none;"></div>
 </div>
 
 <div class="desc-item">
   <label>📈 Recomendaciones</label>
   <textarea id="recommendationsText" maxlength="1300" placeholder="Recomendaciones..."></textarea>
   <div class="print-text" id="print_recommendations"></div>
+  <div id="recommendationsFeedback" style="margin-top:12px; padding:8px; background:var(--neutral-light); border-radius:16px; display:none;"></div>
 </div>
 
 <div class="desc-item">
   <label>💥 Impacto</label>
   <textarea id="impactText" maxlength="1300" placeholder="Impacto observado..."></textarea>
   <div class="print-text" id="print_impact"></div>
+  <div id="impactFeedback" style="margin-top:12px; padding:8px; background:var(--neutral-light); border-radius:16px; display:none;"></div>
 </div>
 
 <!-- footer -->
@@ -1286,6 +1287,435 @@ function checkDateForTimer(id) {
     const dateVal = document.getElementById(`newDate_${id}`).value;
     const isToday = new Date(dateVal + 'T12:00:00').toDateString() === new Date().toDateString();
     document.getElementById(`startTimerBtn_${id}`).style.display = isToday ? 'inline-block' : 'none';
+}
+// ==========================================
+// QR IMPORT FUNCTIONS (Director's App)
+// ==========================================
+let qrScanner = null;
+let qrStream = null;
+
+function showImportQRModal() {
+    document.getElementById('qrImportModal').style.display = 'flex';
+}
+
+function closeQRImportModal() {
+    if (qrStream) {
+        qrStream.getTracks().forEach(track => track.stop());
+        qrStream = null;
+    }
+    document.getElementById('qrImportModal').style.display = 'none';
+    document.getElementById('qrPreview').innerHTML = '';
+    document.getElementById('qrStatus').innerHTML = 'Listo para escanear';
+}
+
+function startQRScanner() {
+    const preview = document.getElementById('qrPreview');
+    preview.innerHTML = '<video id="qrVideo" style="width:100%; border-radius:16px;"></video>';
+    
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => {
+            qrStream = stream;
+            const video = document.getElementById('qrVideo');
+            video.srcObject = stream;
+            video.play();
+            scanQRFromVideo(video);
+        })
+        .catch(err => {
+            console.error('Camera error:', err);
+            document.getElementById('qrStatus').innerHTML = '❌ No se pudo acceder a la cámara. Usa entrada manual.';
+        });
+}
+
+function scanQRFromVideo(video) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    
+    function scanFrame() {
+        if (!qrStream) return;
+        
+        if (video.videoWidth > 0) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, canvas.width, canvas.height);
+            
+            if (code) {
+                document.getElementById('qrStatus').innerHTML = '✅ QR detectado! Procesando...';
+                stopQRScanner();
+                processImportedData(code.data);
+                return;
+            }
+        }
+        requestAnimationFrame(scanFrame);
+    }
+    scanFrame();
+}
+
+function stopQRScanner() {
+    if (qrStream) {
+        qrStream.getTracks().forEach(track => track.stop());
+        qrStream = null;
+    }
+}
+
+function processManualQR() {
+    const data = document.getElementById('manualQRData').value.trim();
+    if (data) {
+        processImportedData(data);
+    } else {
+        alert('Ingresa el código QR manualmente');
+    }
+}
+
+// Main import processor
+function processImportedData(encodedData) {
+    try {
+        console.log('Processing QR data, length:', encodedData.length);
+        
+        let jsonStr;
+        let importData;
+        
+        // Try URL decode first
+        try {
+            jsonStr = decodeURIComponent(encodedData);
+            importData = JSON.parse(jsonStr);
+            console.log('Successfully parsed as URL encoded JSON');
+        } catch(urlError) {
+            // Try Base64 decode
+            try {
+                const decoded = atob(encodedData);
+                jsonStr = decodeURIComponent(escape(decoded));
+                importData = JSON.parse(jsonStr);
+                console.log('Successfully parsed as Base64 encoded');
+            } catch(base64Error) {
+                // Try direct JSON
+                try {
+                    importData = JSON.parse(encodedData);
+                    console.log('Successfully parsed as direct JSON');
+                } catch(directError) {
+                    throw new Error('Could not decode QR data');
+                }
+            }
+        }
+        
+        // Check if it's compact format (new) or old format
+        if (importData.t === 'de') {
+            console.log('Detected compact format');
+            importData = convertCompactToOldFormat(importData);
+        }
+        
+        // Validate import format
+        if (importData.type !== 'dama_export') {
+            console.error('Invalid format, expected dama_export, got:', importData.type);
+            alert('Formato de datos no válido. Asegúrate de escanear el QR de una dama.');
+            closeQRImportModal();
+            return;
+        }
+        
+        document.getElementById('qrStatus').innerHTML = '🔄 Procesando datos...';
+        
+        const result = importDamaData(importData);
+        
+        let message = `✅ Importación completada!\n\n👤 Dama: ${importData.dama.nombre}\n📊 Horas: ${importData.data.totalHoras}\n📋 Actividades: ${importData.data.actividadesCount}`;
+        if (result.newActivities > 0) message += `\n📋 Actividades nuevas: ${result.newActivities}`;
+        if (result.updatedActivities > 0) message += `\n🔄 Actividades actualizadas: ${result.updatedActivities}`;
+        alert(message);
+        
+        renderActivities();
+        updateCharts();
+        actualizarListaDamas();
+        saveAllToStorage();
+        
+        closeQRImportModal();
+        
+    } catch (e) {
+        console.error('Import error:', e);
+        alert('❌ Error al procesar los datos. Verifica que el QR sea válido.\n\nDetalle: ' + e.message);
+        document.getElementById('qrStatus').innerHTML = '❌ Error al procesar';
+    }
+}
+
+// Convert compact format to old format
+function convertCompactToOldFormat(compact) {
+    try {
+        const dama = {
+            id: compact.d?.i || 'unknown',
+            nombre: compact.d?.n || 'Desconocida',
+            identidadSuffix: compact.d?.id6 || '000000',
+            rolId: compact.d?.r || 'voluntaria',
+            rolNombre: compact.d?.rn || 'Voluntaria'
+        };
+        
+        const actividades = (compact.a || []).map(act => ({
+            date: act.dt || '',
+            name: act.nm || 'Actividad',
+            horas: act.h || 0,
+            actionType: act.tp === 'f' ? 'filial' : 'campo',
+            beneficiadas_mujeres: act.w || 0,
+            beneficiados_hombres: act.m || 0,
+            link: act.lk || '',
+            lat: act.lt || '',
+            lng: act.ln || '',
+            colaboradores: []
+        }));
+        
+        const feedback = {
+            scope: compact.f?.s || '',
+            difficulties: compact.f?.d || '',
+            recommendations: compact.f?.r || '',
+            impact: compact.f?.i || ''
+        };
+        
+        return {
+            type: 'dama_export',
+            version: '1.0',
+            dama: dama,
+            data: {
+                totalHoras: compact.th || actividades.reduce((sum, a) => sum + (a.horas || 0), 0),
+                actividadesCount: compact.ac || actividades.length,
+                actividades: actividades
+            },
+            feedback: feedback,
+            exportDate: new Date().toISOString()
+        };
+    } catch(e) {
+        console.error('Conversion error:', e);
+        throw new Error('Error al convertir datos del QR');
+    }
+}
+
+// Core import function with SMART MERGE
+function importDamaData(importData) {
+    let newActivitiesCount = 0;
+    let updatedActivitiesCount = 0;
+    
+    // 1. Find or create dama
+    let dama = damasActivas.find(d => d.id === importData.dama.id);
+    
+    if (!dama) {
+        dama = damasActivas.find(d => 
+            d.nombre.toLowerCase() === importData.dama.nombre.toLowerCase() ||
+            (importData.dama.identidadSuffix !== '000000' && d.identidadSuffix === importData.dama.identidadSuffix)
+        );
+    }
+    
+    if (!dama) {
+        dama = {
+            id: importData.dama.id,
+            identidadSuffix: importData.dama.identidadSuffix || '000000',
+            nombre: importData.dama.nombre,
+            rolId: importData.dama.rolId,
+            rolNombre: importData.dama.rolNombre,
+            totalHoras: 0,
+            actividadesCount: 0,
+            isPlaceholder: importData.dama.identidadSuffix === '000000',
+            mergedFrom: []
+        };
+        damasActivas.push(dama);
+        console.log(`✨ Created new dama: ${dama.nombre}`);
+    } else {
+        console.log(`📌 Found existing dama: ${dama.nombre}`);
+        if (importData.dama.identidadSuffix !== '000000' && dama.identidadSuffix === '000000') {
+            dama.identidadSuffix = importData.dama.identidadSuffix;
+            dama.isPlaceholder = false;
+            console.log(`  🔄 Updated dama ID to: ${dama.identidadSuffix}`);
+        }
+    }
+    
+    // 2. Process each activity
+    importData.data.actividades.forEach(importedAct => {
+        const existingActivity = activities.find(act => 
+            act.date === importedAct.date && 
+            act.name === importedAct.name
+        );
+        
+        if (existingActivity) {
+            let changes = false;
+            
+            // Merge hours - take MAX
+            if (importedAct.horas && importedAct.horas > (existingActivity.horas || 0)) {
+                existingActivity.horas = importedAct.horas;
+                changes = true;
+            }
+            
+            // Merge beneficiaries - take MAX
+            if (importedAct.beneficiadas_mujeres && importedAct.beneficiadas_mujeres > (existingActivity.beneficiadas_mujeres || 0)) {
+                existingActivity.beneficiadas_mujeres = importedAct.beneficiadas_mujeres;
+                changes = true;
+            }
+            if (importedAct.beneficiados_hombres && importedAct.beneficiados_hombres > (existingActivity.beneficiados_hombres || 0)) {
+                existingActivity.beneficiados_hombres = importedAct.beneficiados_hombres;
+                changes = true;
+            }
+            
+            // Merge links - handle multiple links (comma or pipe separated)
+            if (importedAct.link && importedAct.link.trim()) {
+                const newLinks = importedAct.link.split(/[,|]/).map(l => l.trim()).filter(l => l);
+                
+                if (!existingActivity.links) existingActivity.links = [];
+                
+                newLinks.forEach(newLink => {
+                    if (newLink && !existingActivity.links.includes(newLink)) {
+                        existingActivity.links.push(newLink);
+                        changes = true;
+                        console.log(`  🔗 Added link: ${newLink.substring(0, 50)}...`);
+                    }
+                });
+            }
+            
+            // Merge GPS
+            if (importedAct.lat && importedAct.lng && !existingActivity.lat) {
+                existingActivity.lat = importedAct.lat;
+                existingActivity.lng = importedAct.lng;
+                changes = true;
+            }
+            
+            // Track contributor
+            if (!existingActivity.contributingDamas) existingActivity.contributingDamas = [];
+            if (!existingActivity.contributingDamas.includes(importData.dama.id)) {
+                existingActivity.contributingDamas.push(importData.dama.id);
+                changes = true;
+            }
+            
+            if (changes) updatedActivitiesCount++;
+            
+        } else {
+            // NEW ACTIVITY
+            const newLinks = importedAct.link && importedAct.link.trim() 
+                ? importedAct.link.split(/[,|]/).map(l => l.trim()).filter(l => l)
+                : [];
+            
+            const newActivity = {
+                id: Date.now() + Math.random(),
+                date: importedAct.date,
+                name: importedAct.name,
+                actionType: importedAct.actionType || 'campo',
+                horas: importedAct.horas || 0,
+                beneficiadas_mujeres: importedAct.beneficiadas_mujeres || 0,
+                beneficiados_hombres: importedAct.beneficiados_hombres || 0,
+                voluntarias: 1,
+                colaboradores: importedAct.colaboradores || [],
+                links: newLinks,
+                lat: importedAct.lat || '',
+                lng: importedAct.lng || '',
+                importedFrom: [importData.dama.id],
+                contributingDamas: [importData.dama.id]
+            };
+            activities.push(newActivity);
+            newActivitiesCount++;
+            console.log(`✨ Added new activity: ${newActivity.name} with ${newLinks.length} link(s)`);
+        }
+    });
+    
+    // 3. Update dama totals
+    dama.totalHoras = (dama.totalHoras || 0) + importData.data.totalHoras;
+    dama.actividadesCount = (dama.actividadesCount || 0) + importData.data.actividadesCount;
+    
+    if (!dama.mergedFrom) dama.mergedFrom = [];
+    dama.mergedFrom.push({
+        sourceId: importData.dama.id,
+        date: new Date().toISOString(),
+        horas: importData.data.totalHoras,
+        actividades: importData.data.actividadesCount,
+        newActivities: newActivitiesCount,
+        updatedActivities: updatedActivitiesCount
+    });
+    
+    sortActivitiesByDate();
+    
+    // 4. Import feedback
+    if (importData.feedback) {
+        const monthKey = getCurrentMonthKey();
+        const existingFeedback = localStorage.getItem(`feedback_${monthKey}`) || '[]';
+        const feedbackList = JSON.parse(existingFeedback);
+        
+        const existingIndex = feedbackList.findIndex(f => f.damaId === dama.id);
+        const feedbackEntry = {
+            damaId: dama.id,
+            damaNombre: dama.nombre,
+            date: new Date().toISOString(),
+            scope: importData.feedback.scope || '',
+            difficulties: importData.feedback.difficulties || '',
+            recommendations: importData.feedback.recommendations || '',
+            impact: importData.feedback.impact || ''
+        };
+        
+        if (existingIndex >= 0) {
+            feedbackList[existingIndex] = feedbackEntry;
+        } else {
+            feedbackList.push(feedbackEntry);
+        }
+        
+        localStorage.setItem(`feedback_${monthKey}`, JSON.stringify(feedbackList));
+        
+        if (typeof displayFeedbackByCategory === 'function') {
+            displayFeedbackByCategory();
+        }
+    }
+    
+    return { 
+        newActivities: newActivitiesCount, 
+        updatedActivities: updatedActivitiesCount,
+        damaUpdated: dama.nombre
+    };
+}
+
+function sortActivitiesByDate() {
+    activities.sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+function displayFeedbackByCategory() {
+    const monthKey = getCurrentMonthKey();
+    const savedFeedback = localStorage.getItem(`feedback_${monthKey}`);
+    
+    const containers = {
+        scope: document.getElementById('scopeFeedback'),
+        difficulties: document.getElementById('difficultiesFeedback'),
+        recommendations: document.getElementById('recommendationsFeedback'),
+        impact: document.getElementById('impactFeedback')
+    };
+    
+    Object.values(containers).forEach(container => {
+        if (container) {
+            container.innerHTML = '';
+            container.style.display = 'none';
+        }
+    });
+    
+    if (savedFeedback) {
+        const feedbacks = JSON.parse(savedFeedback);
+        feedbacks.forEach(fb => {
+            if (fb.scope && fb.scope.trim() && containers.scope) {
+                containers.scope.style.display = 'block';
+                containers.scope.innerHTML += `<div style="margin-bottom:8px; border-left:3px solid var(--secondary); padding-left:10px;">
+                    <strong style="font-size:0.7rem;">👤 ${escapeHtml(fb.damaNombre)}</strong>
+                    <p style="font-size:0.75rem; margin-top:4px;">${escapeHtml(fb.scope)}</p>
+                </div>`;
+            }
+            if (fb.difficulties && fb.difficulties.trim() && containers.difficulties) {
+                containers.difficulties.style.display = 'block';
+                containers.difficulties.innerHTML += `<div style="margin-bottom:8px; border-left:3px solid var(--secondary); padding-left:10px;">
+                    <strong style="font-size:0.7rem;">👤 ${escapeHtml(fb.damaNombre)}</strong>
+                    <p style="font-size:0.75rem; margin-top:4px;">${escapeHtml(fb.difficulties)}</p>
+                </div>`;
+            }
+            if (fb.recommendations && fb.recommendations.trim() && containers.recommendations) {
+                containers.recommendations.style.display = 'block';
+                containers.recommendations.innerHTML += `<div style="margin-bottom:8px; border-left:3px solid var(--secondary); padding-left:10px;">
+                    <strong style="font-size:0.7rem;">👤 ${escapeHtml(fb.damaNombre)}</strong>
+                    <p style="font-size:0.75rem; margin-top:4px;">${escapeHtml(fb.recommendations)}</p>
+                </div>`;
+            }
+            if (fb.impact && fb.impact.trim() && containers.impact) {
+                containers.impact.style.display = 'block';
+                containers.impact.innerHTML += `<div style="margin-bottom:8px; border-left:3px solid var(--secondary); padding-left:10px;">
+                    <strong style="font-size:0.7rem;">👤 ${escapeHtml(fb.damaNombre)}</strong>
+                    <p style="font-size:0.75rem; margin-top:4px;">${escapeHtml(fb.impact)}</p>
+                </div>`;
+            }
+        });
+    }
 }
 </script>
 </body>
