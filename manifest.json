@@ -1,8 +1,9 @@
 {
   "name": "Informe CD-17 · Técnico",
   "short_name": "CD17-DAMAS",
-  "description": "Informe-Tecnico-CD17-Beta-1.0. Optimized for directors to monitor project hours, volunteer requirements, and field impact in real-time. This always-accessible tool replaces paperwork with instant, sharable, and printable reports. Focus on what matters most: tracking scope, difficulties, and outcomes without the reporting hassle.",
+  "description": "Informe-Tecnico-CD17-Beta-1.0. Optimized for directors to monitor project hours, volunteer requirements, and field impact in real-time.",
   "start_url": "/Informe-Tecnico-CD17-Beta-1.0/index.html",
+  "scope": "/Informe-Tecnico-CD17-Beta-1.0/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#E34A2F",
