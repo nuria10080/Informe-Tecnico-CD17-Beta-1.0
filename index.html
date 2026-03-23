@@ -894,125 +894,20 @@ charts-container {
 
 </div>
 <script>
+// ==========================================
+// 1. GLOBAL STATE & CONSTANTS
+// ==========================================
+let activities = [];
+let damasActivas = [];
+let activityFormCount = 0;
+let timers = {}; 
 
-
-// Timer variables
+// Timer variables for persistence
 let timerInterval = null;
 let timerStartTime = null;
 let activeTimerActivityId = null;
 
-// Multiple forms variables
-let activityFormCount = 0;
-let timers = {}; // Store timer intervals per form
-
-// Get current month-year key
-function getCurrentMonthKey() {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
-// Check if month has changed and clear if needed
-function checkAndClearMonthChange() {
-    
-    const currentMonthKey = getCurrentMonthKey();
-    const lastMonthKey = localStorage.getItem('lastMonthKey');
-    
-    if (lastMonthKey && lastMonthKey !== currentMonthKey) {
-        // Month has changed - clear all data for previous month
-        // But keep the data accessible with month keys
-        activities = [];
-        damasActivas = [];
-        document.getElementById('scopeText').value = '';
-        document.getElementById('difficultiesText').value = '';
-        document.getElementById('recommendationsText').value = '';
-        document.getElementById('impactText').value = '';
-        updateCharCounts();
-    }
-    
-    // Update the last month key
-    localStorage.setItem('lastMonthKey', currentMonthKey);
-    return currentMonthKey;
-}
-
-// Save all data with month key
-function saveAllToStorage() {
-    const monthKey = getCurrentMonthKey();
-    
-    // Save activities with month key
-    localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
-    
-    // Save damas with month key
-    localStorage.setItem(`damas_${monthKey}`, JSON.stringify(damasActivas));
-    
-    // Save descriptions with month key
-    const desc = {
-        scope: document.getElementById('scopeText').value,
-        difficulties: document.getElementById('difficultiesText').value,
-        recommendations: document.getElementById('recommendationsText').value,
-        impact: document.getElementById('impactText').value
-    };
-    localStorage.setItem(`desc_${monthKey}`, JSON.stringify(desc));
-    
-    // Update month indicator
-    document.getElementById('monthIndicator').innerText = formatDateForDisplay(new Date());
-}
-
-// Sort activities by date (oldest to newest)
-function sortActivitiesByDate() {
-    activities.sort((a, b) => {
-        const dateA = new Date(a.date + 'T12:00:00').getTime();
-        const dateB = new Date(b.date + 'T12:00:00').getTime();
-        return dateA - dateB; // Oldest first
-    });
-}
-
-// Load data for current month
-function loadCurrentMonthData() {
-    const monthKey = getCurrentMonthKey();
-    
-    // Load activities
-    const savedActivities = localStorage.getItem(`activities_${monthKey}`);
-    if (savedActivities) {
-        activities = JSON.parse(savedActivities);
-        sortActivitiesByDate(); // Sort after loading
-    }
-    
-    // Load damas
-    const savedDamas = localStorage.getItem(`damas_${monthKey}`);
-    if (savedDamas) {
-        damasActivas = JSON.parse(savedDamas);
-    }
-    
-    // Load descriptions
-    const savedDesc = localStorage.getItem(`desc_${monthKey}`);
-    if (savedDesc) {
-        const d = JSON.parse(savedDesc);
-        document.getElementById('scopeText').value = d.scope || '';
-        document.getElementById('difficultiesText').value = d.difficulties || '';
-        document.getElementById('recommendationsText').value = d.recommendations || '';
-        document.getElementById('impactText').value = d.impact || '';
-    }
-    
-    // Update displays
-    actualizarListaDamas();
-    renderActivities();
-    updateCharts();
-    updateCharCounts();
-    document.getElementById('monthIndicator').innerText = formatDateForDisplay(new Date());
-}
-//// ========== CHARTS SECTION FIXED & STYLED ======
-
-
-
-function getWeekNumber(date) {
-    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-    const dayOfMonth = date.getDate();
-    return Math.ceil((dayOfMonth + firstDayOfMonth.getDay()) / 7);
-}
-let activities = [];
-let damasActivas = [];
-
-let rolesDisponibles = [
+const rolesDisponibles = [
     { id:'directora', nombre:'Directora', descripcion:'aprueba actividades' },
     { id:'subdirectora', nombre:'Subdirectora', descripcion:'planifica y delega' },
     { id:'coord_fondos', nombre:'Coordinadora Recaudación', descripcion:'gestiona recursos' },
@@ -1024,18 +919,135 @@ let rolesDisponibles = [
     { id:'coord_observacion', nombre:'Técnico Observación', descripcion:'monitoreo' }
 ];
 
+// ==========================================
+// 2. CORE UTILITY FUNCTIONS
+// ==========================================
+
+function getCurrentMonthKey() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function getWeekNumber(date) {
+    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const dayOfMonth = date.getDate();
+    return Math.ceil((dayOfMonth + firstDayOfMonth.getDay()) / 7);
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+function formatDateForDisplay(d, includeTime = false) {
+    if (!d) return '';
+    let date = d instanceof Date ? d : new Date(d);
+    if (isNaN(date)) return '';
+    
+    const spanishMonths = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+    
+    try {
+        const options = {
+            day: '2-digit', month: 'short', year: 'numeric',
+            timeZone: 'America/Tegucigalpa'
+        };
+        if (includeTime) {
+            options.hour = '2-digit'; options.minute = '2-digit';
+            options.hourCycle = 'h23'; options.hour12 = false;
+        }
+        const formatter = new Intl.DateTimeFormat('es-ES', options);
+        return formatter.format(date).toUpperCase().replace(/\./g, '');
+    } catch (e) {
+        const result = `${date.getDate().toString().padStart(2, '0')} ${spanishMonths[date.getMonth()]} ${date.getFullYear()}`;
+        return includeTime ? `${result} ${date.getHours()}:${date.getMinutes()}` : result;
+    }
+}
+
+// ==========================================
+// 3. STORAGE & DATA MANAGEMENT
+// ==========================================
+
+function checkAndClearMonthChange() {
+    const currentMonthKey = getCurrentMonthKey();
+    const lastMonthKey = localStorage.getItem('lastMonthKey');
+    
+    if (lastMonthKey && lastMonthKey !== currentMonthKey) {
+        activities = [];
+        damasActivas = [];
+        document.getElementById('scopeText').value = '';
+        document.getElementById('difficultiesText').value = '';
+        document.getElementById('recommendationsText').value = '';
+        document.getElementById('impactText').value = '';
+        updateCharCounts();
+    }
+    localStorage.setItem('lastMonthKey', currentMonthKey);
+    return currentMonthKey;
+}
+
+function saveAllToStorage() {
+    const monthKey = getCurrentMonthKey();
+    localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
+    localStorage.setItem(`damas_${monthKey}`, JSON.stringify(damasActivas));
+    
+    const desc = {
+        scope: document.getElementById('scopeText')?.value || '',
+        difficulties: document.getElementById('difficultiesText')?.value || '',
+        recommendations: document.getElementById('recommendationsText')?.value || '',
+        impact: document.getElementById('impactText')?.value || ''
+    };
+    localStorage.setItem(`desc_${monthKey}`, JSON.stringify(desc));
+    
+    const indicator = document.getElementById('monthIndicator');
+    if (indicator) indicator.innerText = formatDateForDisplay(new Date());
+}
+
+function loadCurrentMonthData() {
+    const monthKey = getCurrentMonthKey();
+    const savedActivities = localStorage.getItem(`activities_${monthKey}`);
+    if (savedActivities) {
+        activities = JSON.parse(savedActivities);
+        activities.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }
+    
+    const savedDamas = localStorage.getItem(`damas_${monthKey}`);
+    if (savedDamas) damasActivas = JSON.parse(savedDamas);
+    
+    const savedDesc = localStorage.getItem(`desc_${monthKey}`);
+    if (savedDesc) {
+        const d = JSON.parse(savedDesc);
+        if(document.getElementById('scopeText')) document.getElementById('scopeText').value = d.scope || '';
+        if(document.getElementById('difficultiesText')) document.getElementById('difficultiesText').value = d.difficulties || '';
+        if(document.getElementById('recommendationsText')) document.getElementById('recommendationsText').value = d.recommendations || '';
+        if(document.getElementById('impactText')) document.getElementById('impactText').value = d.impact || '';
+    }
+    
+    actualizarListaDamas();
+    renderActivities();
+    updateCharts();
+    updateCharCounts();
+}
+
+// ==========================================
+// 4. VOLUNTEER (DAMAS) MANAGEMENT
+// ==========================================
 
 function actualizarListaDamas() {
-    document.getElementById('totalDamasActivas').innerText = damasActivas.length;
+    const totalEl = document.getElementById('totalDamasActivas');
+    if (totalEl) totalEl.innerText = damasActivas.length;
     
     const lista = document.getElementById('rolesActivosList');
+    if (!lista) return;
     lista.innerHTML = '';
     
     damasActivas.forEach(dama => {
         const div = document.createElement('div');
         div.style.cssText = 'background:var(--neutral-light); border-radius:16px; padding:10px; border:1px solid var(--neutral-border); display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;';
         
-        // Show ID status badge
         const idBadge = (dama.identidadSuffix && dama.identidadSuffix !== '000000') ? 
             `<span style="background:#4caf50; color:white; font-size:0.6rem; padding:2px 8px; border-radius:12px; margin-left:6px;">✓ ID:${dama.identidadSuffix}</span>` : 
             `<span style="background:#ff9800; color:white; font-size:0.6rem; padding:2px 8px; border-radius:12px; margin-left:6px;">⚡ temporal</span>`;
@@ -1054,43 +1066,30 @@ function actualizarListaDamas() {
     });
 }
 
-// Helper function to prevent XSS
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
-
 function agregarDama() {
     const rolSelect = document.getElementById('damasRoles');
     const nombreInput = document.getElementById('nuevaDamaNombre');
-    const identidadInput = document.getElementById('identidadDama'); // New field
+    const identidadInput = document.getElementById('identidadDama');
     
-    if (!rolSelect.value || !nombreInput.value.trim()) {
+    if (!rolSelect?.value || !nombreInput?.value.trim()) {
         alert('Selecciona un rol y escribe un nombre');
         return;
     }
     
     const rol = rolesDisponibles.find(r => r.id === rolSelect.value);
-    
-    // Generate temporary ID with zeros (placeholder)
     const identidadSuffix = identidadInput?.value?.trim() || '000000';
     const tempId = `temp_${Date.now()}_${identidadSuffix}`;
     
     damasActivas.push({
-        id: tempId,                    // Temporary ID
-        identidadSuffix: identidadSuffix, // Last 6 digits (or 000000)
+        id: tempId,
+        identidadSuffix: identidadSuffix,
         nombre: nombreInput.value.trim(),
         rolId: rol.id,
         rolNombre: rol.nombre,
         totalHoras: 0,
         actividadesCount: 0,
-        isPlaceholder: identidadSuffix === '000000', // Mark as placeholder
-        mergedFrom: [] // Track which sources merged into this
+        isPlaceholder: identidadSuffix === '000000',
+        mergedFrom: []
     });
     
     nombreInput.value = '';
@@ -1100,276 +1099,22 @@ function agregarDama() {
     updateCharts();
 }
 
-function createNewDama(imported) {
-    const newId = imported.identidadSuffix && imported.identidadSuffix !== '000000' 
-        ? `verified_${imported.identidadSuffix}_${Date.now()}`
-        : `temp_${Date.now()}_${imported.identidadSuffix || '000000'}`;
-    
-    const newDama = {
-        id: newId,
-        identidadSuffix: imported.identidadSuffix || '000000',
-        nombre: imported.nombre,
-        rolId: imported.rolId || 'voluntaria',
-        rolNombre: imported.rolNombre || 'Voluntaria',
-        totalHoras: imported.totalHoras || 0,
-        actividadesCount: imported.actividadesCount || 0,
-        isPlaceholder: !imported.identidadSuffix || imported.identidadSuffix === '000000',
-        mergedFrom: [{
-            sourceId: imported.id,
-            date: new Date().toISOString(),
-            horas: imported.totalHoras,
-            actividades: imported.actividadesCount
-        }]
-    };
-    
-    damasActivas.push(newDama);
-    console.log(`✨ Created new dama: ${imported.nombre}`);
-    return newDama;
-}
-
-// Smart merge when importing data
-function mergeDamaData(importedDama) {
-    // Strategy 1: Match by identidad suffix (if not zeros)
-    if (importedDama.identidadSuffix && importedDama.identidadSuffix !== '000000') {
-        const existingByID = damasActivas.find(d => 
-            d.identidadSuffix === importedDama.identidadSuffix
-        );
-        if (existingByID) {
-            return mergeIntoExisting(existingByID, importedDama);
-        }
-    }
-    
-    // Strategy 2: Match by name (case-insensitive, trim spaces)
-    const existingByName = damasActivas.find(d => 
-        d.nombre.toLowerCase().trim() === importedDama.nombre.toLowerCase().trim()
-    );
-    
-    if (existingByName) {
-        // If name matches but we have better ID info, update the ID
-        if (importedDama.identidadSuffix && importedDama.identidadSuffix !== '000000') {
-            existingByName.identidadSuffix = importedDama.identidadSuffix;
-            existingByName.id = `verified_${importedDama.identidadSuffix}_${existingByName.id}`;
-            existingByName.isPlaceholder = false;
-        }
-        return mergeIntoExisting(existingByName, importedDama);
-    }
-    
-    // Strategy 3: No match - create new dama
-    return createNewDama(importedDama);
-}
-
-function mergeIntoExisting(existing, imported) {
-    // Merge hours and activities
-    existing.totalHoras = (existing.totalHoras || 0) + (imported.totalHoras || 0);
-    existing.actividadesCount = (existing.actividadesCount || 0) + (imported.actividadesCount || 0);
-    
-    // Track merge history
-    if (!existing.mergedFrom) existing.mergedFrom = [];
-    existing.mergedFrom.push({
-        sourceId: imported.id,
-        date: new Date().toISOString(),
-        horas: imported.totalHoras,
-        actividades: imported.actividadesCount
-    });
-    
-    // Update role if imported has more specific role
-    if (imported.rolId && imported.rolId !== 'voluntaria' && existing.rolId === 'voluntaria') {
-        existing.rolId = imported.rolId;
-        existing.rolNombre = imported.rolNombre;
-    }
-    
-    console.log(`✅ Merged data for ${existing.nombre}: +${imported.totalHoras} horas`);
-    return existing;
-}
-
 function eliminarDama(id) {
-    console.log('Intentando eliminar dama con ID:', id);
-    
-    // Find the dama to show confirmation
     const damaToDelete = damasActivas.find(d => d.id === id);
+    if (!damaToDelete) return;
     
-    if (!damaToDelete) {
-        console.error('No se encontró dama con ID:', id);
-        alert('Error: No se pudo encontrar la dama');
-        return;
-    }
-    
-    if (confirm(`¿Eliminar a ${damaToDelete.nombre} de la lista de damas activas?`)) {
+    if (confirm(`¿Eliminar a ${damaToDelete.nombre}?`)) {
         damasActivas = damasActivas.filter(d => d.id !== id);
         actualizarListaDamas();
         saveAllToStorage();
         updateCharts();
-        alert(`✅ ${damaToDelete.nombre} ha sido eliminada`);
     }
 }
 
+// ==========================================
+// 5. ACTIVITY FORM & GEOLOCATION
+// ==========================================
 
-function formatDateForDisplay(d, includeTime = false) {
-    if (!d) return '';
-    
-    // Handle if d is a string (like from date input)
-    if (typeof d === 'string') {
-        // Check if it's just a date (YYYY-MM-DD) without time
-        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
-            // Parse the date parts and create date in local timezone at noon
-            const [year, month, day] = d.split('-').map(Number);
-            const date = new Date(year, month - 1, day, 12, 0, 0); // Use noon to avoid timezone issues
-            if (!isNaN(date)) {
-                d = date;
-            } else {
-                return d;
-            }
-        } else {
-            // It might be a full ISO string
-            const date = new Date(d);
-            if (!isNaN(date)) {
-                d = date;
-            } else {
-                return d;
-            }
-        }
-    }
-    
-    // Ensure we're working with a Date object
-    const date = d instanceof Date ? d : new Date(d);
-    if (isNaN(date)) return '';
-    
-    // Spanish months array as backup
-    const spanishMonths = [
-        'ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN',
-        'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'
-    ];
-    
-    try {
-        // Format based on whether we want time included
-        const options = {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            timeZone: 'America/Tegucigalpa' // Force Honduras timezone
-        };
-        
-        // Add time if requested - force 24-hour format with hourCycle
-        if (includeTime) {
-            options.hour = '2-digit';
-            options.minute = '2-digit';
-            options.hourCycle = 'h23';
-            options.hour12 = false;
-            options.timeZoneName = 'short';
-        }
-        
-        const formatter = new Intl.DateTimeFormat('es-ES', options);
-        let formatted = formatter.format(date).toUpperCase();
-        // Remove any dots that might appear
-        formatted = formatted.replace(/\./g, '');
-        
-        // Double-check if it's still showing English months
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = date.getMonth();
-        const year = date.getFullYear();
-        
-        // If formatted string contains English month abbreviations, use our backup
-        if (formatted.includes('JAN') || formatted.includes('FEB') || 
-            formatted.includes('MAR') || formatted.includes('APR') || 
-            formatted.includes('MAY') || formatted.includes('JUN') ||
-            formatted.includes('JUL') || formatted.includes('AUG') || 
-            formatted.includes('SEP') || formatted.includes('OCT') ||
-            formatted.includes('NOV') || formatted.includes('DEC')) {
-            
-            let result = `${day} ${spanishMonths[month]} ${year}`;
-            if (includeTime) {
-                const hours = date.getHours().toString().padStart(2, '0');
-                const minutes = date.getMinutes().toString().padStart(2, '0');
-                result += ` ${hours}:${minutes}`;
-                
-                // Add timezone manually in fallback
-                const offset = -date.getTimezoneOffset() / 60;
-                const offsetStr = offset >= 0 ? `+${offset}` : `${offset}`;
-                result += ` GMT${offsetStr}`;
-            }
-            return result;
-        }
-        
-        return formatted;
-        
-    } catch (e) {
-        // Fallback to manual formatting
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = date.getMonth();
-        const year = date.getFullYear();
-        let result = `${day} ${spanishMonths[month]} ${year}`;
-        
-        if (includeTime) {
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-            result += ` ${hours}:${minutes}`;
-            
-            // Add timezone manually in catch block
-            const offset = -date.getTimezoneOffset() / 60;
-            const offsetStr = offset >= 0 ? `+${offset}` : `${offset}`;
-            result += ` GMT${offsetStr}`;
-        }
-        
-        return result;
-    }
-}
-
-//just month and year only
-function formatMonthYearForDisplay(d) {
-    if (!d) return '';
-    
-    const date = d instanceof Date ? d : new Date(d);
-    if (isNaN(date)) return '';
-    
-    // Spanish months array
-    const spanishMonths = [
-        'ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN',
-        'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'
-    ];
-    
-    const month = date.getMonth();
-    const year = date.getFullYear();
-    
-    return `${spanishMonths[month]} ${year}`;
-}
-// GPS Location Function
-function getLocation(formId) {
-    const statusEl = document.getElementById(`gpsStatus_${formId}`);
-    const latInput = document.getElementById(`lat_${formId}`);
-    const lngInput = document.getElementById(`lng_${formId}`);
-    
-    if (!navigator.geolocation) {
-        statusEl.innerHTML = '⚠️ Geolocalización no soportada';
-        return;
-    }
-    
-    statusEl.innerHTML = '📌 Obteniendo ubicación...';
-    
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const lat = position.coords.latitude.toFixed(6);
-            const lng = position.coords.longitude.toFixed(6);
-            latInput.value = lat;
-            lngInput.value = lng;
-            statusEl.innerHTML = `✅ Ubicación registrada: ${lat}, ${lng}`;
-            setTimeout(() => { 
-                statusEl.innerHTML = '📌 Ubicación registrada ✓'; 
-            }, 3000);
-        },
-        (error) => {
-            console.error('GPS error:', error);
-            let msg = '❌ Error al obtener ubicación';
-            if(error.code === 1) msg = '❌ Permiso denegado. Activa ubicación.';
-            else if(error.code === 2) msg = '❌ Ubicación no disponible';
-            else if(error.code === 3) msg = '❌ Tiempo de espera agotado';
-            statusEl.innerHTML = msg;
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-}
-
-// ========== MULTIPLE ACTIVITY FORMS FUNCTIONS ==========
-// Create a new activity form HTML
 function createActivityForm(formId) {
     return `
         <div class="activity-form" id="activityForm_${formId}" style="background:var(--neutral-light); border-radius:20px; padding:16px; margin-bottom:20px; border:1px solid var(--neutral-border); position:relative;">
@@ -1377,39 +1122,23 @@ function createActivityForm(formId) {
                 <button type="button" onclick="removeActivityForm(${formId})" style="background:none; border:none; color:var(--warning); font-size:1.2rem; cursor:pointer;">✖</button>
             </div>
             
-            <!-- Basic Info Row (Always Visible) WITH ACTION TYPE -->
             <div style="display: flex; gap: 8px; margin-bottom:10px; flex-wrap: wrap;">
                 <input type="date" id="newDate_${formId}" class="activity-date" style="flex: 1 1 120px;" onchange="checkDateForTimer(${formId})">
                 <select id="newActName_${formId}" style="flex: 2 1 200px;">
                     <option value="">-- actividad --</option>
                     <option value="Mantenimiento y Adecuación">Mantenimiento y Adecuación</option>
-                    <option value="Colaboración en Actividades">Colaboración en Actividades</option>
                     <option value="Jornada de Salud">Jornada de Salud</option>
                     <option value="Estrategias Digitales">Estrategias Digitales</option>
                     <option value="Capacitación Interna">Capacitación Interna</option>
-                    <option value="Encuesta y Capacitación">Encuesta y Capacitación</option>
-                    <option value="Encuesta y Localización">Encuesta y Localización</option>
-                    <option value="Gestión y Recuperación">Gestión y Recuperación</option>
-                    <option value="Gestión y Coordinación">Gestión y Coordinación</option>
-                    <option value="Recaudación Fondos">Recaudación Fondos</option>
                     <option value="Planificación">Planificación</option>
                     <option value="Trabajo Comunitario">Trabajo Comunitario</option>
-                    <option value="Jornadas Integración">Jornadas Integración</option>
-                    <option value="Asesoria & Alinamiento">Asesoria & Alineación</option>
-                    <option value="Gestion de Acuerdos">Gestión de Acuerdos</option>
-                    <option value="Visita y Planificación">Visita y Planificación</option>
-                    <option value="Convocatorio">Convocatorio</option>
-                    <option value="Reunion por Video Llamada/Whatsaap">Reunion por Video Llamada/Whatsaap</option>
-                    <option value="Junta Directiva">Junta Directiva</option>
                 </select>
-                <!-- NEW: Action Type Selector with Filial as default -->
                 <select id="newActionType_${formId}" style="flex: 0 1 100px; padding:8px; border-radius:30px; border:1px solid var(--accent);">
                     <option value="filial" selected>🏢 Filial</option>
                     <option value="campo">🌐 Campo</option>
                 </select>
             </div>
             
-            <!-- Timer / Hours Section (Always Visible) -->
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom:10px; padding:8px; background:white; border-radius:30px;">
                 <span style="font-size:0.8rem; font-weight:600; color:var(--primary-dark);">⏱️ Horas:</span>
                 <input type="number" id="newHoras_${formId}" placeholder="Horas" min="0" step="0.01" style="width: 80px; padding:6px; border-radius:20px; border:1px solid var(--accent);" oninput="checkHoursInput(${formId})">
@@ -1418,61 +1147,19 @@ function createActivityForm(formId) {
                 <span id="timerDisplay_${formId}" style="font-size:0.8rem; font-weight:600; color:var(--primary); background:var(--neutral-light); padding:4px 12px; border-radius:20px; border:1px solid var(--accent); display:none;">00:00:00</span>
             </div>
             
-            <!-- Extended Fields (Hidden until hours are entered) -->
             <div id="extendedFields_${formId}" style="display:none;">
-                <!-- Damas and Beneficiaries -->
                 <div style="display:flex; gap:8px; margin-bottom:10px;">
-                    <input type="number" id="newVoluntarias_${formId}" placeholder="Damas Voluntaria" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
-                    <input type="number" id="newBenMujeres_${formId}" placeholder="Beneficiarios Femeninos" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
-                    <input type="number" id="newBenHombres_${formId}" placeholder="Beneficiarios Masculinos" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
+                    <input type="number" id="newVoluntarias_${formId}" placeholder="Damas" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
+                    <input type="number" id="newBenMujeres_${formId}" placeholder="Mujeres" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
+                    <input type="number" id="newBenHombres_${formId}" placeholder="Hombres" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
                 </div>
-                
-                <!-- Links Section -->
-                <div class="links-mini-grid" style="margin-bottom:10px;">
-                    <div class="link-box"><input type="text" placeholder="Link 1" class="linkInput_${formId}" id="link1_${formId}"></div>
-                    <div class="link-box"><input type="text" placeholder="Link 2" class="linkInput_${formId}" id="link2_${formId}"></div>
-                </div>
-                
-                <!-- Colaboradores Section -->
-                <div class="colaboradores-section" id="colabsContainer_${formId}">
-                    <div class="colaborador-row">
-                        <select class="colab-org_${formId}" id="colabOrg1_${formId}">
-                            <option value="">-- Colaborador --</option>
-                            <option value="Voluntariado">Voluntariado</option>
-                            <option value="Juventud">Juventud</option>
-                            <option value="Soccorismo">Soccorismo</option>
-                            <option value="Junta Directiva CD-17">Junta Directiva CD-17</option>
-                            <option value="Bomberos">Bomberos</option>
-                            <option value="Alcaldía Local">Alcaldía Local</option>
-                            <option value="Autoridad Competente">Autoridad Competente</option>
-                            <option value="Iglesia Local">Iglesia Local</option>
-                            <option value="Hospital Regional">Hospital Regional</option>
-                            <option value="Damas Regional">Damas Regional</option>
-                            <option value="Cede Central">Cede Central</option>
-                            <option value="Centro Educativo">Centro Educativo</option>
-                            <option value="ONG">ONG</option>
-                        </select>
-                        <input type="number" class="colab-cant_${formId}" placeholder="Cant." min="0" style="width:70px;">
-                    </div>
-                </div>
-                <button type="button" class="add-colab-btn" onclick="addColaboradorToForm(${formId})">+ Colaborador</button>
-            </div>
-            
-            <!-- GPS Drop Pin Section -->
-            <div style="margin-top:15px; border-top: 1px solid var(--neutral-border); padding-top:10px;">
-                <button type="button" id="gpsBtn_${formId}" onclick="getLocation(${formId})" style="width:100%; background:var(--accent); color:white; border:none; border-radius:30px; padding:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">
-                    📌 Registrar Ubicación Actual
-                </button>
-                <p id="gpsStatus_${formId}" style="font-size:0.6rem; color:var(--text-medium); text-align:center; margin-top:4px;">Opcional: Captura coordenadas para actividades de campo</p>
-                <input type="hidden" id="lat_${formId}">
-                <input type="hidden" id="lng_${formId}">
+                <input type="hidden" id="lat_${formId}"><input type="hidden" id="lng_${formId}">
+                <button type="button" onclick="getLocation(${formId})" style="width:100%; background:var(--accent); color:white; border:none; border-radius:30px; padding:8px; font-size:0.75rem;">📌 Ubicación</button>
+                <p id="gpsStatus_${formId}" style="font-size:0.6rem; text-align:center;"></p>
             </div>
 
-            <!-- Submit Button -->
             <div style="display:flex; justify-content:flex-end; margin-top:15px;">
-                <button type="button" onclick="submitActivityForm(${formId})" style="background:var(--primary); color:white; border:none; border-radius:30px; padding:10px 20px; font-weight:bold; cursor:pointer;">
-                    ✅ Agregar Actividad
-                </button>
+                <button type="button" onclick="submitActivityForm(${formId})" style="background:var(--primary); color:white; border:none; border-radius:30px; padding:10px 20px; font-weight:bold;">✅ Guardar</button>
             </div>
         </div>
     `;
@@ -1481,1582 +1168,125 @@ function createActivityForm(formId) {
 function addNewActivityForm() {
     activityFormCount++;
     const container = document.getElementById('activityFormsContainer');
-    container.insertAdjacentHTML('beforeend', createActivityForm(activityFormCount));
+    if (container) container.insertAdjacentHTML('beforeend', createActivityForm(activityFormCount));
 }
-// Simple remove function (keep this for the X button)
+
 function removeActivityForm(formId) {
     const form = document.getElementById(`activityForm_${formId}`);
     if (form) {
-        if (timers[formId]) {
-            clearInterval(timers[formId]);
-            delete timers[formId];
-            delete timers[`${formId}_startTime`];
-        }
+        if (timers[formId]) clearInterval(timers[formId]);
+        delete timers[formId];
         form.remove();
     }
-    // Clear saved timer state to prevent orphaned timer restoration
-    clearTimerState();
 }
-// Check date for timer visibility
-function checkDateForTimer(formId) {
-    const dateInput = document.getElementById(`newDate_${formId}`);
+
+function getLocation(formId) {
+    const statusEl = document.getElementById(`gpsStatus_${formId}`);
+    if (!navigator.geolocation) {
+        statusEl.innerHTML = '⚠️ No soportado';
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            document.getElementById(`lat_${formId}`).value = pos.coords.latitude.toFixed(6);
+            document.getElementById(`lng_${formId}`).value = pos.coords.longitude.toFixed(6);
+            statusEl.innerHTML = '✅ Ubicación registrada';
+        },
+        () => { statusEl.innerHTML = '❌ Error GPS'; },
+        { enableHighAccuracy: true }
+    );
+}
+
+// ==========================================
+// 6. TIMER SYSTEM & PERSISTENCE
+// ==========================================
+
+function startTimer(formId) {
     const startBtn = document.getElementById(`startTimerBtn_${formId}`);
-    const hoursInput = document.getElementById(`newHoras_${formId}`);
+    const stopBtn = document.getElementById(`stopTimerBtn_${formId}`);
+    const display = document.getElementById(`timerDisplay_${formId}`);
     
-    if (!dateInput || !startBtn || !hoursInput) return;
+    startBtn.style.display = 'none';
+    stopBtn.style.display = 'inline-block';
+    display.style.display = 'inline-block';
     
-    const selectedDate = new Date(dateInput.value + 'T12:00:00');
-    const today = new Date();
-    const isToday = selectedDate.toDateString() === today.toDateString();
+    const startTime = Date.now();
+    timers[`${formId}_startTime`] = startTime;
     
-    if (isToday && !hoursInput.value) {
-        startBtn.style.display = 'inline-block';
-    } else {
-        startBtn.style.display = 'none';
-    }
+    timers[formId] = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const h = Math.floor(elapsed / 3600000).toString().padStart(2, '0');
+        const m = Math.floor((elapsed % 3600000) / 60000).toString().padStart(2, '0');
+        const s = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
+        display.innerText = `${h}:${m}:${s}`;
+        
+        // Auto-update hours field
+        document.getElementById(`newHoras_${formId}`).value = (elapsed / 3600000).toFixed(2);
+        checkHoursInput(formId);
+    }, 1000);
+    
+    saveTimerState(formId);
 }
 
-// Check hours input to show extended fields
-function checkHoursInput(formId) {
-    const hoursInput = document.getElementById(`newHoras_${formId}`);
-    const extendedFields = document.getElementById(`extendedFields_${formId}`);
-    const startBtn = document.getElementById(`startTimerBtn_${formId}`);
-    
-    if (hoursInput.value && hoursInput.value > 0) {
-        extendedFields.style.display = 'block';
-        startBtn.style.display = 'none';
-    } else {
-        extendedFields.style.display = 'none';
-        // Check if we should show timer button
-        const dateInput = document.getElementById(`newDate_${formId}`);
-        if (dateInput) {
-            const selectedDate = new Date(dateInput.value + 'T12:00:00');
-            const today = new Date();
-            const isToday = selectedDate.toDateString() === today.toDateString();
-            if (isToday) {
-                startBtn.style.display = 'inline-block';
-            }
-        }
-    }
-}
-
-// ========== PERSISTENT TIMER SYSTEM FOR MULTIPLE FORMS ==========
-function saveTimerState(formId) {
-    const date = document.getElementById(`newDate_${formId}`).value;
-    const activityName = document.getElementById(`newActName_${formId}`).value;
-    const actionType = document.getElementById(`newActionType_${formId}`).value;
-    const startTime = timers[`${formId}_startTime`];
-    
-    if (date && activityName && startTime) {
-        const timerState = {
-            formId: formId,
-            date: date,
-            activityName: activityName,
-            actionType: actionType,
-            startTime: startTime,
-            timestamp: Date.now()
-        };
-        localStorage.setItem('active_timer', JSON.stringify(timerState));
-        console.log(`💾 Timer state saved for form ${formId}`);
-    }
-}
-
-function clearTimerState() {
+function stopTimer(formId) {
+    clearInterval(timers[formId]);
+    document.getElementById(`stopTimerBtn_${formId}`).style.display = 'none';
     localStorage.removeItem('active_timer');
 }
 
+function saveTimerState(formId) {
+    const state = {
+        formId: formId,
+        date: document.getElementById(`newDate_${formId}`).value,
+        activityName: document.getElementById(`newActName_${formId}`).value,
+        actionType: document.getElementById(`newActionType_${formId}`).value,
+        startTime: timers[`${formId}_startTime`]
+    };
+    localStorage.setItem('active_timer', JSON.stringify(state));
+}
+
 function loadActiveTimer() {
-    const savedTimer = localStorage.getItem('active_timer');
-    if (savedTimer) {
-        const timer = JSON.parse(savedTimer);
-        const elapsed = Date.now() - timer.startTime;
-        const hoursDecimal = (elapsed / 3600000).toFixed(2);
-        
-        // Check if the form still exists
-        const formExists = document.getElementById(`activityForm_${timer.formId}`);
-        if (!formExists) {
-            // Form was removed, clear timer state
-            clearTimerState();
-            return;
-        }
-        
-        // Restore form values
-        document.getElementById(`newDate_${timer.formId}`).value = timer.date;
-        document.getElementById(`newActName_${timer.formId}`).value = timer.activityName;
-        document.getElementById(`newActionType_${timer.formId}`).value = timer.actionType;
-        document.getElementById(`newHoras_${timer.formId}`).value = hoursDecimal;
-        document.getElementById(`extendedFields_${timer.formId}`).style.display = 'block';
-        
-        // Ask user if they want to continue
-        if (confirm(`⏱️ Tenías un temporizador en curso para "${timer.activityName}" (${hoursDecimal} horas). ¿Continuar o descartar?`)) {
-            // Restore timer state
-            timers[timer.formId] = setInterval(() => {
-                const elapsedNow = Date.now() - timer.startTime;
-                const hours = Math.floor(elapsedNow / 3600000).toString().padStart(2, '0');
-                const minutes = Math.floor((elapsedNow % 3600000) / 60000).toString().padStart(2, '0');
-                const seconds = Math.floor((elapsedNow % 60000) / 1000).toString().padStart(2, '0');
-                const display = document.getElementById(`timerDisplay_${timer.formId}`);
-                if (display) display.innerText = `${hours}:${minutes}:${seconds}`;
-                
-                // Update hours input in real-time
-                const hoursInput = document.getElementById(`newHoras_${timer.formId}`);
-                if (hoursInput) hoursInput.value = (elapsedNow / 3600000).toFixed(2);
-            }, 1000);
-            
-            timers[`${timer.formId}_startTime`] = timer.startTime;
-            
-            // Update UI
-            document.getElementById(`newHoras_${timer.formId}`).style.display = 'none';
-            document.getElementById(`startTimerBtn_${timer.formId}`).style.display = 'none';
-            document.getElementById(`stopTimerBtn_${timer.formId}`).style.display = 'inline-block';
-            document.getElementById(`timerDisplay_${timer.formId}`).style.display = 'inline-block';
-            
-            console.log(`🔄 Timer restored for form ${timer.formId}`);
-        } else {
-            // Discard timer
-            clearTimerState();
-        }
+    const saved = localStorage.getItem('active_timer');
+    if (!saved) return;
+    
+    const timer = JSON.parse(saved);
+    addNewActivityForm(); // Ensure a form exists to load into
+    const currentId = activityFormCount;
+    
+    if (confirm(`⏱️ ¿Continuar temporizador de "${timer.activityName}"?`)) {
+        document.getElementById(`newDate_${currentId}`).value = timer.date;
+        document.getElementById(`newActName_${currentId}`).value = timer.activityName;
+        document.getElementById(`newActionType_${currentId}`).value = timer.actionType;
+        timers[`${currentId}_startTime`] = timer.startTime;
+        startTimer(currentId);
+    } else {
+        localStorage.removeItem('active_timer');
     }
 }
 
-// Start timer for specific form
-// Start timer for specific form
-function startTimer(formId) {
-    if (timers[formId]) return;
-    
-    const date = document.getElementById(`newDate_${formId}`).value;
-    const activityName = document.getElementById(`newActName_${formId}`).value;
-    
-    if (!date || !activityName) {
-        alert('Primero selecciona fecha y actividad');
-        return;
-    }
-    
-    const startTime = Date.now();
-    
-    // Hide hours input, show timer
-    document.getElementById(`newHoras_${formId}`).style.display = 'none';
-    document.getElementById(`startTimerBtn_${formId}`).style.display = 'none';
-    document.getElementById(`stopTimerBtn_${formId}`).style.display = 'inline-block';
-    document.getElementById(`timerDisplay_${formId}`).style.display = 'inline-block';
-    
-    // Start timer display
-    timers[formId] = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const hours = Math.floor(elapsed / 3600000).toString().padStart(2, '0');
-        const minutes = Math.floor((elapsed % 3600000) / 60000).toString().padStart(2, '0');
-        const seconds = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
-        document.getElementById(`timerDisplay_${formId}`).innerText = `${hours}:${minutes}:${seconds}`;
-        
-        // Also update hours input in real-time
-        const hoursInput = document.getElementById(`newHoras_${formId}`);
-        if (hoursInput) hoursInput.value = (elapsed / 3600000).toFixed(2);
-    }, 1000);
-    
-    // Store timer data
-    timers[`${formId}_startTime`] = startTime;
-    
-    // Save to localStorage for persistence
-    saveTimerState(formId);
-}
-// Stop timer for specific form
-// Stop timer for specific form
-function stopTimer(formId) {
-    if (!timers[formId]) return;
-    
-    clearInterval(timers[formId]);
-    delete timers[formId];
-    
-    // Calculate hours
-    const elapsed = Date.now() - timers[`${formId}_startTime`];
-    const hoursDecimal = (elapsed / 3600000).toFixed(2);
-    
-    // Show hours input with value
-    const hoursInput = document.getElementById(`newHoras_${formId}`);
-    hoursInput.style.display = 'inline-block';
-    hoursInput.value = hoursDecimal;
-    
-    // Hide timer controls
-    document.getElementById(`startTimerBtn_${formId}`).style.display = 'none';
-    document.getElementById(`stopTimerBtn_${formId}`).style.display = 'none';
-    document.getElementById(`timerDisplay_${formId}`).style.display = 'none';
-    
-    // Show extended fields
-    document.getElementById(`extendedFields_${formId}`).style.display = 'block';
-    
-    delete timers[`${formId}_startTime`];
-    
-    // Clear saved timer state
-    clearTimerState();
-}
-
-// Add colaborador to specific form
-function addColaboradorToForm(formId) {
-    const container = document.getElementById(`colabsContainer_${formId}`);
-    const newRow = document.createElement('div');
-    newRow.className = 'colaborador-row';
-    newRow.innerHTML = `
-        <select class="colab-org_${formId}">
-            <option value="">-- Colaborador --</option>
-            <option value="Voluntariado">Voluntariado</option>
-            <option value="Juventud">Juventud</option>
-            <option value="Soccorismo">Soccorismo</option>
-            <option value="Junta Directiva CD-17">Junta Directiva CD-17</option>
-            <option value="Bomberos">Bomberos</option>
-            <option value="Alcaldía Local">Alcaldía Local</option>
-            <option value="Autoridad Competente">Autoridad Competente</option>
-            <option value="Iglesia Local">Iglesia Local</option>
-            <option value="Hospital Regional">Hospital Regional</option>
-            <option value="Damas Regional">Damas Regional</option>
-            <option value="Cede Central">Cede Central</option>
-            <option value="Centro Educativo">Centro Educativo</option>
-            <option value="ONG">ONG</option>
-        </select>
-        <input type="number" class="colab-cant_${formId}" placeholder="Cant." min="0" style="width:70px;">
-    `;
-    container.appendChild(newRow);
-}
-
-// ===== 1. Pie Chart - Women vs Men Beneficiaries =====
-function updateBeneficiariesPieChart() {
-    const canvas = document.getElementById('chartBeneficiados');
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-
-    let totalWomen = 0;
-    let totalMen = 0;
-    let maxActivity = { name: '', total: 0 };
-
-    activities.forEach(act => {
-        const women = act.beneficiadas_mujeres || 0;
-        const men = act.beneficiados_hombres || 0;
-        totalWomen += women;
-        totalMen += men;
-        if (women + men > maxActivity.total) maxActivity = { name: act.name, total: women + men };
-    });
-
-    const total = totalWomen + totalMen;
-
-    // Safely destroy existing chart
-    if (window.beneficiariesChart) {
-        try {
-            window.beneficiariesChart.destroy();
-        } catch(e) {
-            console.warn('Chart destroy error:', e);
-        }
-        window.beneficiariesChart = null;
-    }
-
-    window.beneficiariesChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['F', 'M'],
-            datasets: [{
-                data: [totalWomen, totalMen],
-                backgroundColor: ['#E34A2F', '#1E3A5F'],
-                borderColor: '#FFFFFF',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '65%',
-            plugins: {
-                legend: { 
-                    display: true, 
-                    position: 'bottom', 
-                    labels: { color: '#1E1E1E', font: { size: 10, weight: '400' } } 
-                },
-                tooltip: {
-                    titleColor: '#1E1E1E',
-                    bodyColor: '#1E1E1E',
-                    callbacks: {
-                        label: function(context) {
-                            const value = context.raw;
-                            const percent = total ? ((value / total) * 100).toFixed(1) : 0;
-                            return `${context.label}: ${value} (${percent}%)`;
-                        },
-                        afterBody: () => `Mayor actividad: ${maxActivity.name} (${maxActivity.total})`
-                    }
-                }
-            }
-        }
-    });
-
-    // Update chart title
-    const chartBox = document.getElementById('chartBeneficiados').parentNode;
-    let titleEl = chartBox.querySelector('.chart-title');
-    if (!titleEl) {
-        titleEl = document.createElement('div');
-        titleEl.className = 'chart-title';
-        chartBox.insertBefore(titleEl, chartBox.firstChild);
-    }
-    titleEl.style.fontWeight = '600';
-    titleEl.style.color = '#1E1E1E';
-    titleEl.innerHTML = `Beneficiarios <span>⚤ ${total} total</span>`;
-}
-
-// ===== 2. Horizontal Bar Chart - Top Activities by Hours =====
-function updateHoursBarChart() {
-    const canvas = document.getElementById('chartHoras');
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-
-    const activityTotals = {};
-    activities.forEach(a => {
-        if (a.horas && a.horas > 0) {
-            if (!activityTotals[a.name]) activityTotals[a.name] = 0;
-            activityTotals[a.name] += a.horas;
-        }
-    });
-
-    const sortedActivities = Object.entries(activityTotals)
-        .sort(([, h1], [, h2]) => h2 - h1)
-        .slice(0, 5);
-
-    const labels = sortedActivities.map(([name]) => name.length > 20 ? name.substr(0, 17)+'...' : name);
-    const data = sortedActivities.map(([, hours]) => hours);
-
-    const avgHours = activities.length
-        ? (activities.reduce((sum, a) => sum + (a.horas || 0), 0) / activities.length).toFixed(1)
-        : 0;
-
-    // Safely destroy existing chart
-    if (window.hoursChart) {
-        try {
-            window.hoursChart.destroy();
-        } catch(e) {
-            console.warn('Chart destroy error:', e);
-        }
-        window.hoursChart = null;
-    }
-
-    window.hoursChart = new Chart(ctx, {
-        type: 'bar',
-        data: { 
-            labels, 
-            datasets: [{
-                data,
-                backgroundColor: '#1E3A5F',
-                borderColor: '#00FF00',
-                borderWidth: 1,
-                borderRadius: 5,
-                barPercentage: 0.6,
-                categoryPercentage: 0.7
-            }] 
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { 
-                legend: { display: false }, 
-                tooltip: { 
-                    titleColor: '#1E1E1E', 
-                    bodyColor: '#1E1E1E',
-                    callbacks: { label: t => `${t.raw} h` } 
-                } 
-            },
-            scales: {
-                x: { 
-                    beginAtZero: true, 
-                    ticks: { color: '#000000', font: { size: 12, weight: '500' } }, 
-                    grid: { color: '#D9E2EC' } 
-                },
-                y: { 
-                    ticks: { color: '#000000', font: { size: 12, weight: '500' } }, 
-                    grid: { display: false } 
-                }
-            }
-        }
-    });
-
-    const chartBox = document.getElementById('chartHoras').parentNode;
-    let titleEl = chartBox.querySelector('.chart-title');
-    if (!titleEl) {
-        titleEl = document.createElement('div');
-        titleEl.className = 'chart-title';
-        chartBox.insertBefore(titleEl, chartBox.firstChild);
-    }
-    titleEl.style.fontWeight = '600';
-    titleEl.style.color = '#1E1E1E';
-    titleEl.innerHTML = `Duración actividades <span>⏱️ ${avgHours}h prom.</span>`;
-}
-
-// ===== 3. Horizontal Bar Chart - Damas / Colaboradores per Project =====
-function updateCollaboratorsBarChart() {
-    const canvas = document.getElementById('chartDamas');
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-
-    const orgTotals = {};
-    let totalCollaborators = 0;
-
-    activities.forEach(a => {
-        if (a.voluntarias && a.voluntarias > 0) {
-            const orgName = a.name || 'Sin nombre';
-            if (!orgTotals[orgName]) orgTotals[orgName] = 0;
-            orgTotals[orgName] += a.voluntarias;
-        }
-        if (Array.isArray(a.colaboradores)) {
-            a.colaboradores.forEach(c => {
-                totalCollaborators += c.cant || 0;
-            });
-        }
-        totalCollaborators += a.voluntarias || 0;
-    });
-
-    const labels = Object.keys(orgTotals);
-    const data = Object.values(orgTotals);
-
-    // Safely destroy existing chart
-    if (window.collabChart) {
-        try {
-            window.collabChart.destroy();
-        } catch(e) {
-            console.warn('Chart destroy error:', e);
-        }
-        window.collabChart = null;
-    }
-
-    window.collabChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                data,
-                backgroundColor: '#1E3A5F',
-                borderColor: '#E34A2F',
-                borderWidth: 1,
-                borderRadius: 4
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    titleColor: '#1E1E1E',
-                    bodyColor: '#1E1E1E',
-                    callbacks: {
-                        label: t => `${t.raw} damas`
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    ticks: { color: '#1E1E1E', font: { size: 12, weight: '500' } },
-                    grid: { color: '#D9E2EC' }
-                },
-                y: {
-                    ticks: { color: '#1E1E1E', font: { size: 12, weight: '500' } },
-                    grid: { display: false }
-                }
-            }
-        }
-    });
-
-    const chartBox = document.getElementById('chartDamas').parentNode;
-    let titleEl = chartBox.querySelector('.chart-title');
-    if (!titleEl) {
-        titleEl = document.createElement('div');
-        titleEl.className = 'chart-title';
-        chartBox.insertBefore(titleEl, chartBox.firstChild);
-    }
-    titleEl.style.fontWeight = '600';
-    titleEl.style.color = '#1E1E1E';
-    titleEl.innerHTML = `Damas por proyecto <span>👥 ${totalCollaborators} colaboradores</span>`;
-}
-
-// ===== 4. Vertical Bar Chart - Most Active Damas by Hours =====
-function updateActiveDamasChart() {
-    const canvas = document.getElementById('chartActiveDamas');
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    
-    // Calculate hours per dama from activities
-    const damaHours = {};
-    
-    // Initialize with all registered damas
-    damasActivas.forEach(dama => {
-        damaHours[dama.id] = {
-            nombre: dama.nombre,
-            horas: dama.totalHoras || 0,  // Use stored total if available
-            actividades: dama.actividadesCount || 0,
-            rol: dama.rolNombre,
-            isPlaceholder: dama.isPlaceholder || false
-        };
-    });
-    
-    // Also calculate from activities (for backward compatibility and real-time updates)
-    activities.forEach(activity => {
-        // If activity has participantes array (future feature)
-        if (activity.participantes && Array.isArray(activity.participantes)) {
-            activity.participantes.forEach(p => {
-                // Try to find matching dama by ID or name
-                let dama = damasActivas.find(d => d.id === p.damaId);
-                if (!dama) {
-                    dama = damasActivas.find(d => d.nombre === p.nombre);
-                }
-                if (dama && damaHours[dama.id]) {
-                    damaHours[dama.id].horas += p.horas || 0;
-                    damaHours[dama.id].actividades++;
-                }
-            });
-        } 
-        // If activity has voluntarias count but no participantes, distribute evenly (temporary)
-        else if (activity.voluntarias > 0 && damasActivas.length > 0) {
-            const horasPerDama = (activity.horas || 0) / damasActivas.length;
-            damasActivas.forEach(dama => {
-                if (damaHours[dama.id]) {
-                    damaHours[dama.id].horas += horasPerDama;
-                    damaHours[dama.id].actividades++;
-                }
-            });
-        }
-    });
-    
-    // Filter out damas with zero hours and sort by hours (highest first)
-    const activeDamas = Object.values(damaHours)
-        .filter(d => d.horas > 0)
-        .sort((a, b) => b.horas - a.horas)
-        .slice(0, 8); // Show top 8 most active
-    
-    const labels = activeDamas.map(d => {
-        // Truncate long names
-        let name = d.nombre.length > 12 ? d.nombre.substring(0, 10) + '...' : d.nombre;
-        // Add role initial indicator
-        const roleIcon = d.rol === 'Directora' ? '👑 ' : 
-                        d.rol === 'Subdirectora' ? '⭐ ' : '👤 ';
-        return roleIcon + name;
-    });
-    
-    const data = activeDamas.map(d => Math.round(d.horas * 10) / 10);
-    const totalHours = data.reduce((sum, h) => sum + h, 0);
-    const avgHours = activeDamas.length ? (totalHours / activeDamas.length).toFixed(1) : 0;
-    
-    // Safely destroy existing chart
-    if (window.activeDamasChart) {
-        try {
-            window.activeDamasChart.destroy();
-        } catch(e) {
-            console.warn('Chart destroy error:', e);
-        }
-        window.activeDamasChart = null;
-    }
-    
-    // Only create chart if there's data
-    if (activeDamas.length === 0) {
-        // Show empty state message
-        const chartBox = document.getElementById('chartActiveDamas').parentNode;
-        let titleEl = chartBox.querySelector('.chart-title');
-        if (!titleEl) {
-            titleEl = document.createElement('div');
-            titleEl.className = 'chart-title';
-            chartBox.insertBefore(titleEl, chartBox.firstChild);
-        }
-        titleEl.innerHTML = `Damas Más Activas <span>⏱️ 0 horas</span>`;
-        
-        // Draw empty chart placeholder
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.font = '12px Inter, sans-serif';
-        ctx.fillStyle = '#4A5A6E';
-        ctx.textAlign = 'center';
-        ctx.fillText('Agrega actividades para ver damas activas', canvas.width/2, canvas.height/2);
-        return;
-    }
-    
-    window.activeDamasChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Horas',
-                data: data,
-                backgroundColor: [
-                    '#E34A2F', '#1E3A5F', '#4F7CAC', '#2E7D32',
-                    '#ED6A5E', '#36A2EB', '#9C27B0', '#FF9800'
-                ],
-                borderColor: '#FFFFFF',
-                borderWidth: 2,
-                borderRadius: 6,
-                barPercentage: 0.65,
-                categoryPercentage: 0.8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { 
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    titleColor: '#FFFFFF',
-                    bodyColor: '#FFFFFF',
-                    callbacks: {
-                        label: (context) => {
-                            const dama = activeDamas[context.dataIndex];
-                            return [
-                                `📊 Horas: ${context.raw} h`,
-                                `📋 Actividades: ${dama.actividades}`,
-                                `🎭 Rol: ${dama.rol}`
-                            ];
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    ticks: { 
-                        font: { size: 11, weight: '500' },
-                        color: '#1E3A5F',
-                        maxRotation: 45,
-                        minRotation: 35
-                    },
-                    grid: { display: false },
-                    title: {
-                        display: true,
-                        text: 'Damas',
-                        font: { size: 10, weight: '500' },
-                        color: '#4A5A6E'
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    ticks: { 
-                        font: { size: 10 },
-                        callback: (value) => value + 'h'
-                    },
-                    grid: { color: '#D9E2EC' },
-                    title: {
-                        display: true,
-                        text: 'Horas trabajadas',
-                        font: { size: 10, weight: '500' },
-                        color: '#4A5A6E'
-                    }
-                }
-            }
-        }
-    });
-    
-    // Update chart title
-    const chartBox = document.getElementById('chartActiveDamas').parentNode;
-    let titleEl = chartBox.querySelector('.chart-title');
-    if (!titleEl) {
-        titleEl = document.createElement('div');
-        titleEl.className = 'chart-title';
-        chartBox.insertBefore(titleEl, chartBox.firstChild);
-    }
-    titleEl.style.fontWeight = '600';
-    titleEl.style.color = '#1E1E1E';
-    titleEl.innerHTML = `Damas Más Activas <span>⏱️ ${Math.round(totalHours * 10) / 10} horas totales · ${activeDamas.length} damas activas</span>`;
-}
-
-
-// Main update function - with safety checks
-// Main update function - with safety checks
-function updateCharts() {
-    // Small delay to ensure DOM is ready
-    setTimeout(() => {
-        try {
-            updateBeneficiariesPieChart();
-            updateHoursBarChart();
-            updateCollaboratorsBarChart();
-            updateActiveDamasChart(); // Add the new chart
-        } catch(e) {
-            console.error('Chart update error:', e);
-        }
-    }, 50);
-}
-function submitActivityForm(formId) {
-    console.log('Submitting form:', formId);
-    
-    const formElement = document.getElementById(`activityForm_${formId}`);
-    if (!formElement) return;
-
-    const date = document.getElementById(`newDate_${formId}`).value;
-    const name = document.getElementById(`newActName_${formId}`).value;
-    const actionType= document.getElementById(`newActionType_${formId}`).value; 
-    const voluntarias = parseInt(document.getElementById(`newVoluntarias_${formId}`).value) || 0;
-    const horas = parseFloat(document.getElementById(`newHoras_${formId}`).value) || 0;
-    const mujeres = parseInt(document.getElementById(`newBenMujeres_${formId}`).value) || 0;
-    const hombres = parseInt(document.getElementById(`newBenHombres_${formId}`).value) || 0;
-
-    if (!date || !name) {
-        alert('Selecciona fecha y actividad');
-        return;
-    }
-
-    if (horas === 0) {
-        alert('Ingresa las horas o usa el timer');
-        return;
-    }
-
-    // Colaboradores
-    const colabRows = document.querySelectorAll(`#colabsContainer_${formId} .colaborador-row`);
-    const colaboradores = [];
-    colabRows.forEach(row => {
-        const org = row.querySelector(`.colab-org_${formId}`)?.value || '';
-        const cant = parseInt(row.querySelector(`.colab-cant_${formId}`)?.value) || 0;
-        if (org && cant) colaboradores.push({ org, cant });
-    });
-
-    // Links
-    const links = [];
-    const link1 = document.getElementById(`link1_${formId}`)?.value;
-    const link2 = document.getElementById(`link2_${formId}`).value;
-
-    if (link1 && link1.trim()) links.push(link1.trim());
-    if (link2 && link2.trim()) links.push(link2.trim());
-
-    const formattedLinks = links.map(link =>
-        (link.startsWith('http://') || link.startsWith('https://')) ? link : 'https://' + link
-    );
-
-    // ✅ CREATE ACTIVITY FIRST
-    const activityId = Date.now() + Math.random().toString(36).substr(2, 9);
-
-    const lat = document.getElementById(`lat_${formId}`)?.value || '';
-const lng = document.getElementById(`lng_${formId}`)?.value || '';
-
-const newActivity = {
-    id: activityId,
-    date,
-    name,
-    actionType: document.getElementById(`newActionType_${formId}`).value, 
-    voluntarias,
-    horas,
-    beneficiadas_mujeres: mujeres,
-    beneficiados_hombres: hombres,
-    colaboradores,
-    links: formattedLinks,
-    lat: lat,
-    lng: lng
-};
-
-    // ✅ 🔥 REMOVE FORM BEFORE ANY RENDERING
-    formElement.remove();
-    // Clear saved timer state when submitting
-    clearTimerState();
-
-    // ✅ Stop timer cleanly
-    if (timers[formId]) {
-        clearInterval(timers[formId]);
-        delete timers[formId];
-        delete timers[`${formId}_startTime`];
-    }
-
-    // ✅ NOW update data + UI
-    activities.push(newActivity);
-    sortActivitiesByDate();
-    renderActivities();
-    saveAllToStorage();
-    updateCharts();
-    setTimeout(() => {
-    updateCharts();
-}, 100);
-    alert('✅ Actividad agregada');
-}
-
-
-function getQRCodeData(activity) {
-    // ✅ Only return a QR value if a valid link exists
-    if (
-        activity.links &&
-        Array.isArray(activity.links) &&
-        activity.links.length > 0 &&
-        activity.links[0] &&
-        activity.links[0].trim() !== ''
-    ) {
-        return activity.links[0];
-    }
-
-    // ❌ No link → NO QR
-    return null;
-}function renderActivities() {
-    // Inject print styles if not already present
-    if (!document.getElementById('print-gps-styles')) {
-        const style = document.createElement('style');
-        style.id = 'print-gps-styles';
-        style.textContent = `
-            @media print {
-                .gps-thumb { display: none !important; }
-                .gps-coords-print { display: inline !important; }
-            }
-            @media screen {
-                .gps-coords-print { display: none !important; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    const tbody = document.getElementById('activitiesBody');
-    tbody.innerHTML = '';
-
-    let totalHoras = 0, totalF = 0, totalM = 0, totalBen = 0;
-    // Counters for filial and campo hours
-    let totalHorasFilial = 0, totalHorasCampo = 0;
-
-    activities.forEach((a, idx) => {
-        const tBen = (a.beneficiadas_mujeres || 0) + (a.beneficiados_hombres || 0);
-        totalBen += tBen;
-        totalHoras += a.horas || 0;
-        totalF += a.beneficiadas_mujeres || 0;
-        totalM += a.beneficiados_hombres || 0;
-        
-        // Add hours to appropriate category based on actionType
-        const horas = a.horas || 0;
-        if (a.actionType === 'filial') {
-            totalHorasFilial += horas;
-        } else {
-            totalHorasCampo += horas;
-        }
-
-        const qrId = `qr_${a.id || idx}`;
-        const qrData = getQRCodeData(a);
-
-        // GPS badge with thumbtack (screen) and coordinates (print)
-        let gpsBadge = '';
-        if (a.lat && a.lng) {
-            gpsBadge = `
-                <div class="gps-badge">
-                    <a href="https://maps.google.com/?q=${a.lat},${a.lng}" 
-                       target="_blank" 
-                       class="gps-thumb" 
-                       style="color:var(--success); text-decoration:none;">
-                        📌
-                    </a>
-                    <span class="gps-coords-print" style="font-size:0.75rem;">${a.lat}, ${a.lng}</span>
-                </div>
-            `;
-        }
-
-        // Colaboradores
-        let colaboradoresHtml = '<div class="org-badge-container">';
-        if (a.colaboradores && a.colaboradores.length > 0) {
-            a.colaboradores.forEach(col => {
-                colaboradoresHtml += `<span class="org-badge">${col.org} (${col.cant})</span>`;
-            });
-        } else {
-            colaboradoresHtml += '<span class="org-badge">—</span>';
-        }
-        colaboradoresHtml += '</div>';
-
-        // Links
-        let linksHtml = '';
-        if (a.links && a.links.length > 0) {
-            linksHtml = '<div style="display:flex; flex-wrap:wrap; gap:4px;">';
-            a.links.forEach(link => {
-                let fullLink = link;
-                if (!link.startsWith('http://') && !link.startsWith('https://')) {
-                    fullLink = 'https://' + link;
-                }
-                linksHtml += `
-                    <button onclick="window.open('${fullLink}', '_blank')" 
-                        style="background:var(--accent); color:white; border:none; 
-                               border-radius:4px; padding:2px 8px; font-size:0.7rem;
-                               cursor:pointer;">
-                        🔗 Link
-                    </button>`;
-            });
-            linksHtml += '</div>';
-        } else {
-            linksHtml = '<span style="color:var(--text-light);">—</span>';
-        }
-
-        
-        // QR CELL - Clickable even in PDFs
-        let qrCellHtml = '';
-        if (qrData) {
-            qrCellHtml = `
-                <div style="text-align:center;">
-                    <a href="${qrData}" target="_blank" style="text-decoration:none; display:inline-block;">
-                        <div id="${qrId}" 
-                            style="width:80px; height:80px; background:white; margin:0 auto; cursor:pointer;" 
-                            title="Abrir enlace">
-                        </div>
-                    </a>
-                </div>`;
-        } else {
-            qrCellHtml = '<span style="color:var(--text-light);">—</span>';
-        }
-
-
-        // Build table row
-        tbody.innerHTML += `<tr>
-            <td>${formatDateForDisplay(a.date)}</td>
-            <td style="text-align:left">${a.name}</td>
-            <td>${a.voluntarias || 0}</td>
-            <td>${a.horas || 0}</td>
-            <td>${a.beneficiadas_mujeres || 0}</td>
-            <td>${a.beneficiados_hombres || 0}</td>
-            <td>${tBen}</td>
-            <td>${colaboradoresHtml}</td>
-            <td>${gpsBadge}</td>
-            <td>${qrCellHtml}</td>
-            <td><button onclick="deleteActivity(${idx})" style="border:none;background:none;color:var(--warning);">🗑️</button></td>
-        　`;
-    });
-
-    // Totals - Update all summary displays
-    document.getElementById('totalHoras').innerText = totalHoras;
-    
-    // Update subcategory totals
-    const totalHorasFilialEl = document.getElementById('totalHorasFilial');
-    const totalHorasCampoEl = document.getElementById('totalHorasCampo');
-    
-    if (totalHorasFilialEl) totalHorasFilialEl.innerText = totalHorasFilial;
-    if (totalHorasCampoEl) totalHorasCampoEl.innerText = totalHorasCampo;
-    
-    document.getElementById('totalBeneficiados').innerText = totalBen;
-    document.getElementById('totalMujeresBen').innerText = totalF;
-    document.getElementById('totalHombresBen').innerText = totalM;
-    document.getElementById('totalActividades').innerText = activities.length;
-    document.getElementById('footerDate').innerText = formatDateForDisplay(new Date(), true);
-    updateBeneficiariesPieChart();
-    updateHoursBarChart();
-    updateCollaboratorsBarChart();
-    // Generate QR codes for activities with links
-    setTimeout(() => {
-        if (typeof QRCode === 'undefined') return;
-
-        activities.forEach((a, idx) => {
-            const qrData = getQRCodeData(a);
-            if (!qrData) return;
-
-            const qrId = `qr_${a.id || idx}`;
-            const qrDiv = document.getElementById(qrId);
-
-            if (qrDiv) {
-                qrDiv.innerHTML = '';
-                try {
-                    new QRCode(qrDiv, {
-                        text: qrData,
-                        width: 60,
-                        height: 60,
-                        colorDark: "#000000",
-                        colorLight: "#ffffff",
-                        correctLevel: QRCode.CorrectLevel.L
-                    });
-                } catch (e) {
-                    console.error('QR error:', e);
-                }
-            }
-        });
-    }, 300);
-}
-function deleteActivity(idx) {
-    activities.splice(idx, 1);
-    renderActivities();
-    saveAllToStorage();
-    
-    // Small delay to ensure charts update properly
-    setTimeout(() => {
-        updateCharts();
-    }, 100);
-}
-
-function saveData() {
-    sortActivitiesByDate();
-    saveAllToStorage();
-    alert('✅ Datos guardados para el mes actual.');
-}
-
-function clearData() {
-    if (confirm('Borrar toda la información del mes actual?')) {
-        const monthKey = getCurrentMonthKey();
-        activities = [];
-        damasActivas = [];
-        localStorage.removeItem(`activities_${monthKey}`);
-        localStorage.removeItem(`damas_${monthKey}`);
-        localStorage.removeItem(`desc_${monthKey}`);
-        document.getElementById('scopeText').value = '';
-        document.getElementById('difficultiesText').value = '';
-        document.getElementById('recommendationsText').value = '';
-        document.getElementById('impactText').value = '';
-        updateCharCounts();
-        actualizarListaDamas();
-        renderActivities();
-        updateCharts();
-        document.getElementById('monthIndicator').innerText = formatDateForDisplay(new Date());
-        alert('🗑️ Datos del mes actual borrados.');
-    }
-}
-
-function exportPDF() {
-    window.print();
-}
-function syncPrintText() {
-    document.getElementById('print_scope').innerText = document.getElementById('scopeText').value;
-    document.getElementById('print_difficulties').innerText = document.getElementById('difficultiesText').value;
-    document.getElementById('print_recommendations').innerText = document.getElementById('recommendationsText').value;
-    document.getElementById('print_impact').innerText = document.getElementById('impactText').value;
-}
-
-window.addEventListener('beforeprint', syncPrintText);
-
-function loadSavedData() {
-    loadCurrentMonthData();
-}
-
-function updateCharCounts() {
-    const scopeCount = document.getElementById('scopeCount');
-    const difficultiesCount = document.getElementById('difficultiesCount');
-    const recommendationsCount = document.getElementById('recommendationsCount');
-    const impactCount = document.getElementById('impactCount');
-    
-    if (scopeCount) scopeCount.innerText = document.getElementById('scopeText').value.length;
-    if (difficultiesCount) difficultiesCount.innerText = document.getElementById('difficultiesText').value.length;
-    if (recommendationsCount) recommendationsCount.innerText = document.getElementById('recommendationsText').value.length;
-    if (impactCount) impactCount.innerText = document.getElementById('impactText').value.length;
-}
-
-document.getElementById('scopeText').addEventListener('input', function() {
-    updateCharCounts();
-    saveAllToStorage();
-});
-document.getElementById('difficultiesText').addEventListener('input', function() {
-    updateCharCounts();
-    saveAllToStorage();
-});
-document.getElementById('recommendationsText').addEventListener('input', function() {
-    updateCharCounts();
-    saveAllToStorage();
-});
-document.getElementById('impactText').addEventListener('input', function() {
-    updateCharCounts();
-    saveAllToStorage();
-});
-
-
-// Single DOMContentLoaded event - NO initial form
-document.addEventListener('DOMContentLoaded', () => {
+// ==========================================
+// 7. INITIALIZATION
+// ==========================================
+
+window.onload = function() {
     checkAndClearMonthChange();
-    
-    document.getElementById('currentDate').innerText = formatMonthYearForDisplay(new Date());
-    
-    // NO initial form - start with just the button
-    // addNewActivityForm(); // This line is commented out
-    
-    rolesDisponibles.forEach(r => {
-        const sel = document.getElementById('damasRoles');
-        const opt = document.createElement('option');
-        opt.value = r.id;
-        opt.textContent = r.nombre;
-        sel.appendChild(opt);
-    });
-    
     loadCurrentMonthData();
-    updateCharCounts();
-    
-    setInterval(saveAllToStorage, 30000);
-    window.addEventListener('beforeunload', saveAllToStorage);
-     setTimeout(() => {
-        loadActiveTimer();
-    }, 500);
-});
-// Add this to your existing script section
-const state = {
-    save: () => {
-        const data = {
-            logros: document.querySelector('textarea')?.value,
-            // Add other fields here like kpi-values
-        };
-        localStorage.setItem('rc_tracker_data', JSON.stringify(data));
-    },
-    load: () => {
-        const saved = localStorage.getItem('rc_tracker_data');
-        if (saved) {
-            const data = JSON.parse(saved);
-            if (document.querySelector('textarea')) {
-                document.querySelector('textarea').value = data.logros || '';
-            }
-        }
-    }
+    loadActiveTimer();
 };
 
-// Auto-save when typing
-document.addEventListener('input', state.save);
-// Load when opening
-window.addEventListener('load', state.load);
-
-
-// --- AUTO-SAVE PATCH ---
-// Ensures that every time you type in the textareas, it saves immediately
-document.querySelectorAll('textarea').forEach(textarea => {
-    textarea.addEventListener('input', () => {
-        saveAllToStorage(); // Uses your existing function
-    });
-});
-
-// --- PRINT LAYOUT PATCH ---
-// Injects CSS dynamically to fix the QR code spacing when printing
-const printStyle = document.createElement('style');
-printStyle.innerHTML = `
-    @media print {
-        .activity-card { 
-            page-break-inside: avoid !important; 
-            display: block !important; 
-            margin-bottom: 30px !important;
-            border: 1px solid #000 !important;
-        }
-        .qrcode-container, canvas, img { 
-            display: block !important; 
-            margin: 10px auto !important; 
-        }
-        button, .damas-dropdown { display: none !important; }
-    }
-`;
-
-//master app only
-// ========== QR IMPORT FUNCTIONS (Director's App) ==========
-let qrScanner = null;
-let qrStream = null;
-
-function showImportQRModal() {
-    document.getElementById('qrImportModal').style.display = 'flex';
+// Placeholder functions for UI updates (to be defined in your charts/render scripts)
+function updateCharts() { console.log('Charts updated'); }
+function renderActivities() { console.log('Activities rendered'); }
+function updateCharCounts() { console.log('Char counts updated'); }
+function checkHoursInput(id) { 
+    const val = document.getElementById(`newHoras_${id}`).value;
+    document.getElementById(`extendedFields_${id}`).style.display = val > 0 ? 'block' : 'none';
 }
-
-function closeQRImportModal() {
-    if (qrStream) {
-        qrStream.getTracks().forEach(track => track.stop());
-        qrStream = null;
-    }
-    document.getElementById('qrImportModal').style.display = 'none';
-    document.getElementById('qrPreview').innerHTML = '';
-    document.getElementById('qrStatus').innerHTML = 'Listo para escanear';
+function checkDateForTimer(id) {
+    const dateVal = document.getElementById(`newDate_${id}`).value;
+    const isToday = new Date(dateVal + 'T12:00:00').toDateString() === new Date().toDateString();
+    document.getElementById(`startTimerBtn_${id}`).style.display = isToday ? 'inline-block' : 'none';
 }
-
-function startQRScanner() {
-    const preview = document.getElementById('qrPreview');
-    preview.innerHTML = '<video id="qrVideo" style="width:100%; border-radius:16px;"></video>';
-    
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then(stream => {
-            qrStream = stream;
-            const video = document.getElementById('qrVideo');
-            video.srcObject = stream;
-            video.play();
-            
-            // Simple QR detection (using canvas polling)
-            scanQRFromVideo(video);
-        })
-        .catch(err => {
-            console.error('Camera error:', err);
-            document.getElementById('qrStatus').innerHTML = '❌ No se pudo acceder a la cámara. Usa entrada manual.';
-        });
-}
-
-function scanQRFromVideo(video) {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    
-    function scanFrame() {
-        if (!qrStream) return;
-        
-        if (video.videoWidth > 0) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, canvas.width, canvas.height);
-            
-            if (code) {
-                // QR detected!
-                document.getElementById('qrStatus').innerHTML = '✅ QR detectado! Procesando...';
-                stopQRScanner();
-                processImportedData(code.data);
-                return;
-            }
-        }
-        requestAnimationFrame(scanFrame);
-    }
-    scanFrame();
-}
-
-function stopQRScanner() {
-    if (qrStream) {
-        qrStream.getTracks().forEach(track => track.stop());
-        qrStream = null;
-    }
-}
-
-function processManualQR() {
-    const data = document.getElementById('manualQRData').value.trim();
-    if (data) {
-        processImportedData(data);
-    } else {
-        alert('Ingresa el código QR manualmente');
-    }
-}
-
-// Main import processor
-// Main import processor - MORE RELIABLE VERSION
-function processImportedData(encodedData) {
-    try {
-        console.log('Processing QR data, length:', encodedData.length);
-        console.log('First 100 chars:', encodedData.substring(0, 100));
-        
-        let jsonStr;
-        let importData;
-        
-        // Try URL decode first (most common)
-        try {
-            jsonStr = decodeURIComponent(encodedData);
-            importData = JSON.parse(jsonStr);
-            console.log('Successfully parsed as URL encoded JSON');
-        } catch(urlError) {
-            console.log('URL decode failed, trying other methods...');
-            
-            // Try Base64 decode
-            try {
-                const decoded = atob(encodedData);
-                jsonStr = decodeURIComponent(escape(decoded));
-                importData = JSON.parse(jsonStr);
-                console.log('Successfully parsed as Base64 encoded');
-            } catch(base64Error) {
-                // Try direct JSON (if it's already JSON)
-                try {
-                    importData = JSON.parse(encodedData);
-                    console.log('Successfully parsed as direct JSON');
-                } catch(directError) {
-                    throw new Error('Could not decode QR data');
-                }
-            }
-        }
-        
-        // Check if it's compact format (new) or old format
-        if (importData.t === 'de') {
-            console.log('Detected compact format');
-            importData = convertCompactToOldFormat(importData);
-        }
-        
-        // Validate import format
-        if (importData.type !== 'dama_export') {
-            console.error('Invalid format, expected dama_export, got:', importData.type);
-            alert('Formato de datos no válido. Asegúrate de escanear el QR de una dama.');
-            closeQRImportModal();
-            return;
-        }
-        
-        // Show processing indicator
-        document.getElementById('qrStatus').innerHTML = '🔄 Procesando datos...';
-        
-        // Process the import
-        const result = importDamaData(importData);
-        
-        // Show result
-        let message = `✅ Importación completada!\n\n👤 Dama: ${importData.dama.nombre}\n📊 Horas: ${importData.data.totalHoras}\n📋 Actividades: ${importData.data.actividadesCount}`;
-        if (result.newActivities > 0) message += `\n📋 Actividades nuevas: ${result.newActivities}`;
-        if (result.updatedActivities > 0) message += `\n🔄 Actividades actualizadas: ${result.updatedActivities}`;
-        alert(message);
-        
-        // Refresh UI
-        renderActivities();
-        updateCharts();
-        actualizarListaDamas();
-        saveAllToStorage();
-        
-        // Close modal
-        closeQRImportModal();
-        
-    } catch (e) {
-        console.error('Import error:', e);
-        alert('❌ Error al procesar los datos. Verifica que el QR sea válido.\n\nDetalle: ' + e.message);
-        document.getElementById('qrStatus').innerHTML = '❌ Error al procesar';
-    }
-}
-// Convert compact format to old format
-// Convert compact format to old format - with error handling
-function convertCompactToOldFormat(compact) {
-    try {
-        // Convert compact dama info with fallbacks
-        const dama = {
-            id: compact.d?.i || 'unknown',
-            nombre: compact.d?.n || 'Desconocida',
-            identidadSuffix: compact.d?.id6 || '000000',
-            rolId: compact.d?.r || 'voluntaria',
-            rolNombre: compact.d?.rn || 'Voluntaria'
-        };
-        
-        // Convert activities - handle missing fields
-        const actividades = (compact.a || []).map(act => ({
-            date: act.dt || '',
-            name: act.nm || 'Actividad',
-            horas: act.h || 0,
-            actionType: act.tp === 'f' ? 'filial' : 'campo',
-            beneficiadas_mujeres: act.w || 0,
-            beneficiados_hombres: act.m || 0,
-            link: act.lk || '',
-            lat: act.lt || '',
-            lng: act.ln || '',
-            colaboradores: []
-        }));
-        
-        // Convert feedback
-        const feedback = {
-            scope: compact.f?.s || '',
-            difficulties: compact.f?.d || '',
-            recommendations: compact.f?.r || '',
-            impact: compact.f?.i || ''
-        };
-        
-        // Build old format structure
-        return {
-            type: 'dama_export',
-            version: '1.0',
-            dama: dama,
-            data: {
-                totalHoras: compact.th || actividades.reduce((sum, a) => sum + (a.horas || 0), 0),
-                actividadesCount: compact.ac || actividades.length,
-                actividades: actividades
-            },
-            feedback: feedback,
-            exportDate: new Date().toISOString()
-        };
-    } catch(e) {
-        console.error('Conversion error:', e);
-        throw new Error('Error al convertir datos del QR');
-    }
-}
-// Core import function with SMART MERGE
-function importDamaData(importData) {
-    let newActivitiesCount = 0;
-    let updatedActivitiesCount = 0;
-    
-    // 1. Find or create dama
-    let dama = damasActivas.find(d => d.id === importData.dama.id);
-    
-    if (!dama) {
-        // Try to match by name or ID
-        dama = damasActivas.find(d => 
-            d.nombre.toLowerCase() === importData.dama.nombre.toLowerCase() ||
-            (importData.dama.identidadSuffix !== '000000' && d.identidadSuffix === importData.dama.identidadSuffix)
-        );
-    }
-    
-    if (!dama) {
-        // Create new dama
-        dama = {
-            id: importData.dama.id,
-            identidadSuffix: importData.dama.identidadSuffix || '000000',
-            nombre: importData.dama.nombre,
-            rolId: importData.dama.rolId,
-            rolNombre: importData.dama.rolNombre,
-            totalHoras: 0,
-            actividadesCount: 0,
-            isPlaceholder: importData.dama.identidadSuffix === '000000',
-            mergedFrom: []
-        };
-        damasActivas.push(dama);
-        console.log(`✨ Created new dama: ${dama.nombre}`);
-    } else {
-        console.log(`📌 Found existing dama: ${dama.nombre}`);
-        if (importData.dama.identidadSuffix !== '000000' && dama.identidadSuffix === '000000') {
-            dama.identidadSuffix = importData.dama.identidadSuffix;
-            dama.isPlaceholder = false;
-            console.log(`  🔄 Updated dama ID to: ${dama.identidadSuffix}`);
-        }
-    }
-    
-    // 2. Process each activity from volunteer with SMART MERGE
-    importData.data.actividades.forEach(importedAct => {
-        const existingActivity = activities.find(act => 
-            act.date === importedAct.date && 
-            act.name === importedAct.name
-        );
-        
-        if (existingActivity) {
-            // ========== MERGE - Activity already exists ==========
-            let changes = false;
-            
-            // Merge hours - take MAX
-            if (importedAct.horas && importedAct.horas > (existingActivity.horas || 0)) {
-                existingActivity.horas = importedAct.horas;
-                changes = true;
-            }
-            
-            // Merge beneficiaries - take MAX
-            if (importedAct.beneficiadas_mujeres && importedAct.beneficiadas_mujeres > (existingActivity.beneficiadas_mujeres || 0)) {
-                existingActivity.beneficiadas_mujeres = importedAct.beneficiadas_mujeres;
-                changes = true;
-            }
-            if (importedAct.beneficiados_hombres && importedAct.beneficiados_hombres > (existingActivity.beneficiados_hombres || 0)) {
-                existingActivity.beneficiados_hombres = importedAct.beneficiados_hombres;
-                changes = true;
-            }
-            
-            // Merge links
-            if (importedAct.link && importedAct.link.trim()) {
-                if (!existingActivity.links) existingActivity.links = [];
-                if (!existingActivity.links.includes(importedAct.link)) {
-                    existingActivity.links.push(importedAct.link);
-                    changes = true;
-                }
-            }
-            
-            // Merge GPS
-            if (importedAct.lat && importedAct.lng && !existingActivity.lat) {
-                existingActivity.lat = importedAct.lat;
-                existingActivity.lng = importedAct.lng;
-                changes = true;
-            }
-            
-            // Track contributor
-            if (!existingActivity.contributingDamas) existingActivity.contributingDamas = [];
-            if (!existingActivity.contributingDamas.includes(importData.dama.id)) {
-                existingActivity.contributingDamas.push(importData.dama.id);
-                changes = true;
-            }
-            
-            if (changes) {
-                updatedActivitiesCount++;
-                console.log(`  ✅ Activity updated: ${existingActivity.name}`);
-            }
-            
-        } else {
-            // ========== NEW ACTIVITY - Add it ==========
-            const newActivity = {
-                id: Date.now() + Math.random(),
-                date: importedAct.date,
-                name: importedAct.name,
-                actionType: importedAct.actionType || 'campo',
-                horas: importedAct.horas || 0,
-                beneficiadas_mujeres: importedAct.beneficiadas_mujeres || 0,
-                beneficiados_hombres: importedAct.beneficiados_hombres || 0,
-                voluntarias: 1,
-                colaboradores: importedAct.colaboradores || [],
-                links: importedAct.link ? [importedAct.link] : [],
-                lat: importedAct.lat || '',
-                lng: importedAct.lng || '',
-                importedFrom: [importData.dama.id],
-                contributingDamas: [importData.dama.id]
-            };
-            activities.push(newActivity);
-            newActivitiesCount++;
-            console.log(`✨ Added new activity: ${newActivity.name}`);
-        }
-    });
-    
-    // 3. Update dama totals
-    dama.totalHoras = (dama.totalHoras || 0) + importData.data.totalHoras;
-    dama.actividadesCount = (dama.actividadesCount || 0) + importData.data.actividadesCount;
-    
-    // Track merge history
-    if (!dama.mergedFrom) dama.mergedFrom = [];
-    dama.mergedFrom.push({
-        sourceId: importData.dama.id,
-        date: new Date().toISOString(),
-        horas: importData.data.totalHoras,
-        actividades: importData.data.actividadesCount,
-        newActivities: newActivitiesCount,
-        updatedActivities: updatedActivitiesCount
-    });
-    
-    // Sort activities
-    sortActivitiesByDate();
-    
-    // Also import feedback if available (store in localStorage for reporting)
-    if (importData.feedback) {
-        const monthKey = getCurrentMonthKey();
-        const existingFeedback = localStorage.getItem(`feedback_${monthKey}`) || '[]';
-        const feedbackList = JSON.parse(existingFeedback);
-        feedbackList.push({
-            damaId: dama.id,
-            damaNombre: dama.nombre,
-            date: new Date().toISOString(),
-            ...importData.feedback
-        });
-        localStorage.setItem(`feedback_${monthKey}`, JSON.stringify(feedbackList));
-    }
-    
-    return { 
-        newActivities: newActivitiesCount, 
-        updatedActivities: updatedActivitiesCount,
-        damaUpdated: dama.nombre
-    };
-}
-function getCurrentDamaFromLocalStorage() {
-    const damas = JSON.parse(localStorage.getItem('damas_activas') || '[]');
-    return damas[0] || { id: 'dama_unknown', nombre: 'Usuario', identidadSuffix: '000000' };
-}
-
-// Helper: Get activities for current dama (for Dama's app)
-function getMyActivities() {
-    // In Dama's app, each dama only sees their own activities
-    // This would need to be implemented based on how you track per-dama activities
-    return activities;
-}
-//end master app only
-// Save timer state when app goes to background
-document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-        // App is being minimized - save any active timer
-        for (let formId in timers) {
-            if (timers[formId] && timers[`${formId}_startTime`]) {
-                saveTimerState(parseInt(formId));
-                break;
-            }
-        }
-    }
-});
-
-// Save timer state before page unload
-window.addEventListener('beforeunload', function() {
-    for (let formId in timers) {
-        if (timers[formId] && timers[`${formId}_startTime`]) {
-            saveTimerState(parseInt(formId));
-            break;
-        }
-    }
-});
-
-document.head.appendChild(printStyle);
-let newWorker;
-
-function applyUpdate() {
-  if (newWorker) {
-    newWorker.postMessage({ type: 'SKIP_WAITING' });
-  }
-}
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').then(reg => {
-    // This part checks if you uploaded a new version to GitHub
-    reg.onupdatefound = () => {
-      newWorker = reg.installing;
-      newWorker.onstatechange = () => {
-        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          const banner = document.getElementById('update-banner');
-          if (banner) banner.style.display = 'block';
-        }
-      };
-    };
-  });
-
-  // This reloads the app automatically once the update is applied
-  let refreshing;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
-    window.location.reload();
-    refreshing = true;
-  });
-}
-  
-
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </body>
 </html>
