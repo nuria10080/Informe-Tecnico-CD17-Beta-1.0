@@ -505,14 +505,6 @@ charts-container {
     white-space: normal;
 }
 
-.chart-title span {
-    color: var(--text-medium);
-    font-weight: 500;
-    font-size: 0.7rem;
-    text-transform: none;
-    white-space: normal;
-}
-
 .chart-box:hover {
     transform: none;
     box-shadow: none;
@@ -1502,8 +1494,9 @@ function removeActivityForm(formId) {
         }
         form.remove();
     }
+    // Clear saved timer state to prevent orphaned timer restoration
+    clearTimerState();
 }
-
 // Check date for timer visibility
 function checkDateForTimer(formId) {
     const dateInput = document.getElementById(`newDate_${formId}`);
@@ -1547,9 +1540,97 @@ function checkHoursInput(formId) {
     }
 }
 
+// ========== PERSISTENT TIMER SYSTEM FOR MULTIPLE FORMS ==========
+function saveTimerState(formId) {
+    const date = document.getElementById(`newDate_${formId}`).value;
+    const activityName = document.getElementById(`newActName_${formId}`).value;
+    const actionType = document.getElementById(`newActionType_${formId}`).value;
+    const startTime = timers[`${formId}_startTime`];
+    
+    if (date && activityName && startTime) {
+        const timerState = {
+            formId: formId,
+            date: date,
+            activityName: activityName,
+            actionType: actionType,
+            startTime: startTime,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('active_timer', JSON.stringify(timerState));
+        console.log(`💾 Timer state saved for form ${formId}`);
+    }
+}
+
+function clearTimerState() {
+    localStorage.removeItem('active_timer');
+}
+
+function loadActiveTimer() {
+    const savedTimer = localStorage.getItem('active_timer');
+    if (savedTimer) {
+        const timer = JSON.parse(savedTimer);
+        const elapsed = Date.now() - timer.startTime;
+        const hoursDecimal = (elapsed / 3600000).toFixed(2);
+        
+        // Check if the form still exists
+        const formExists = document.getElementById(`activityForm_${timer.formId}`);
+        if (!formExists) {
+            // Form was removed, clear timer state
+            clearTimerState();
+            return;
+        }
+        
+        // Restore form values
+        document.getElementById(`newDate_${timer.formId}`).value = timer.date;
+        document.getElementById(`newActName_${timer.formId}`).value = timer.activityName;
+        document.getElementById(`newActionType_${timer.formId}`).value = timer.actionType;
+        document.getElementById(`newHoras_${timer.formId}`).value = hoursDecimal;
+        document.getElementById(`extendedFields_${timer.formId}`).style.display = 'block';
+        
+        // Ask user if they want to continue
+        if (confirm(`⏱️ Tenías un temporizador en curso para "${timer.activityName}" (${hoursDecimal} horas). ¿Continuar o descartar?`)) {
+            // Restore timer state
+            timers[timer.formId] = setInterval(() => {
+                const elapsedNow = Date.now() - timer.startTime;
+                const hours = Math.floor(elapsedNow / 3600000).toString().padStart(2, '0');
+                const minutes = Math.floor((elapsedNow % 3600000) / 60000).toString().padStart(2, '0');
+                const seconds = Math.floor((elapsedNow % 60000) / 1000).toString().padStart(2, '0');
+                const display = document.getElementById(`timerDisplay_${timer.formId}`);
+                if (display) display.innerText = `${hours}:${minutes}:${seconds}`;
+                
+                // Update hours input in real-time
+                const hoursInput = document.getElementById(`newHoras_${timer.formId}`);
+                if (hoursInput) hoursInput.value = (elapsedNow / 3600000).toFixed(2);
+            }, 1000);
+            
+            timers[`${timer.formId}_startTime`] = timer.startTime;
+            
+            // Update UI
+            document.getElementById(`newHoras_${timer.formId}`).style.display = 'none';
+            document.getElementById(`startTimerBtn_${timer.formId}`).style.display = 'none';
+            document.getElementById(`stopTimerBtn_${timer.formId}`).style.display = 'inline-block';
+            document.getElementById(`timerDisplay_${timer.formId}`).style.display = 'inline-block';
+            
+            console.log(`🔄 Timer restored for form ${timer.formId}`);
+        } else {
+            // Discard timer
+            clearTimerState();
+        }
+    }
+}
+
+// Start timer for specific form
 // Start timer for specific form
 function startTimer(formId) {
     if (timers[formId]) return;
+    
+    const date = document.getElementById(`newDate_${formId}`).value;
+    const activityName = document.getElementById(`newActName_${formId}`).value;
+    
+    if (!date || !activityName) {
+        alert('Primero selecciona fecha y actividad');
+        return;
+    }
     
     const startTime = Date.now();
     
@@ -1566,12 +1647,19 @@ function startTimer(formId) {
         const minutes = Math.floor((elapsed % 3600000) / 60000).toString().padStart(2, '0');
         const seconds = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
         document.getElementById(`timerDisplay_${formId}`).innerText = `${hours}:${minutes}:${seconds}`;
+        
+        // Also update hours input in real-time
+        const hoursInput = document.getElementById(`newHoras_${formId}`);
+        if (hoursInput) hoursInput.value = (elapsed / 3600000).toFixed(2);
     }, 1000);
     
     // Store timer data
     timers[`${formId}_startTime`] = startTime;
+    
+    // Save to localStorage for persistence
+    saveTimerState(formId);
 }
-
+// Stop timer for specific form
 // Stop timer for specific form
 function stopTimer(formId) {
     if (!timers[formId]) return;
@@ -1597,6 +1685,9 @@ function stopTimer(formId) {
     document.getElementById(`extendedFields_${formId}`).style.display = 'block';
     
     delete timers[`${formId}_startTime`];
+    
+    // Clear saved timer state
+    clearTimerState();
 }
 
 // Add colaborador to specific form
@@ -2155,6 +2246,8 @@ const newActivity = {
 
     // ✅ 🔥 REMOVE FORM BEFORE ANY RENDERING
     formElement.remove();
+    // Clear saved timer state when submitting
+    clearTimerState();
 
     // ✅ Stop timer cleanly
     if (timers[formId]) {
@@ -2174,6 +2267,7 @@ const newActivity = {
 }, 100);
     alert('✅ Actividad agregada');
 }
+
 
 function getQRCodeData(activity) {
     // ✅ Only return a QR value if a valid link exists
@@ -2467,6 +2561,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     setInterval(saveAllToStorage, 30000);
     window.addEventListener('beforeunload', saveAllToStorage);
+     setTimeout(() => {
+        loadActiveTimer();
+    }, 500);
 });
 // Add this to your existing script section
 const state = {
@@ -2605,11 +2702,40 @@ function processManualQR() {
 }
 
 // Main import processor
+// Main import processor - Handles both old and new QR formats
 function processImportedData(encodedData) {
     try {
-        // Decode the QR data
-        const jsonStr = decodeURIComponent(encodedData);
-        const importData = JSON.parse(jsonStr);
+        let jsonStr;
+        let importData;
+        
+        // Try to detect if it's Base64 encoded (new format)
+        // Base64 strings contain only A-Z, a-z, 0-9, +, /, = and are typically longer than 50 chars
+        const isBase64 = /^[A-Za-z0-9+/=]+$/.test(encodedData) && encodedData.length > 50;
+        
+        if (isBase64) {
+            // New format: Base64 encoded
+            try {
+                // Decode Base64 to JSON string
+                const decoded = atob(encodedData);
+                jsonStr = decodeURIComponent(escape(decoded));
+                importData = JSON.parse(jsonStr);
+            } catch(e) {
+                console.log('Base64 decode failed, trying URL decode:', e);
+                // Fallback to URL decode
+                jsonStr = decodeURIComponent(encodedData);
+                importData = JSON.parse(jsonStr);
+            }
+        } else {
+            // Old format: URL encoded
+            jsonStr = decodeURIComponent(encodedData);
+            importData = JSON.parse(jsonStr);
+        }
+        
+        // Check if it's compact format (new) or old format
+        if (importData.t === 'de') {
+            // NEW COMPACT FORMAT - Convert to old format for compatibility
+            importData = convertCompactToOldFormat(importData);
+        }
         
         // Validate import format
         if (importData.type !== 'dama_export') {
@@ -2643,8 +2769,55 @@ function processImportedData(encodedData) {
     }
 }
 
+// Convert compact format to old format
+function convertCompactToOldFormat(compact) {
+    // Convert compact dama info
+    const dama = {
+        id: compact.d.i,
+        nombre: compact.d.n,
+        identidadSuffix: compact.d.id6 || '000000',
+        rolId: compact.d.r,
+        rolNombre: compact.d.rn
+    };
+    
+    // Convert activities
+    const actividades = compact.a.map(act => ({
+        date: act.dt,
+        name: act.nm,
+        horas: act.h,
+        actionType: act.tp === 'f' ? 'filial' : 'campo',
+        beneficiadas_mujeres: act.w || 0,
+        beneficiados_hombres: act.m || 0,
+        link: act.lk || '',
+        lat: act.lt || '',
+        lng: act.ln || '',
+        colaboradores: []  // No collaborators in dama app
+    }));
+    
+    // Convert feedback
+    const feedback = {
+        scope: compact.f?.s || '',
+        difficulties: compact.f?.d || '',
+        recommendations: compact.f?.r || '',
+        impact: compact.f?.i || ''
+    };
+    
+    // Build old format structure
+    return {
+        type: 'dama_export',
+        version: '1.0',
+        dama: dama,
+        data: {
+            totalHoras: compact.th || actividades.reduce((sum, a) => sum + (a.horas || 0), 0),
+            actividadesCount: compact.ac || actividades.length,
+            actividades: actividades
+        },
+        feedback: feedback,
+        exportDate: new Date().toISOString()
+    };
+}
 // Core import function
-// Core import function with SMART MERGE (MAX values)
+// Core import function with SMART MERGE
 function importDamaData(importData) {
     let newActivitiesCount = 0;
     let updatedActivitiesCount = 0;
@@ -2677,7 +2850,6 @@ function importDamaData(importData) {
         console.log(`✨ Created new dama: ${dama.nombre}`);
     } else {
         console.log(`📌 Found existing dama: ${dama.nombre}`);
-        // Update ID if we have better info
         if (importData.dama.identidadSuffix !== '000000' && dama.identidadSuffix === '000000') {
             dama.identidadSuffix = importData.dama.identidadSuffix;
             dama.isPlaceholder = false;
@@ -2687,7 +2859,6 @@ function importDamaData(importData) {
     
     // 2. Process each activity from volunteer with SMART MERGE
     importData.data.actividades.forEach(importedAct => {
-        // Look for existing activity by date and name
         const existingActivity = activities.find(act => 
             act.date === importedAct.date && 
             act.name === importedAct.name
@@ -2696,106 +2867,53 @@ function importDamaData(importData) {
         if (existingActivity) {
             // ========== MERGE - Activity already exists ==========
             let changes = false;
-            console.log(`🔄 Merging activity: ${existingActivity.name} on ${existingActivity.date}`);
             
-            // 2.1 MERGE COLLABORATORS - Take the MAXIMUM count for each organization
-            if (importedAct.colaboradores && importedAct.colaboradores.length > 0) {
-                if (!existingActivity.colaboradores) existingActivity.colaboradores = [];
-                
-                importedAct.colaboradores.forEach(newColab => {
-                    const existingColab = existingActivity.colaboradores.find(c => c.org === newColab.org);
-                    if (existingColab) {
-                        // Take the MAXIMUM count (most complete data)
-                        const maxCount = Math.max(existingColab.cant || 0, newColab.cant || 0);
-                        if (maxCount !== existingColab.cant) {
-                            existingColab.cant = maxCount;
-                            changes = true;
-                            console.log(`    📊 ${newColab.org}: ${existingColab.cant} → ${maxCount} (max)`);
-                        }
-                    } else if (newColab.org && newColab.cant) {
-                        // Add new collaborator not previously recorded
-                        existingActivity.colaboradores.push({...newColab});
-                        changes = true;
-                        console.log(`    ➕ New collaborator: ${newColab.org}: ${newColab.cant}`);
-                    }
-                });
+            // Merge hours - take MAX
+            if (importedAct.horas && importedAct.horas > (existingActivity.horas || 0)) {
+                existingActivity.horas = importedAct.horas;
+                changes = true;
             }
             
-            // 2.2 MERGE BENEFICIARIES - Take the MAXIMUM
-            if (importedAct.beneficiadas_mujeres !== undefined) {
-                const currentMujeres = existingActivity.beneficiadas_mujeres || 0;
-                const maxMujeres = Math.max(currentMujeres, importedAct.beneficiadas_mujeres);
-                if (maxMujeres !== currentMujeres) {
-                    existingActivity.beneficiadas_mujeres = maxMujeres;
-                    changes = true;
-                    console.log(`    👩 Mujeres: ${currentMujeres} → ${maxMujeres}`);
-                }
+            // Merge beneficiaries - take MAX
+            if (importedAct.beneficiadas_mujeres && importedAct.beneficiadas_mujeres > (existingActivity.beneficiadas_mujeres || 0)) {
+                existingActivity.beneficiadas_mujeres = importedAct.beneficiadas_mujeres;
+                changes = true;
+            }
+            if (importedAct.beneficiados_hombres && importedAct.beneficiados_hombres > (existingActivity.beneficiados_hombres || 0)) {
+                existingActivity.beneficiados_hombres = importedAct.beneficiados_hombres;
+                changes = true;
             }
             
-            if (importedAct.beneficiados_hombres !== undefined) {
-                const currentHombres = existingActivity.beneficiados_hombres || 0;
-                const maxHombres = Math.max(currentHombres, importedAct.beneficiados_hombres);
-                if (maxHombres !== currentHombres) {
-                    existingActivity.beneficiados_hombres = maxHombres;
-                    changes = true;
-                    console.log(`    👨 Hombres: ${currentHombres} → ${maxHombres}`);
-                }
-            }
-            
-            // 2.3 MERGE HOURS - Take the MAXIMUM
-            if (importedAct.horas !== undefined) {
-                const currentHoras = existingActivity.horas || 0;
-                const maxHoras = Math.max(currentHoras, importedAct.horas);
-                if (maxHoras !== currentHoras) {
-                    existingActivity.horas = maxHoras;
-                    changes = true;
-                    console.log(`    ⏱️ Horas: ${currentHoras} → ${maxHoras}`);
-                }
-            }
-            
-            // 2.4 MERGE LINKS - UNION (add all unique links)
+            // Merge links
             if (importedAct.link && importedAct.link.trim()) {
                 if (!existingActivity.links) existingActivity.links = [];
                 if (!existingActivity.links.includes(importedAct.link)) {
                     existingActivity.links.push(importedAct.link);
                     changes = true;
-                    console.log(`    🔗 Added link: ${importedAct.link.substring(0, 30)}...`);
                 }
             }
             
-            // 2.5 MERGE GPS - Take the FIRST that has data
+            // Merge GPS
             if (importedAct.lat && importedAct.lng && !existingActivity.lat) {
                 existingActivity.lat = importedAct.lat;
                 existingActivity.lng = importedAct.lng;
                 changes = true;
-                console.log(`    📍 Added GPS location`);
             }
             
-            // 2.6 Track that this dama contributed to this activity
+            // Track contributor
             if (!existingActivity.contributingDamas) existingActivity.contributingDamas = [];
             if (!existingActivity.contributingDamas.includes(importData.dama.id)) {
                 existingActivity.contributingDamas.push(importData.dama.id);
-                changes = true;
-                console.log(`    👥 Added contributor: ${importData.dama.nombre}`);
-            }
-            
-            // 2.7 Track import source
-            if (!existingActivity.importedFrom) existingActivity.importedFrom = [];
-            if (!existingActivity.importedFrom.includes(importData.dama.id)) {
-                existingActivity.importedFrom.push(importData.dama.id);
                 changes = true;
             }
             
             if (changes) {
                 updatedActivitiesCount++;
                 console.log(`  ✅ Activity updated: ${existingActivity.name}`);
-            } else {
-                console.log(`  ℹ️ No changes needed for: ${existingActivity.name}`);
             }
             
         } else {
             // ========== NEW ACTIVITY - Add it ==========
-            console.log(`✨ Adding new activity: ${importedAct.name} on ${importedAct.date}`);
             const newActivity = {
                 id: Date.now() + Math.random(),
                 date: importedAct.date,
@@ -2804,25 +2922,23 @@ function importDamaData(importData) {
                 horas: importedAct.horas || 0,
                 beneficiadas_mujeres: importedAct.beneficiadas_mujeres || 0,
                 beneficiados_hombres: importedAct.beneficiados_hombres || 0,
-                voluntarias: 1, // This dama contributed
+                voluntarias: 1,
                 colaboradores: importedAct.colaboradores || [],
                 links: importedAct.link ? [importedAct.link] : [],
                 lat: importedAct.lat || '',
                 lng: importedAct.lng || '',
                 importedFrom: [importData.dama.id],
-                contributingDamas: [importData.dama.id],
-                originalSource: importData.dama.nombre
+                contributingDamas: [importData.dama.id]
             };
             activities.push(newActivity);
             newActivitiesCount++;
+            console.log(`✨ Added new activity: ${newActivity.name}`);
         }
     });
     
-    // 3. Update dama totals (ADD her personal hours, not MAX)
-    const previousHours = dama.totalHoras || 0;
-    dama.totalHoras = previousHours + importData.data.totalHoras;
+    // 3. Update dama totals
+    dama.totalHoras = (dama.totalHoras || 0) + importData.data.totalHoras;
     dama.actividadesCount = (dama.actividadesCount || 0) + importData.data.actividadesCount;
-    console.log(`📊 Dama ${dama.nombre}: ${previousHours}h → ${dama.totalHoras}h (+${importData.data.totalHoras}h)`);
     
     // Track merge history
     if (!dama.mergedFrom) dama.mergedFrom = [];
@@ -2838,11 +2954,19 @@ function importDamaData(importData) {
     // Sort activities
     sortActivitiesByDate();
     
-    // Show detailed result
-    let message = `✅ Importación completada!\n\n👤 Dama: ${importData.dama.nombre}\n📊 Horas agregadas: ${importData.data.totalHoras}\n📋 Total horas dama: ${dama.totalHoras}h`;
-    if (newActivitiesCount > 0) message += `\n📋 Actividades nuevas: ${newActivitiesCount}`;
-    if (updatedActivitiesCount > 0) message += `\n🔄 Actividades actualizadas: ${updatedActivitiesCount}`;
-    alert(message);
+    // Also import feedback if available (store in localStorage for reporting)
+    if (importData.feedback) {
+        const monthKey = getCurrentMonthKey();
+        const existingFeedback = localStorage.getItem(`feedback_${monthKey}`) || '[]';
+        const feedbackList = JSON.parse(existingFeedback);
+        feedbackList.push({
+            damaId: dama.id,
+            damaNombre: dama.nombre,
+            date: new Date().toISOString(),
+            ...importData.feedback
+        });
+        localStorage.setItem(`feedback_${monthKey}`, JSON.stringify(feedbackList));
+    }
     
     return { 
         newActivities: newActivitiesCount, 
@@ -2850,7 +2974,6 @@ function importDamaData(importData) {
         damaUpdated: dama.nombre
     };
 }
-// Helper: Get current dama from localStorage (for Dama's app)
 function getCurrentDamaFromLocalStorage() {
     const damas = JSON.parse(localStorage.getItem('damas_activas') || '[]');
     return damas[0] || { id: 'dama_unknown', nombre: 'Usuario', identidadSuffix: '000000' };
@@ -2863,7 +2986,28 @@ function getMyActivities() {
     return activities;
 }
 //end master app only
+// Save timer state when app goes to background
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // App is being minimized - save any active timer
+        for (let formId in timers) {
+            if (timers[formId] && timers[`${formId}_startTime`]) {
+                saveTimerState(parseInt(formId));
+                break;
+            }
+        }
+    }
+});
 
+// Save timer state before page unload
+window.addEventListener('beforeunload', function() {
+    for (let formId in timers) {
+        if (timers[formId] && timers[`${formId}_startTime`]) {
+            saveTimerState(parseInt(formId));
+            break;
+        }
+    }
+});
 
 document.head.appendChild(printStyle);
 let newWorker;
