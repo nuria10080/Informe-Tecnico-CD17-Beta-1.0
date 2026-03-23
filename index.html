@@ -2702,44 +2702,50 @@ function processManualQR() {
 }
 
 // Main import processor
-// Main import processor - Handles both old and new QR formats
+// Main import processor - MORE RELIABLE VERSION
 function processImportedData(encodedData) {
     try {
+        console.log('Processing QR data, length:', encodedData.length);
+        console.log('First 100 chars:', encodedData.substring(0, 100));
+        
         let jsonStr;
         let importData;
         
-        // Try to detect if it's Base64 encoded (new format)
-        // Base64 strings contain only A-Z, a-z, 0-9, +, /, = and are typically longer than 50 chars
-        const isBase64 = /^[A-Za-z0-9+/=]+$/.test(encodedData) && encodedData.length > 50;
-        
-        if (isBase64) {
-            // New format: Base64 encoded
+        // Try URL decode first (most common)
+        try {
+            jsonStr = decodeURIComponent(encodedData);
+            importData = JSON.parse(jsonStr);
+            console.log('Successfully parsed as URL encoded JSON');
+        } catch(urlError) {
+            console.log('URL decode failed, trying other methods...');
+            
+            // Try Base64 decode
             try {
-                // Decode Base64 to JSON string
                 const decoded = atob(encodedData);
                 jsonStr = decodeURIComponent(escape(decoded));
                 importData = JSON.parse(jsonStr);
-            } catch(e) {
-                console.log('Base64 decode failed, trying URL decode:', e);
-                // Fallback to URL decode
-                jsonStr = decodeURIComponent(encodedData);
-                importData = JSON.parse(jsonStr);
+                console.log('Successfully parsed as Base64 encoded');
+            } catch(base64Error) {
+                // Try direct JSON (if it's already JSON)
+                try {
+                    importData = JSON.parse(encodedData);
+                    console.log('Successfully parsed as direct JSON');
+                } catch(directError) {
+                    throw new Error('Could not decode QR data');
+                }
             }
-        } else {
-            // Old format: URL encoded
-            jsonStr = decodeURIComponent(encodedData);
-            importData = JSON.parse(jsonStr);
         }
         
         // Check if it's compact format (new) or old format
         if (importData.t === 'de') {
-            // NEW COMPACT FORMAT - Convert to old format for compatibility
+            console.log('Detected compact format');
             importData = convertCompactToOldFormat(importData);
         }
         
         // Validate import format
         if (importData.type !== 'dama_export') {
-            alert('Formato de datos no válido');
+            console.error('Invalid format, expected dama_export, got:', importData.type);
+            alert('Formato de datos no válido. Asegúrate de escanear el QR de una dama.');
             closeQRImportModal();
             return;
         }
@@ -2751,7 +2757,10 @@ function processImportedData(encodedData) {
         const result = importDamaData(importData);
         
         // Show result
-        alert(`✅ Importación completada!\n\n👤 Dama: ${importData.dama.nombre}\n📊 Horas: ${importData.data.totalHoras}\n📋 Actividades: ${importData.data.actividadesCount}\n\n${result.newActivities} actividades nuevas agregadas`);
+        let message = `✅ Importación completada!\n\n👤 Dama: ${importData.dama.nombre}\n📊 Horas: ${importData.data.totalHoras}\n📋 Actividades: ${importData.data.actividadesCount}`;
+        if (result.newActivities > 0) message += `\n📋 Actividades nuevas: ${result.newActivities}`;
+        if (result.updatedActivities > 0) message += `\n🔄 Actividades actualizadas: ${result.updatedActivities}`;
+        alert(message);
         
         // Refresh UI
         renderActivities();
@@ -2764,59 +2773,63 @@ function processImportedData(encodedData) {
         
     } catch (e) {
         console.error('Import error:', e);
-        alert('❌ Error al procesar los datos. Verifica que el QR sea válido.');
+        alert('❌ Error al procesar los datos. Verifica que el QR sea válido.\n\nDetalle: ' + e.message);
         document.getElementById('qrStatus').innerHTML = '❌ Error al procesar';
     }
 }
-
 // Convert compact format to old format
+// Convert compact format to old format - with error handling
 function convertCompactToOldFormat(compact) {
-    // Convert compact dama info
-    const dama = {
-        id: compact.d.i,
-        nombre: compact.d.n,
-        identidadSuffix: compact.d.id6 || '000000',
-        rolId: compact.d.r,
-        rolNombre: compact.d.rn
-    };
-    
-    // Convert activities
-    const actividades = compact.a.map(act => ({
-        date: act.dt,
-        name: act.nm,
-        horas: act.h,
-        actionType: act.tp === 'f' ? 'filial' : 'campo',
-        beneficiadas_mujeres: act.w || 0,
-        beneficiados_hombres: act.m || 0,
-        link: act.lk || '',
-        lat: act.lt || '',
-        lng: act.ln || '',
-        colaboradores: []  // No collaborators in dama app
-    }));
-    
-    // Convert feedback
-    const feedback = {
-        scope: compact.f?.s || '',
-        difficulties: compact.f?.d || '',
-        recommendations: compact.f?.r || '',
-        impact: compact.f?.i || ''
-    };
-    
-    // Build old format structure
-    return {
-        type: 'dama_export',
-        version: '1.0',
-        dama: dama,
-        data: {
-            totalHoras: compact.th || actividades.reduce((sum, a) => sum + (a.horas || 0), 0),
-            actividadesCount: compact.ac || actividades.length,
-            actividades: actividades
-        },
-        feedback: feedback,
-        exportDate: new Date().toISOString()
-    };
+    try {
+        // Convert compact dama info with fallbacks
+        const dama = {
+            id: compact.d?.i || 'unknown',
+            nombre: compact.d?.n || 'Desconocida',
+            identidadSuffix: compact.d?.id6 || '000000',
+            rolId: compact.d?.r || 'voluntaria',
+            rolNombre: compact.d?.rn || 'Voluntaria'
+        };
+        
+        // Convert activities - handle missing fields
+        const actividades = (compact.a || []).map(act => ({
+            date: act.dt || '',
+            name: act.nm || 'Actividad',
+            horas: act.h || 0,
+            actionType: act.tp === 'f' ? 'filial' : 'campo',
+            beneficiadas_mujeres: act.w || 0,
+            beneficiados_hombres: act.m || 0,
+            link: act.lk || '',
+            lat: act.lt || '',
+            lng: act.ln || '',
+            colaboradores: []
+        }));
+        
+        // Convert feedback
+        const feedback = {
+            scope: compact.f?.s || '',
+            difficulties: compact.f?.d || '',
+            recommendations: compact.f?.r || '',
+            impact: compact.f?.i || ''
+        };
+        
+        // Build old format structure
+        return {
+            type: 'dama_export',
+            version: '1.0',
+            dama: dama,
+            data: {
+                totalHoras: compact.th || actividades.reduce((sum, a) => sum + (a.horas || 0), 0),
+                actividadesCount: compact.ac || actividades.length,
+                actividades: actividades
+            },
+            feedback: feedback,
+            exportDate: new Date().toISOString()
+        };
+    } catch(e) {
+        console.error('Conversion error:', e);
+        throw new Error('Error al convertir datos del QR');
+    }
 }
-// Core import function
 // Core import function with SMART MERGE
 function importDamaData(importData) {
     let newActivitiesCount = 0;
