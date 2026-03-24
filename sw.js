@@ -1,94 +1,70 @@
-const CACHE_NAME = 'cd17-v2';
+// sw.js - Service Worker for offline support
+const CACHE_NAME = 'cd17-report-v1';
 const urlsToCache = [
-  '/Informe-Tecnico-CD17-Beta-1.0/',
-  '/Informe-Tecnico-CD17-Beta-1.0/index.html',
-  '/Informe-Tecnico-CD17-Beta-1.0/manifest.json',
-  '/Informe-Tecnico-CD17-Beta-1.0/icon-192.png',
-  '/Informe-Tecnico-CD17-Beta-1.0/icon-512.png',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
+    './',
+    './index.html',
+    'https://cdn.jsdelivr.net/npm/chart.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js',
+    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
 
-// Install: Cache all required files
-self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('Caching files...');
-      return cache.addAll(urlsToCache);
-    })
-  );
-  self.skipWaiting();
-});
-
-// Activate: Clean up old caches and take control
-self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating...');
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => {
-      console.log('Now controlling all clients');
-      return self.clients.claim();
-    })
-  );
-});
-
-// Fetch: Serve from cache first, then network
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-  
-  // For navigation (HTML pages) - always serve from cache first
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      caches.match('/Informe-Tecnico-CD17-Beta-1.0/index.html').then((response) => {
-        if (response) {
-          console.log('Serving index.html from cache');
-          return response;
-        }
-        // If not in cache, fetch from network
-        return fetch(event.request).then((networkResponse) => {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put('/Informe-Tecnico-CD17-Beta-1.0/index.html', responseToCache);
-          });
-          return networkResponse;
-        });
-      }).catch(() => {
-        return new Response('Offline - please connect to internet to load the app', {
-          status: 503,
-          statusText: 'Service Unavailable'
-        });
-      })
+// Install event - cache essential files
+self.addEventListener('install', event => {
+    console.log('[Service Worker] Installing...');
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                console.log('[Service Worker] Caching app shell');
+                return cache.addAll(urlsToCache);
+            })
+            .catch(err => console.log('[Service Worker] Cache error:', err))
     );
-    return;
-  }
-  
-  // For other requests (images, JS, CDN) - try cache first, then network
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        console.log('Serving from cache:', event.request.url);
-        return response;
-      }
-      console.log('Fetching from network:', event.request.url);
-      return fetch(event.request).then((networkResponse) => {
-        // Cache successful responses for offline use
-        if (networkResponse && networkResponse.status === 200) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        }
-        return networkResponse;
-      });
-    })
-  );
+    self.skipWaiting();
+});
+
+// Activate event - clean up old caches
+self.addEventListener('activate', event => {
+    console.log('[Service Worker] Activating...');
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cache => {
+                    if (cache !== CACHE_NAME) {
+                        console.log('[Service Worker] Deleting old cache:', cache);
+                        return caches.delete(cache);
+                    }
+                })
+            );
+        })
+    );
+    return self.clients.claim();
+});
+
+// Fetch event - serve from cache, fallback to network
+self.addEventListener('fetch', event => {
+    event.respondWith(
+        caches.match(event.request)
+            .then(response => {
+                // Return cached response if found
+                if (response) {
+                    return response;
+                }
+                // Otherwise fetch from network
+                return fetch(event.request)
+                    .then(response => {
+                        // Don't cache non-successful responses
+                        if (!response || response.status !== 200) {
+                            return response;
+                        }
+                        // Clone the response
+                        const responseToCache = response.clone();
+                        caches.open(CACHE_NAME)
+                            .then(cache => {
+                                cache.put(event.request, responseToCache);
+                            });
+                        return response;
+                    });
+            })
+    );
 });
