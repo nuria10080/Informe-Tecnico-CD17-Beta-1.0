@@ -1,18 +1,16 @@
-https://nuria10080.github.io/Informe-Tecnico-CD17-Beta-1.0
-
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-<link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#E34A2F">
 <title>Informe Técnico · CD-17 </title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
 
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -32,12 +30,7 @@ background:var(--neutral-light); color:var(--text-dark); padding:16px 12px; line
 .title-section h1 span{color:var(--secondary);}
 .subhead{font-size:0.7rem;color:var(--text-medium);font-weight:500;margin-top:2px;}
 .badge{background:var(--primary-dark);color:white;padding:6px 16px;border-radius:40px;font-weight:600;font-size:0.75rem;margin-left:auto;border-left:3px solid var(--secondary);}
-.badge span:last-child {
-    font-size: 0.7rem;
-    margin-left: 8px;
-    padding-left: 8px;
-    border-left: 1px solid var(--accent);
-}
+.badge span:last-child { font-size: 0.7rem; margin-left: 8px; padding-left: 8px; border-left: 1px solid var(--accent);}
 .kpi-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:25px;}
 .kpi-item{background:var(--neutral-light);border-radius:20px;padding:14px 6px;text-align:center;border:1px solid var(--neutral-border);position:relative;}
 .kpi-label{font-size:0.7rem;font-weight:600;text-transform:uppercase;color:var(--text-medium);letter-spacing:0.3px;margin-bottom:4px;}
@@ -45,638 +38,156 @@ background:var(--neutral-light); color:var(--text-dark); padding:16px 12px; line
 .gender-breakdown{display:flex; justify-content:center; gap:10px; font-size:0.7rem; font-weight:600; margin-top:4px;}
 .gender-f{color:var(--gender-f);}
 .gender-m{color:var(--gender-m);}
-#damasActivasContainer {
-    position: relative; 
-    cursor: default; 
-    z-index: 30; 
-    padding-bottom: 20px;
-}
-
-.damas-dropdown {
-    position: absolute; 
-    top: calc(100% - 10px); 
-    left: 0; 
-    right: 0; 
-    background: white; 
-    border-radius: 20px; 
-    box-shadow: 0 12px 30px rgba(0,0,0,0.15); 
-    padding: 12px 10px; 
-    border: 1px solid var(--accent); 
-    opacity: 0; 
-    visibility: hidden; 
-    transform: translateY(-10px); 
-    transition: opacity 0.2s ease, visibility 0.2s, transform 0.2s; 
-    pointer-events: none; 
-    z-index: 100; 
-    max-height: 400px; 
-    overflow-y: auto;
-    min-width: 100%;
-    
-   
-}
-
-#damasActivasContainer:hover .damas-dropdown,
-.damas-dropdown:hover,
-.damas-dropdown:focus-within {
-    opacity: 1; 
-    visibility: visible; 
-    transform: translateY(0); 
-    pointer-events: auto;
-}
-
-.damas-dropdown select:focus,
-.damas-dropdown input:focus,
-.damas-dropdown button:focus {
-    outline: none;
-}
-
-.damas-dropdown:focus-within {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-    pointer-events: auto;
-}
-
-.damas-dropdown select {
-    width: 100%; 
-    padding: 10px; 
-    border-radius: 30px; 
-    border: 1px solid var(--accent); 
-    background: white; 
-    font-size: 0.75rem; 
-    margin-bottom: 12px;
-}
+#damasActivasContainer { position: relative; cursor: default; z-index: 30; padding-bottom: 20px; }
+.damas-dropdown { position: absolute; top: calc(100% - 10px); left: 0; right: 0; background: white; border-radius: 20px; box-shadow: 0 12px 30px rgba(0,0,0,0.15); padding: 12px 10px; border: 1px solid var(--accent); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: opacity 0.2s ease, visibility 0.2s, transform 0.2s; pointer-events: none; z-index: 100; max-height: 400px; overflow-y: auto; min-width: 100%; }
+#damasActivasContainer:hover .damas-dropdown, .damas-dropdown:hover, .damas-dropdown:focus-within { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
+.damas-dropdown select:focus, .damas-dropdown input:focus, .damas-dropdown button:focus { outline: none; }
+.damas-dropdown select { width: 100%; padding: 10px; border-radius: 30px; border: 1px solid var(--accent); background: white; font-size: 0.75rem; margin-bottom: 12px; }
 #rolesActivosList{max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;}
 #rolesActivosList div{background:var(--neutral-light); border-radius:16px; padding:10px; border:1px solid var(--neutral-border); display:flex; justify-content:space-between; align-items:center;}
-#rolesActivosList button{background:var(--warning); color:white; border:none; border-radius:30px; padding:4px 10px; font-size:0.6rem; font-weight:600; cursor:pointer; transition:0.1s; margin-left:4px;}
-#rolesActivosList button:first-of-type{background:var(--accent);}
-.section-title {
-    font-size: 1.1rem; 
-    font-weight: 600; 
-    color: var(--primary-dark); 
-    margin: 20px 0 12px 0;
-    display: flex; 
-    align-items: center; 
-    cursor: pointer;
-    scroll-margin-top: 20px;
-    transition: margin 0.3s ease;
-}
-
-.section-title::after {
-    content: ''; 
-    flex: 1; 
-    height: 2px; 
-    background: linear-gradient(90deg, var(--accent), transparent); 
-    margin-left: 14px;
-}
-
-.section-title.bookmark-mode {
-    margin-top: 40px;
-}
-.logros-container{background:var(--neutral-light); border-radius:24px; padding:12px 14px; margin-bottom:12px; border:1px solid var(--neutral-border);}
+#rolesActivosList button{background:var(--warning); color:white; border:none; border-radius:30px; padding:4px 10px; font-size:0.6rem; font-weight:600; cursor:pointer; margin-left:4px;}
+.section-title { font-size: 1.1rem; font-weight: 600; color: var(--primary-dark); margin: 20px 0 12px 0; display: flex; align-items: center; cursor: pointer; scroll-margin-top: 20px; }
+.section-title::after { content: ''; flex: 1; height: 2px; background: linear-gradient(90deg, var(--accent), transparent); margin-left: 14px; }
 textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); border-radius:20px; font-size:0.85rem; background:white; resize:vertical; font-family:inherit;}
-.char-count{text-align:right; font-size:0.65rem; color:var(--text-medium); margin-top:4px;}
-
-/* ===== MOBILE-OPTIMIZED ACTIVITIES SECTION ===== */
-.activities-section {
-    margin: 18px 0;
-    border-radius: 20px;
-    border: 1px solid var(--neutral-border);
-    overflow: hidden;
-}
-
-/* Desktop: horizontal scrollable table */
-.activities-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    min-width: 1200px;
-}
-
-.activities-table th {
-    background: var(--primary-dark);
-    color: white;
-    font-size: 0.7rem;
-    font-weight: 600;
-    padding: 10px 4px;
-    white-space: nowrap;
-}
-
-.activities-table td {
-    padding: 10px 4px;
-    border-bottom: 1px solid var(--neutral-border);
-    text-align: center;
-    font-size: 0.75rem;
-    vertical-align: middle;
-}
-
-/* Mobile: card-style activities */
-@media (max-width: 768px) {
-    .activities-table { display: none; }
-    .activities-section {
-        background: white;
-        padding: 12px;
-        overflow: visible;
-    }
-    .mobile-activities-cards {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-    .activity-card {
-        background: var(--neutral-light);
-        border-radius: 20px;
-        padding: 16px;
-        border: 1px solid var(--neutral-border);
-        position: relative;
-    }
-    .activity-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 12px;
-        padding-bottom: 8px;
-        border-bottom: 1px dashed var(--accent);
-    }
-    .activity-date {
-        font-weight: 700;
-        color: var(--primary-dark);
-        background: white;
-        padding: 4px 12px;
-        border-radius: 30px;
-        font-size: 0.75rem;
-        border: 1px solid var(--accent);
-    }
-    .activity-name {
-        font-weight: 700;
-        color: var(--primary-dark);
-        font-size: 1rem;
-        flex: 1;
-        margin-left: 12px;
-    }
-    .activity-delete {
-        background: none;
-        border: none;
-        color: var(--warning);
-        font-size: 1.2rem;
-        cursor: pointer;
-        padding: 4px 8px;
-    }
-    .activity-stats {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-        margin-bottom: 12px;
-    }
-    .stat-item {
-        background: white;
-        border-radius: 16px;
-        padding: 8px 4px;
-        text-align: center;
-        border: 1px solid var(--neutral-border);
-    }
-    .stat-label {
-        font-size: 0.6rem;
-        color: var(--text-medium);
-        text-transform: uppercase;
-        font-weight: 600;
-    }
-    .stat-value {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--primary-dark);
-    }
-    .activity-colabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin: 12px 0;
-        padding: 8px 0;
-        border-top: 1px solid var(--neutral-border);
-        border-bottom: 1px solid var(--neutral-border);
-    }
-    .activity-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 12px;
-    }
-    .activity-qr {
-        width: 60px;
-        height: 60px;
-        background: white;
-        border-radius: 12px;
-        padding: 4px;
-        border: 1px solid var(--neutral-border);
-    }
-    .activity-links {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-    }
-    .activity-link-btn {
-        background: var(--accent);
-        color: white;
-        border: none;
-        border-radius: 30px;
-        padding: 6px 12px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        cursor: pointer;
-    }
-    .damas-dropdown{
-        width: 80vw;
-       
-    }
-}
-
-/* Mobile-optimized input row */
-@media (max-width: 600px) {
-    .compact-input-row {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    #newDate, #newActName, #newVoluntarias, #newHoras, #newBenMujeres, #newBenHombres {
-        max-width: 100% !important;
-        width: 100% !important;
-        flex: 1 1 auto !important;
-    }
-    .links-mini-grid { grid-template-columns: 1fr; }
-    .colaborador-row {
-        flex-direction: column;
-        gap: 8px;
-        padding: 12px;
-    }
-    .colaborador-row select,
-    .colaborador-row input { width: 100%; }
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-    .report-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .badge {
-        margin-left: 0;
-        width: 100%;
-        text-align: center;
-    }
-    .logo-area {
-        width: 100%;
-        justify-content: center;
-    }
-    .logo-area img { height: 70px; }
-    .title-section h1 { font-size: 1.2rem; }
-    .desc-grid { grid-template-columns: 1fr; }
-}
-
-.org-badge {
-    background: transparent;
-    color: var(--primary-dark);
-    padding: 3px 8px;
-    border-radius: 20px;
-    font-size: 0.6rem;
-    font-weight: 600;
-    display: inline-block;
-    margin: 3px;
-    border: 1.5px dashed var(--accent);
-    white-space: nowrap;
-}
-.org-badge-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    justify-content: center;
-    max-width: 200px;
-}
-.link-badge {
-    background: var(--info);
-    color: white;
-    padding: 2px 6px;
-    border-radius: 30px;
-    font-size: 0.6rem;
-    font-weight: 600;
-    display: inline-block;
-    margin: 2px;
-    text-decoration: none;
-}
+.activities-section { margin: 18px 0; border-radius: 20px; border: 1px solid var(--neutral-border); overflow-x: auto; width: 100%; }
+.activities-table { width: 100%; border-collapse: collapse; background: white; min-width: 100%; table-layout: auto; }
+.activities-table th { background: var(--primary-dark); color: white; font-size: 0.7rem; font-weight: 600; padding: 10px 4px; white-space: nowrap; }
+.activities-table td { padding: 10px 4px; border-bottom: 1px solid var(--neutral-border); text-align: center; font-size: 0.75rem; vertical-align: middle; }
+.org-badge { background: transparent; color: var(--primary-dark); padding: 3px 8px; border-radius: 20px; font-size: 0.6rem; font-weight: 600; display: inline-block; margin: 3px; border: 1.5px dashed var(--accent); white-space: nowrap; }
+.org-badge-container { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; max-width: 200px; }
 .add-activity-row{background:transparent; padding:16px 14px; border:none;}
-.compact-input-row{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:12px;}
-.compact-input-row input,.compact-input-row select{padding:10px 8px; border-radius:30px; border:1px solid var(--neutral-border); background:white; font-size:0.8rem; height:42px; flex:1 0 auto;}
-#newDate{max-width:130px; flex:1; }
-#newActName{flex:3; max-width:310px; }
-#newVoluntarias,#newHoras{width:75px; flex:0 0 auto;}
-#newBenMujeres,#newBenHombres{width:65px; flex:0 0 auto;}
-.colaboradores-section{margin-top:14px;}
-.colaborador-row{display:flex; gap:8px; background:white; padding:6px 12px; border-radius:40px; border:1px solid var(--neutral-border); margin-bottom:8px;}
-.colaborador-row select{flex:2; border:none; background:transparent; font-weight:500; font-size:0.8rem; padding:6px 0;}
-.colaborador-row input{width:70px; border-radius:30px; border:1px solid var(--neutral-border); padding:6px; text-align:center;}
-.add-colab-btn{background:white; border:1px dashed var(--accent); padding:8px 16px; border-radius:40px; font-size:0.8rem; font-weight:600; color:var(--accent); cursor:pointer; margin-top:5px; width:fit-content;}
-.links-mini-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; background:white; padding:14px; border-radius:22px; margin:12px 0;}
-.link-box{background:var(--neutral-light); border-radius:18px; padding:8px;}
-.link-box input{width:100%; padding:8px; border-radius:30px; border:1px solid var(--neutral-border); font-size:0.7rem;}
-
-.btn-add-row {
-    background: #1E3A5F; /* navy blue */
-    color: white;
-    border: none;
-    border-radius: 50%; /* circular */
-    width: 45px;
-    height: 45px;
-    font-size: 1.5rem;
-    font-weight: bold;
-    cursor: pointer;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    transition: all 0.2s ease;
-}
-
-.btn-add-row:hover {
-    background: #162d49; /* darker navy */
-    transform: scale(1.1);
-}
-
-.btn-add-row:active {
-    transform: scale(0.95);
-}
-.add-activity-btn:disabled{background:var(--neutral-border); color:var(--text-medium); cursor:not-allowed;}
-.collaboradores-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(100px,1fr)); gap:10px; margin:15px 0;}
-.collaborador-card{background:var(--neutral-light); border-radius:22px; padding:12px 6px; text-align:center; border:1px solid var(--neutral-border);}
-.collaborador-card h4{font-size:0.8rem;}
-.collaborador-count{font-size:1.6rem; font-weight:700; color:var(--primary);}
-.hours-summary{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; background:linear-gradient(145deg,var(--primary-dark),#12344d); color:white; border-radius:30px; padding:16px 8px; margin:20px 0;}
-.hours-stat{text-align:center;}
-.hours-stat .label{font-size:0.6rem; opacity:0.8; display:block;}
-.hours-stat .value{font-size:1.5rem; font-weight:700; display:block;}
-.footer-info{display:flex; justify-content:space-between; font-size:0.7rem; margin:15px 0 5px; border-top:1px dashed var(--neutral-border); padding-top:12px;}
+.btn-add-row { background: #1E3A5F; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 1.5rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: all 0.2s ease; }
+.btn-add-row:hover { background: #162d49; transform: scale(1.1); }
+.footer-info{display:flex; justify-content:space-between; font-size:0.7rem; margin:15px 0 5px; border-top:1px dashed var(--neutral-border); padding-top:12px; flex-wrap:wrap; gap:8px;}
 .action-buttons{display:flex; flex-wrap:wrap; gap:8px; margin-top:15px;}
 .action-button{flex:1 0 120px; padding:12px 6px; border:none; border-radius:40px; font-weight:600; font-size:0.7rem; background:var(--primary-dark); color:white; cursor:pointer;}
 .action-button.save{background:var(--success);}
 .action-button.clear{background:var(--warning);}
 .action-button.export{background:var(--accent);}
-.qr-ampliada-modal{display:none; position:fixed; background:rgba(0,0,0,0.95); inset:0; z-index:2000; justify-content:center; align-items:center;}
-.desc-section { margin: 20px 0 10px; padding: 16px; background: var(--neutral-light); border-radius: 24px; border: 1px solid var(--neutral-border); }
-.desc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.desc-item { background: white; border-radius: 20px; padding: 12px; }
+.desc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+.desc-item { background: white; border-radius: 20px; padding: 12px; border: 1px solid var(--neutral-border); }
 .desc-item label { font-weight: 700; font-size: 0.75rem; color: var(--primary-dark); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 6px; }
-.desc-item textarea { width: 100%; min-height: 100px; max-height: 200px; font-size: 0.8rem; }
-.char-counter { font-size: 0.6rem; color: var(--text-medium); text-align: right; margin-top: 4px; }
-.gps-badge {
-    font-size: 1rem;
-    color: var(--success);
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-}
-/* Charts Container */
-.charts-container {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin: 24px 0 16px;
-}
-.chart-box {
-    background: var(--white);
-    border-radius: 16px;
-    padding: 12px;
-    border: 1px solid var(--neutral-border);
-    box-shadow: none;
-    height: 200px;
-    position: relative;
-}
-.chart-box canvas {
-    width: 100% !important;
-    height: 180px !important;
-    display: block;
-}
-.chart-box:hover {
-    transform: none;
-    box-shadow: none;
-}
-.chart-title {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    color: var(--primary-dark);
-    margin-bottom: 8px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid var(--secondary);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.chart-title span {
-    color: var(--text-medium);
-    font-weight: 500;
-    font-size: 0.7rem;
-    text-transform: none;
-}
-  .desc-item .print-text {
-        display: block !important;
-        font: 12pt 'Times New Roman', serif !important;
-        font-weight: normal !important;
-        text-align: justify !important;          /* ✅ fully justified */
-        line-height: 1.6 !important;
-        color: #000000 !important;
-        white-space: pre-wrap !important;
-        word-wrap: break-word !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: none !important;
-        background: transparent !important;
-    }
+.desc-item textarea { width: 100%; min-height: 100px; font-size: 0.8rem; }
+.gps-badge { font-size: 1rem; color: var(--success); margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.charts-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0 16px; }
+.chart-box { background: var(--white); border-radius: 16px; padding: 12px; border: 1px solid var(--neutral-border); height: 200px; position: relative; }
+.chart-box canvas { width: 100% !important; height: 160px !important; }
+.chart-title { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: var(--primary-dark); margin-bottom: 8px; border-bottom: 1px solid var(--secondary); display: flex; justify-content: space-between; }
+.desc-item .print-text { display: none; }
 
-    
-/* Responsive */
-@media (max-width: 800px) {
-    .charts-container { grid-template-columns: repeat(2, 1fr); }
+/* Mobile Responsive */
+@media (max-width: 800px) { .charts-container { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { 
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .desc-grid { grid-template-columns: 1fr; }
+    .report-header { flex-direction: column; align-items: flex-start; }
+    .badge { margin-left: 0; width: 100%; text-align: center; }
+    .logo-area { width: 100%; justify-content: center; }
+    .logo-area img { height: 70px; }
+    .title-section h1 { font-size: 1.2rem; }
 }
-@media (max-width: 500px) {
-    .charts-container { grid-template-columns: 1fr; }
-    .chart-box { height: 220px; }
-}
-@media (max-width:600px){ .desc-grid { grid-template-columns: 1fr; } }
+@media (max-width: 500px) { .charts-container { grid-template-columns: 1fr; } }
 
-/* ===== PRINT STYLES - KEEP HEADERS EXACT, PLAIN TEXT DESCRIPTION ===== */
+/* ===== PRINT STYLES ===== */
 @media print {
     /* Hide interactive elements */
-    .add-activity-row, 
-    .damas-dropdown,
-    .add-colab-btn, 
-    .char-counter, 
-    .char-count,
-    .action-buttons,
-    .char-counter, 
-    .char-count,
-    .compact-input-row,
-    .links-mini-grid,
-    .colaboradores-section,
-    .qr-ampliada-modal,
-    button:not(.activity-link-btn) {
+    .desc-item textarea,
+     .desc-item .print-text,
+    .desc-item,
+    .add-activity-row, .damas-dropdown, .add-colab-btn, .action-buttons,
+    .compact-input-row, .links-mini-grid, .colaboradores-section,
+    .qr-ampliada-modal, button:not(.activity-link-btn) {
         display: none !important;
     }
     
-    /* Keep all headers, KPIs, charts, table exactly as on screen */
-    .report-header { order: 1 !important; margin-bottom: 10px !important; }
-    .kpi-grid,
-    .kpi-item,
-    .activities-section,
-    .activities-table,
-    
-    .footer-info,
-    .section-title,
-    .org-badge,
-    .org-badge-container,
-    .activity-link-btn,
-    .gender-f,
-    .gender-m,
-    .badge,
-    .logo-area,
-    .title-section {
+    /* Show all essential elements */
+    .report-header, .kpi-grid, .kpi-item, .activities-section,
+    .activities-table, .footer-info, .section-title, .org-badge,
+    .org-badge-container, .gender-f, .gender-m, .badge, .logo-area,
+    .title-section, .charts-container, .chart-box, .desc-grid, .desc-item {
         display: block !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
     
-    /* Make the activities table fit A4 width (scale down if needed) */
-    .activities-table {
-        min-width: 0 !important;
-        width: 100% !important;
-        font-size: 8pt !important; /* slightly smaller to fit more columns */
-        table-layout: auto !important;
-        word-break: break-word !important;
-    }
-    .activities-table th,
-    .activities-table td {
-        padding: 4px 2px !important;
-        white-space: normal !important;
-    }
-    /* Keep QR codes visible but smaller */
+    /* Table full width */
+    .activities-section { width: 100% !important; overflow: visible !important; }
+    .activities-table { width: 100% !important; min-width: 0 !important; table-layout: auto !important; font-size: 8pt !important; }
+    .activities-table th, .activities-table td { padding: 4px 2px !important; white-space: normal !important; }
+    
+    /* QR Codes - Side by Side Horizontal */
     .activities-table td div[id^="qr_"] {
-        width: 40px !important;
-        height: 40px !important;
-        margin: 0 auto !important;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 20px !important;
+        justify-content: center !important;
+        align-items: flex-start !important;
+        padding: 10px 0 !important;
+        width: auto !important;
+        margin: 0 !important;
     }
-     .activities-table td div[id^="qr_"] {
+    .activities-table td div[id^="qr_"] > div {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        gap: 20px !important; /* Significant physical space between QRs */
-        padding: 10px 0 !important;
+        gap: 5px !important;
     }
-    .activities-table td div[id^="qr_"] canvas{width: 25px; height:25px;}
-    .activities-table td div[id^="qr_"] img {
-        width: 80px !important; /* Increased size */
-        height: 80px !important;
+    .activities-table td div[id^="qr_"] canvas {
+        width: 60px !important;
+        height: 60px !important;
         display: block !important;
-        border: 1px solid #eee !important; /* Subtle boundary */
+        border: 1px solid #ddd !important;
     }
-      .activities-table td div[id^="qr_"] img {
-        display: none !important; 
-    }
-    /* Keep charts grid exactly as on screen (3 columns) */
-    .charts-container {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 8px !important;
-    }
-    .chart-box {
-        height: 160px !important; /* slightly shorter for print */
-        padding: 6px !important;
-    }
-    .chart-box canvas {
-        height: 120px !important;
-    }
+    .activities-table td div[id^="qr_"] img { display: none !important; }
+    .activities-table td div[id^="qr_"] span { display: block !important; font-size: 8pt !important; text-align: center !important; }
     
-    /* Keep KPI cards as four columns */
-    .kpi-grid {
-        display: grid !important;
-        grid-template-columns: repeat(4, 1fr) !important;
-        gap: 8px !important;
-    }
+    /* Charts - 4 columns */
+    .charts-container { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 8px !important; }
+    .chart-box { height: 140px !important; padding: 4px !important; }
+    .chart-box canvas { height: 100px !important; }
     
-    /* ===== DESCRIPTION TEXT: 12pt Times New Roman, plain ===== */
-    .desc-section {
-        background: transparent !important;
-        border: none !important;
-        padding: 0 !important;
-        margin: 30px 0 !important;
-    }
-    .desc-grid {
-        display: block !important;
-        grid-template-columns: none !important;
-        gap: 0 !important;
-    }
-    .desc-item {
-        background: transparent !important;
-        border: none !important;
-        padding: 0 !important;
-        margin: 0 0 30px 0 !important;
-        border-radius: 0 !important;
-        page-break-inside: avoid; /* keep each description together if possible */
-    }
-    .desc-item label {
-        /* keep label styling as on screen (header) */
-        font-weight: 700 !important;
-        font-size: 11pt !important;
-        color: var(--primary-dark) !important;
-        text-transform: uppercase !important;
-        margin-bottom: 6px !important;
-        border-bottom: 2px solid var(--secondary) !important;
-        display: block !important;
-    }
-    .desc-item textarea {
-    border: none !important;
-    background: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    height: auto !important;
-    width: 100% !important;
-    font: 12pt 'Times New Roman', serif !important;
-    font-weight: normal !important;          /* ensures text is not bold */
-    text-align: justify !important;          /* 🔹 ADD THIS LINE */
-    text-transform: none !important;
-    line-height: 1.6 !important;
-    color: #000000 !important;
-    resize: none !important;
-    overflow: visible !important;
-    white-space: pre-wrap !important;
-    word-wrap: break-word !important;
-    box-shadow: none !important;
-    -webkit-appearance: none !important;
-}.desc-item textarea {
-        display: none !important;
-    }
-    /* Hide mobile cards in print (show only the table) */
-    .mobile-activities-cards {
-        display: none !important;
-    }
+    /* KPI - 4 columns */
+    .kpi-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 8px !important; }
+    
+    /* Description text */
+    .desc-item textarea { display: none !important; }
+    .desc-item .print-text { display: block !important; font: 12pt 'Times New Roman', serif !important; text-align: justify !important; line-height: 1.6 !important; white-space: pre-wrap !important; margin-top: 8px; }
+    .desc-item label { font-weight: 700 !important; font-size: 11pt !important; border-bottom: 2px solid var(--secondary) !important; margin-bottom: 6px !important; }
     
     /* Page setup */
-    @page {
-        size: A4;
-        margin: 0.8cm;
-    }
+    @page { size: A4; margin: 0.8cm; }
+    body { background: white !important; padding: 0 !important; }
+    .dashboard-card { max-width: 100% !important; box-shadow: none !important; padding: 15px 12px !important; }
+}
+@media print {
+    /* Remove borders from all text elements in print */
+    .desc-item textarea,
+    .desc-item .print-text,
+    .desc-item,
+    .desc-grid,
     
-    body {
-        background: white !important;
-        padding: 0 !important;
-    }
+    .activities-table td,
+    .activities-table th
     
-    .dashboard-card {
-        max-width: 100% !important;
+    {
+        border: none !important;
         box-shadow: none !important;
-        padding: 15px 12px !important;
+        background: transparent !important;
+    }
+    
+    /* Keep table borders only for structure if needed */
+    .activities-table {
+        border-collapse: collapse !important;
+    }
+    
+    .activities-table td, 
+    .activities-table th {
+        border-bottom: 1px solid #ccc !important; /* optional: keep bottom borders for readability */
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
     }
 }
-
 </style>
 </head>
 <body>
@@ -702,19 +213,18 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
 
 <div class="kpi-grid">
 <div class="kpi-item" id="damasActivasContainer">
-    <div class="kpi-label">⚡ Damas Activas</div>
-    <div class="kpi-value" id="totalDamasActivas">0</div>
-    <div class="damas-dropdown">
-        <div style="display:flex; flex-direction: column; gap:6px; margin-bottom:10px;">
-            <select id="damasRoles" style="flex:2;">
-                <option value="">Seleccionar rol</option>
-            </select>
-            <input type="text" id="nuevaDamaNombre" placeholder="Nombre" style="flex:3; padding:8px; border-radius:30px; border:1px solid var(--accent);">
-            <button onclick="agregarDama()" style="background:var(--accent); color:white; border:none; border-radius:30px; padding:8px 12px; font-weight:bold;">➕</button>
+        <div class="kpi-label">⚡ Damas Activas</div>
+        <div class="kpi-value" id="totalDamasActivas">0</div>
+        <div class="damas-dropdown">
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <select id="damasRoles"><option value="">Seleccionar rol</option></select>
+                <input type="text" id="nuevaDamaNombre" placeholder="Nombre completo">
+                <input type="text" id="identidadDama" placeholder="Últimos 6 dígitos (opcional)" maxlength="6">
+                <button onclick="agregarDama()" style="background:var(--accent); color:white; border:none; border-radius:30px; padding:8px; font-weight:bold;">➕ Agregar Dama</button>
+            </div>
+            <div id="rolesActivosList"></div>
         </div>
-        <div id="rolesActivosList"></div>
     </div>
-</div>
 <div class="kpi-item"><div class="kpi-label">👥 Beneficiados</div><div class="kpi-value" id="totalBeneficiados">0</div><div class="gender-breakdown"><span class="gender-f" id="totalMujeresBen">0</span> · <span class="gender-m" id="totalHombresBen">0</span></div></div>
 <div class="kpi-item"><div class="kpi-label">⏱️ Total Horas</div><div class="kpi-value" id="totalHoras">0</div>
 <div style="display: flex; gap: 15px; margin-top: 5px; font-size: 0.9rem; align-items: center; justify-content: center;">
@@ -730,11 +240,30 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
 </div>
 <div class="kpi-item"><div class="kpi-label">📋 Actividades</div><div class="kpi-value" id="totalActividades">0</div></div>
 </div>
+<!-- Profile Selector - ADD THIS AFTER KPI GRID -->
+<div class="profile-selector" style="background: var(--neutral-light); border-radius: 20px; padding: 12px 16px; margin-bottom: 20px; border: 1px solid var(--neutral-border);">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-weight: 700; color: var(--primary-dark);">👤 Usuario Actual:</span>
+            <select id="currentUserSelect" style="padding: 8px 16px; border-radius: 30px; border: 1px solid var(--accent); background: white;">
+                <option>Cargando...</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button onclick="showAddDamaModal()" style="background: var(--accent); color: white; border: none; border-radius: 30px; padding: 6px 14px; font-size: 0.75rem; cursor: pointer;">➕ Nueva Dama</button>
+            <button onclick="showManageDamas()" style="background: var(--primary); color: white; border: none; border-radius: 30px; padding: 6px 14px; font-size: 0.75rem; cursor: pointer;">📋 Gestionar Damas</button>
+        </div>
+    </div>
+    <div id="currentUserInfo" style="margin-top: 8px; font-size: 0.7rem; color: var(--text-medium);">
+        Las horas registradas se asignarán al usuario seleccionado
+    </div>
+</div>
 <!-- charts -->
 <div class="charts-container">
-    <div class="chart-box"><canvas id="chartDamas"></canvas></div>
-    <div class="chart-box"><canvas id="chartBeneficiados"></canvas></div>
-    <div class="chart-box"><canvas id="chartHoras"></canvas></div>
+    <div class="chart-box"><canvas id="chartDamas"></canvas><div class="chart-title">Damas por proyecto</div></div>
+    <div class="chart-box"><canvas id="chartBeneficiados"></canvas><div class="chart-title">Beneficiarios</div></div>
+    <div class="chart-box"><canvas id="chartHoras"></canvas><div class="chart-title">Duración actividades</div></div>
+    <div class="chart-box"><canvas id="chartActiveDamas"></canvas><div class="chart-title">Damas Más Activas</div></div>
 </div>
 <div class="section-title" onclick="addActivity()">➕ Actividad Realizada</div>
 <div class="activities-section">
@@ -795,193 +324,60 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
     <button class="action-button print" onclick="exportPDF()">📄 Imprimir</button>
     <button class="action-button save" onclick="saveData()">💾 Guardar</button>
     <button class="action-button clear" onclick="clearData()">🗑️ Borrar</button>
+    <!-- QR Import Modal -->
+    <div id="qrImportModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center;">
+        <div style="background:white; border-radius:30px; max-width:90%; width:400px; padding:20px;">
+            <h3 style="margin-bottom:15px;">📷 Importar desde QR</h3>
+            <div id="qrPreview" style="background:#000; border-radius:16px; min-height:200px;"></div>
+            <button onclick="startQRScanner()" style="margin:10px 0; padding:10px; background:var(--accent); color:white; border:none; border-radius:30px; width:100%; cursor:pointer;">📷 Iniciar Cámara</button>
+            <input type="text" id="manualQRData" placeholder="O pegar código QR aquí" style="width:100%; padding:10px; margin:10px 0; border-radius:30px; border:1px solid var(--neutral-border);">
+            <button onclick="processManualQR()" style="padding:10px; background:var(--primary); color:white; border:none; border-radius:30px; width:100%; cursor:pointer;">🔍 Procesar QR Manual</button>
+            <button onclick="closeQRImportModal()" style="margin-top:10px; padding:10px; background:var(--warning); color:white; border:none; border-radius:30px; width:100%; cursor:pointer;">❌ Cerrar</button>
+            <p id="qrStatus" style="font-size:0.7rem; margin-top:8px; text-align:center;"></p>
+        </div>
+    </div>
 </div>
 
 
 </div>
 <script>
+// ==========================================
+// GLOBAL STATE
+// ==========================================
 let activities = [];
 let damasActivas = [];
+let activityFormCount = 0;
+let timers = {};
 
-let rolesDisponibles = [
-    { id:'directora', nombre:'Directora', descripcion:'aprueba actividades' },
-    { id:'subdirectora', nombre:'Subdirectora', descripcion:'planifica y delega' },
-    { id:'coord_fondos', nombre:'Coordinadora Recaudación', descripcion:'gestiona recursos' },
-    { id:'coord_encuestas_local', nombre:'Coordinadora Encuestas y Local.', descripcion:'encuestas/localización' },
-    { id:'coord_encuestas_capacitacion', nombre:'Coordinadora Encuestas y Capac.', descripcion:'datos y talleres' },
-    { id:'coord_gestion_damas', nombre:'Gestión y Recuperacion Damas', descripcion:'reincorporación' },
-    { id:'coord_comunicacion', nombre:'Técnico Comunicación', descripcion:'medios digitales' },
-    { id:'coord_eventos', nombre:'Ferias & Excursiones', descripcion:'ferias, excursiones' },
-    { id:'coord_observacion', nombre:'Técnico Observación', descripcion:'monitoreo' }
+const rolesDisponibles = [
+    { id:'directora', nombre:'Directora' },
+    { id:'subdirectora', nombre:'Subdirectora' },
+    { id:'coord_fondos', nombre:'Coordinadora Recaudación' },
+    { id:'coord_encuestas_local', nombre:'Coordinadora Encuestas y Localizaciones' },
+    { id:'coord_encuestas_capacitacion', nombre:'Coordinadora Encuestas y Capacitaciones' },
+    { id:'coord_gestion_damas', nombre:'Gestión y Recuperacion Damas' },
+    { id:'coord_comunicacion', nombre:'Técnico Comunicación' },
+    { id:'coord_eventos', nombre:'Ferias & Excursiones' },
+    { id:'coord_observacion', nombre:'Técnico Auxiliar' }
 ];
 
-
-// Timer variables
-let timerInterval = null;
-let timerStartTime = null;
-let activeTimerActivityId = null;
-
-// Multiple forms variables
-let activityFormCount = 0;
-let timers = {}; // Store timer intervals per form
-
-// Get current month-year key
+// ==========================================
+// UTILITY FUNCTIONS
+// ==========================================
 function getCurrentMonthKey() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-// Check if month has changed and clear if needed
-function checkAndClearMonthChange() {
-    
-    const currentMonthKey = getCurrentMonthKey();
-    const lastMonthKey = localStorage.getItem('lastMonthKey');
-    
-    if (lastMonthKey && lastMonthKey !== currentMonthKey) {
-        // Month has changed - clear all data for previous month
-        // But keep the data accessible with month keys
-        activities = [];
-        damasActivas = [];
-        document.getElementById('scopeText').value = '';
-        document.getElementById('difficultiesText').value = '';
-        document.getElementById('recommendationsText').value = '';
-        document.getElementById('impactText').value = '';
-        updateCharCounts();
-    }
-    
-    // Update the last month key
-    localStorage.setItem('lastMonthKey', currentMonthKey);
-    return currentMonthKey;
-}
-
-// Save all data with month key
-function saveAllToStorage() {
-    const monthKey = getCurrentMonthKey();
-    
-    // Save activities with month key
-    localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
-    
-    // Save damas with month key
-    localStorage.setItem(`damas_${monthKey}`, JSON.stringify(damasActivas));
-    
-    // Save descriptions with month key
-    const desc = {
-        scope: document.getElementById('scopeText').value,
-        difficulties: document.getElementById('difficultiesText').value,
-        recommendations: document.getElementById('recommendationsText').value,
-        impact: document.getElementById('impactText').value
-    };
-    localStorage.setItem(`desc_${monthKey}`, JSON.stringify(desc));
-    
-    // Update month indicator
-    document.getElementById('monthIndicator').innerText = formatDateForDisplay(new Date());
-}
-
-// Sort activities by date (oldest to newest)
-function sortActivitiesByDate() {
-    activities.sort((a, b) => {
-        const dateA = new Date(a.date + 'T12:00:00').getTime();
-        const dateB = new Date(b.date + 'T12:00:00').getTime();
-        return dateA - dateB; // Oldest first
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
     });
 }
-
-// Load data for current month
-function loadCurrentMonthData() {
-    const monthKey = getCurrentMonthKey();
-    
-    // Load activities
-    const savedActivities = localStorage.getItem(`activities_${monthKey}`);
-    if (savedActivities) {
-        activities = JSON.parse(savedActivities);
-        sortActivitiesByDate(); // Sort after loading
-    }
-    
-    // Load damas
-    const savedDamas = localStorage.getItem(`damas_${monthKey}`);
-    if (savedDamas) {
-        damasActivas = JSON.parse(savedDamas);
-    }
-    
-    // Load descriptions
-    const savedDesc = localStorage.getItem(`desc_${monthKey}`);
-    if (savedDesc) {
-        const d = JSON.parse(savedDesc);
-        document.getElementById('scopeText').value = d.scope || '';
-        document.getElementById('difficultiesText').value = d.difficulties || '';
-        document.getElementById('recommendationsText').value = d.recommendations || '';
-        document.getElementById('impactText').value = d.impact || '';
-    }
-    
-    // Update displays
-    actualizarListaDamas();
-    renderActivities();
-    updateCharts();
-    updateCharCounts();
-    document.getElementById('monthIndicator').innerText = formatDateForDisplay(new Date());
-}
-//// ========== CHARTS SECTION FIXED & STYLED ======
-
-
-
-function getWeekNumber(date) {
-    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-    const dayOfMonth = date.getDate();
-    return Math.ceil((dayOfMonth + firstDayOfMonth.getDay()) / 7);
-}
-
-function actualizarListaDamas() {
-    document.getElementById('totalDamasActivas').innerText = damasActivas.length;
-    
-    const lista = document.getElementById('rolesActivosList');
-    lista.innerHTML = '';
-    
-    damasActivas.forEach(dama => {
-        const div = document.createElement('div');
-        div.innerHTML = `
-            <div style="display:flex; flex-direction:row; align-items:flex-start;width:100%; gap:2px;">
-                <strong style="font-size:0.8rem;">${dama.nombre}</strong>
-                <small style="color:var(--text-medium);">${dama.rolNombre}</small>
-            </div>
-            <button onclick="eliminarDama(${dama.id})" style="background:var(--warning);">🗑️</button>
-        `;
-        lista.appendChild(div);
-    });
-}
-
-function agregarDama() {
-    const rolSelect = document.getElementById('damasRoles');
-    const nombreInput = document.getElementById('nuevaDamaNombre');
-    
-    if (!rolSelect.value || !nombreInput.value.trim()) {
-        alert('Selecciona un rol y escribe un nombre');
-        return;
-    }
-    
-    const rol = rolesDisponibles.find(r => r.id === rolSelect.value);
-    damasActivas.push({
-        id: Date.now() + Math.random(),
-        rolId: rol.id,
-        rolNombre: rol.nombre,
-        nombre: nombreInput.value.trim()
-    });
-    
-    nombreInput.value = '';
-    actualizarListaDamas();
-    saveAllToStorage();
-     setTimeout(() => {
-        updateCharts();
-    }, 100);
-}
-
-function eliminarDama(id) {
-    damasActivas = damasActivas.filter(d => d.id !== id);
-    actualizarListaDamas();
-    saveAllToStorage();
-    updateCharts();
-}
-
-
 function formatDateForDisplay(d, includeTime = false) {
     if (!d) return '';
     
@@ -1146,6 +542,234 @@ function getLocation(formId) {
     );
 }
 
+function sortActivitiesByDate() {
+    activities.sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+function updateFooterDates() {
+    const now = new Date();
+    const lastModified = localStorage.getItem(`lastModified_${getCurrentMonthKey()}`) || formatDateForDisplay(now, true);
+    document.getElementById('lastModifiedDate').innerText = lastModified;
+    document.getElementById('deliveryDate').innerText = formatDateForDisplay(now, true);
+}
+
+// ==========================================
+// STORAGE
+// ==========================================
+function saveAllToStorage() {
+    const monthKey = getCurrentMonthKey();
+    localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
+    localStorage.setItem(`damas_${monthKey}`, JSON.stringify(damasActivas));
+    const desc = {
+        scope: document.getElementById('scopeText')?.value || '',
+        difficulties: document.getElementById('difficultiesText')?.value || '',
+        recommendations: document.getElementById('recommendationsText')?.value || '',
+        impact: document.getElementById('impactText')?.value || ''
+    };
+    localStorage.setItem(`desc_${monthKey}`, JSON.stringify(desc));
+}
+
+function loadCurrentMonthData() {
+    const monthKey = getCurrentMonthKey();
+    const savedActivities = localStorage.getItem(`activities_${monthKey}`);
+    if (savedActivities) {
+        activities = JSON.parse(savedActivities);
+        sortActivitiesByDate();
+    }
+    const savedDamas = localStorage.getItem(`damas_${monthKey}`);
+    if (savedDamas) damasActivas = JSON.parse(savedDamas);
+    const savedDesc = localStorage.getItem(`desc_${monthKey}`);
+    if (savedDesc) {
+        const d = JSON.parse(savedDesc);
+        if(document.getElementById('scopeText')) document.getElementById('scopeText').value = d.scope || '';
+        if(document.getElementById('difficultiesText')) document.getElementById('difficultiesText').value = d.difficulties || '';
+        if(document.getElementById('recommendationsText')) document.getElementById('recommendationsText').value = d.recommendations || '';
+        if(document.getElementById('impactText')) document.getElementById('impactText').value = d.impact || '';
+    }
+    initProfileSystem(); // Add this line
+    actualizarListaDamas();
+    renderActivities();
+    updateCharts();
+    updateFooterDates();
+}
+
+// ==========================================
+// DAMAS MANAGEMENT
+// ==========================================
+// ==========================================
+// PROFILE SYSTEM (Complete replacement for damasActivas)
+// ==========================================
+let damaProfiles = []; // This replaces damasActivas
+let currentUser = null;
+
+function initProfileSystem() {
+    const monthKey = getCurrentMonthKey();
+    const savedProfiles = localStorage.getItem(`damaProfiles_${monthKey}`);
+    if (savedProfiles) {
+        damaProfiles = JSON.parse(savedProfiles);
+    } else {
+        // Create default Subdirector profile
+        const defaultProfile = {
+            id: `profile_${Date.now()}`,
+            nombre: 'Usuario Principal',
+            identidadSuffix: '',
+            rolNombre: 'Subdirectora',
+            totalHoras: 0,
+            actividadesCount: 0,
+            isPlaceholder: true,
+            mergedFrom: []
+        };
+        damaProfiles = [defaultProfile];
+    }
+    
+    currentUser = damaProfiles.find(p => p.rolNombre === 'Subdirectora') || damaProfiles[0];
+    saveProfiles();
+    renderProfileSelector();
+}
+
+function saveProfiles() {
+    const monthKey = getCurrentMonthKey();
+    localStorage.setItem(`damaProfiles_${monthKey}`, JSON.stringify(damaProfiles));
+}
+
+function renderProfileSelector() {
+    const profileSelect = document.getElementById('currentUserSelect');
+    if (!profileSelect) return;
+    
+    profileSelect.innerHTML = '<option value="">-- Seleccionar Usuario --</option>';
+    damaProfiles.forEach(profile => {
+        const option = document.createElement('option');
+        option.value = profile.id;
+        option.textContent = `${profile.nombre} (${profile.rolNombre}) - ${profile.totalHoras} hrs`;
+        if (currentUser && currentUser.id === profile.id) {
+            option.selected = true;
+        }
+        profileSelect.appendChild(option);
+    });
+    
+    profileSelect.onchange = (e) => {
+        if (e.target.value) {
+            currentUser = damaProfiles.find(p => p.id === e.target.value);
+            saveProfiles();
+            renderProfileSelector();
+            updateActiveDamasChart();
+        }
+    };
+}
+
+function showAddDamaModal() {
+    const nombre = prompt('Nombre completo de la Dama:');
+    if (!nombre) return;
+    const rol = prompt('Rol (Directora, Subdirectora, Voluntaria, etc.):', 'Voluntaria');
+    const identidad = prompt('Últimos 6 dígitos de identidad (opcional):', '');
+    const newProfile = {
+        id: `profile_${Date.now()}_${Math.random()}`,
+        nombre: nombre.trim(),
+        identidadSuffix: identidad || '000000',
+        rolNombre: rol || 'Voluntaria',
+        totalHoras: 0,
+        actividadesCount: 0,
+        isPlaceholder: identidad === '000000',
+        mergedFrom: []
+    };
+    damaProfiles.push(newProfile);
+    saveProfiles();
+    renderProfileSelector();
+    actualizarListaDamas();
+    updateActiveDamasChart();
+    alert(`✅ Dama ${nombre} agregada`);
+}
+
+function showManageDamas() {
+    let list = '=== LISTA DE DAMAS ===\n\n';
+    damaProfiles.forEach((p, i) => {
+        list += `${i + 1}. ${p.nombre}\n   Rol: ${p.rolNombre}\n   Horas: ${p.totalHoras}\n   Actividades: ${p.actividadesCount}\n   ID: ${p.identidadSuffix || 'N/A'}\n\n`;
+    });
+    alert(list);
+}
+
+function actualizarListaDamas() {
+    const totalEl = document.getElementById('totalDamasActivas');
+    if (totalEl) totalEl.innerText = damaProfiles.length;
+    
+    const lista = document.getElementById('rolesActivosList');
+    if (!lista) return;
+    lista.innerHTML = '';
+    
+    damaProfiles.forEach(dama => {
+        const div = document.createElement('div');
+        const idBadge = (dama.identidadSuffix && dama.identidadSuffix !== '000000' && dama.identidadSuffix !== '') ? 
+            `<span style="background:#4caf50; color:white; font-size:0.6rem; padding:2px 8px; border-radius:12px;">✓ ID:${dama.identidadSuffix}</span>` : 
+            `<span style="background:#ff9800; color:white; font-size:0.6rem; padding:2px 8px; border-radius:12px;">⚡ temporal</span>`;
+        div.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:flex-start; gap:4px;">
+                <div><strong>${escapeHtml(dama.nombre)}</strong> ${idBadge}</div>
+                <small>${dama.rolNombre} | ${dama.totalHoras} hrs | ${dama.actividadesCount} act.</small>
+            </div>
+            <button onclick="eliminarDama('${dama.id}')" style="background:var(--warning); border:none; border-radius:30px; padding:6px 12px; color:white;">🗑️</button>
+        `;
+        lista.appendChild(div);
+    });
+}
+
+function agregarDama() {
+    const rolSelect = document.getElementById('damasRoles');
+    const nombreInput = document.getElementById('nuevaDamaNombre');
+    const identidadInput = document.getElementById('identidadDama');
+    
+    if (!rolSelect?.value || !nombreInput?.value.trim()) {
+        alert('Selecciona un rol y escribe un nombre');
+        return;
+    }
+    
+    const rol = rolesDisponibles.find(r => r.id === rolSelect.value);
+    const identidadSuffix = identidadInput?.value?.trim() || '000000';
+    
+    // Check if profile already exists
+    const existing = damaProfiles.find(p => p.nombre.toLowerCase() === nombreInput.value.trim().toLowerCase());
+    if (existing) {
+        alert('Esta dama ya existe en el sistema');
+        return;
+    }
+    
+    const tempId = `profile_${Date.now()}_${identidadSuffix}`;
+    
+    damaProfiles.push({
+        id: tempId,
+        identidadSuffix: identidadSuffix,
+        nombre: nombreInput.value.trim(),
+        rolId: rol.id,
+        rolNombre: rol.nombre,
+        totalHoras: 0,
+        actividadesCount: 0,
+        isPlaceholder: identidadSuffix === '000000',
+        mergedFrom: []
+    });
+    
+    nombreInput.value = '';
+    if (identidadInput) identidadInput.value = '';
+    saveProfiles();
+    renderProfileSelector();
+    actualizarListaDamas();
+    updateActiveDamasChart();
+}
+
+function eliminarDama(id) {
+    const damaToDelete = damaProfiles.find(d => d.id === id);
+    if (!damaToDelete) return;
+    if (confirm(`¿Eliminar a ${damaToDelete.nombre}? Esto eliminará ${damaToDelete.totalHoras} horas registradas.`)) {
+        damaProfiles = damaProfiles.filter(d => d.id !== id);
+        if (currentUser && currentUser.id === id) {
+            currentUser = damaProfiles[0] || null;
+        }
+        saveProfiles();
+        renderProfileSelector();
+        actualizarListaDamas();
+        updateActiveDamasChart();
+    }
+}
+
+
+
 // ========== MULTIPLE ACTIVITY FORMS FUNCTIONS ==========
 // Create a new activity form HTML
 function createActivityForm(formId) {
@@ -1181,6 +805,7 @@ function createActivityForm(formId) {
                     <option value="Asesoria & Alinamiento">Asesoria & Alineación</option>
                     <option value="Gestion de Acuerdos">Gestión de Acuerdos</option>
                     <option value="Visita y Planificación">Visita y Planificación</option>
+                    <option value="Capacitación">Capacitación</option>
                     <option value="Convocatorio">Convocatorio</option>
                     <option value="Reunion por Video Llamada/Whatsaap">Reunion por Video Llamada/Whatsaap</option>
                     <option value="Junta Directiva">Junta Directiva</option>
@@ -1524,84 +1149,6 @@ function processImportedData(encodedData) {
     }
 }
 
-// ==========================================
-// CHARTS (Simplified)
-// ==========================================
-function updateBeneficiariesPieChart() {
-    const ctx = document.getElementById('chartBeneficiados')?.getContext('2d');
-    if (!ctx) return;
-    let women = 0, men = 0;
-    activities.forEach(a => { women += a.beneficiadas_mujeres || 0; men += a.beneficiados_hombres || 0; });
-    if (window.beneficiariesChart) window.beneficiariesChart.destroy();
-    window.beneficiariesChart = new Chart(ctx, {
-        type: 'doughnut', data: { labels: ['Mujeres', 'Hombres'], datasets: [{ data: [women, men], backgroundColor: ['#E34A2F', '#1E3A5F'] }] },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
-}
-
-function updateHoursBarChart() {
-    const ctx = document.getElementById('chartHoras')?.getContext('2d');
-    if (!ctx) return;
-    const totals = {};
-    activities.forEach(a => { if (a.horas) totals[a.name] = (totals[a.name] || 0) + a.horas; });
-    const sorted = Object.entries(totals).sort((a,b) => b[1]-a[1]).slice(0,5);
-    if (window.hoursChart) window.hoursChart.destroy();
-    window.hoursChart = new Chart(ctx, {
-        type: 'bar', data: { labels: sorted.map(s=>s[0]), datasets: [{ data: sorted.map(s=>s[1]), backgroundColor: '#1E3A5F' }] },
-        options: { indexAxis: 'y', responsive: true }
-    });
-}
-
-function updateCollaboratorsBarChart() {
-    const ctx = document.getElementById('chartDamas')?.getContext('2d');
-    if (!ctx) return;
-    const totals = {};
-    activities.forEach(a => { if (a.voluntarias) totals[a.name] = (totals[a.name] || 0) + a.voluntarias; });
-    if (window.collabChart) window.collabChart.destroy();
-    window.collabChart = new Chart(ctx, {
-        type: 'bar', data: { labels: Object.keys(totals), datasets: [{ data: Object.values(totals), backgroundColor: '#4F7CAC' }] },
-        options: { indexAxis: 'y', responsive: true }
-    });
-}
-
-function updateActiveDamasChart() {
-    const ctx = document.getElementById('chartActiveDamas')?.getContext('2d');
-    if (!ctx) return;
-    const damaHours = {};
-    damasActivas.forEach(d => { damaHours[d.id] = { nombre: d.nombre, horas: d.totalHoras || 0 }; });
-    const active = Object.values(damaHours).sort((a,b)=>b.horas-a.horas).slice(0,5);
-    if (window.activeDamasChart) window.activeDamasChart.destroy();
-    window.activeDamasChart = new Chart(ctx, {
-        type: 'bar', data: { labels: active.map(d=>d.nombre), datasets: [{ data: active.map(d=>d.horas), backgroundColor: '#E34A2F' }] },
-        options: { responsive: true }
-    });
-}
-
-function updateCharts() {
-    updateBeneficiariesPieChart();
-    updateHoursBarChart();
-    updateCollaboratorsBarChart();
-    updateActiveDamasChart();
-}
-
-// ==========================================
-// OTHER FUNCTIONS
-// ==========================================
-function exportPDF() { window.print(); }
-function saveData() { saveAllToStorage(); alert('✅ Datos guardados'); }
-function clearData() {
-    if (confirm('Borrar todo?')) {
-        activities = [];
-        damasActivas = [];
-        saveAllToStorage();
-        actualizarListaDamas();
-        renderActivities();
-        updateCharts();
-        alert('🗑️ Datos borrados');
-    }
-}
-
-
 function submitActivityForm(formId) {
     console.log('Submitting form:', formId);
     
@@ -1625,7 +1172,11 @@ function submitActivityForm(formId) {
         alert('Ingresa las horas o usa el timer');
         return;
     }
-
+    if (currentUser) {
+    currentUser.totalHoras += horas;
+    currentUser.actividadesCount++;
+    saveProfiles();
+}
     // Colaboradores
     const colabRows = document.querySelectorAll(`#colabsContainer_${formId} .colaborador-row`);
     const colaboradores = [];
@@ -1657,7 +1208,9 @@ const newActivity = {
     id: activityId,
     date,
     name,
-    actionType: document.getElementById(`newActionType_${formId}`).value, 
+    actionType: document.getElementById(`newActionType_${formId}`).value,
+    createdBy: currentUser ? currentUser.id : null,
+    createdByName: currentUser ? currentUser.nombre : 'Usuario', 
     voluntarias,
     horas,
     beneficiadas_mujeres: mujeres,
@@ -1802,18 +1355,19 @@ function renderActivities() {
         const qrDataArray = getQRCodeData(a);
 
         if (qrDataArray && qrDataArray.length > 0) {
-            qrCellHtml = `<div style="display:flex; flex-direction:column; gap:8px;">`;
+            // Change outer to ROW, not column
+            qrCellHtml = `<div style="display:flex; flex-direction:row; gap:16px; justify-content:center; flex-wrap:wrap;">`;
             
             qrDataArray.forEach((link, linkIndex) => {
                 const qrId = `qr_${a.id || idx}_${linkIndex}`;
                 qrCellHtml += `
-                    <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
                         <div id="${qrId}" 
-                            style="width:80px; height:80px; background:white; cursor:pointer;" 
+                            style="width:60px; height:60px; background:white; cursor:pointer;" 
                             onclick="window.open('${link}', '_blank')" 
                             title="Abrir enlace ${linkIndex + 1}">
                         </div>
-                        <span style="font-size:0.65rem; margin-top:4px; color:var(--text-light);">
+                        <span style="font-size:0.65rem; color:var(--text-light);">
                             Link ${linkIndex + 1}
                         </span>
                     </div>`;
@@ -1928,6 +1482,227 @@ function clearData() {
         alert('🗑️ Datos del mes actual borrados.');
     }
 }
+
+// ==========================================
+// CHARTS (Simplified)
+// ==========================================
+function updateBeneficiariesPieChart() {
+    const ctx = document.getElementById('chartBeneficiados')?.getContext('2d');
+    if (!ctx) return;
+    let women = 0, men = 0;
+    activities.forEach(a => { women += a.beneficiadas_mujeres || 0; men += a.beneficiados_hombres || 0; });
+    if (window.beneficiariesChart) window.beneficiariesChart.destroy();
+    window.beneficiariesChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Mujeres', 'Hombres'],
+            datasets: [{
+                data: [women, men],
+                backgroundColor: ['#E34A2F', '#1E3A5F'],
+                label: 'Beneficiarios'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: ${context.raw} personas`;
+                        }
+                    }
+                },
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 10 } }
+                }
+            }
+        }
+    });
+}
+
+function updateHoursBarChart() {
+    const ctx = document.getElementById('chartHoras')?.getContext('2d');
+    if (!ctx) return;
+    const totals = {};
+    activities.forEach(a => { if (a.horas) totals[a.name] = (totals[a.name] || 0) + a.horas; });
+    const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    if (window.hoursChart) window.hoursChart.destroy();
+    window.hoursChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sorted.map(s => s[0]),
+            datasets: [{
+                data: sorted.map(s => s[1]),
+                backgroundColor: '#1E3A5F',
+                label: 'Horas'
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Horas: ${context.raw}`;
+                        }
+                    }
+                },
+                legend: {
+                    position: 'top',
+                    labels: { font: { size: 10 } }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Horas',
+                        font: { size: 10, weight: 'bold' }
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Actividades',
+                        font: { size: 10, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateCollaboratorsBarChart() {
+    const ctx = document.getElementById('chartDamas')?.getContext('2d');
+    if (!ctx) return;
+    const totals = {};
+    activities.forEach(a => { if (a.voluntarias) totals[a.name] = (totals[a.name] || 0) + a.voluntarias; });
+    if (window.collabChart) window.collabChart.destroy();
+    window.collabChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(totals),
+            datasets: [{
+                data: Object.values(totals),
+                backgroundColor: '#4F7CAC',
+                label: 'Damas Voluntarias Presentes'
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Damas Voluntarias Presentes: ${context.raw}`;
+                        }
+                    }
+                },
+                legend: {
+                    position: 'top',
+                    labels: { font: { size: 10 } }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Cantidad de Damas',
+                        font: { size: 10, weight: 'bold' }
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Actividades',
+                        font: { size: 10, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateActiveDamasChart() {
+    const ctx = document.getElementById('chartActiveDamas')?.getContext('2d');
+    if (!ctx) return;
+    const active = damaProfiles.map(p => ({ nombre: p.nombre, horas: p.totalHoras || 0 })).sort((a, b) => b.horas - a.horas).slice(0, 8);
+    if (window.activeDamasChart) window.activeDamasChart.destroy();
+    window.activeDamasChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: active.map(d => d.nombre),
+            datasets: [{
+                data: active.map(d => d.horas),
+                backgroundColor: '#E34A2F',
+                label: 'Horas'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Horas: ${context.raw}`;
+                        }
+                    }
+                },
+                legend: {
+                    position: 'top',
+                    labels: { font: { size: 10 } }
+                }
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Horas',
+                        font: { size: 10, weight: 'bold' }
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Damas',
+                        font: { size: 10, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+function updateCharts() {
+    updateBeneficiariesPieChart();
+    updateHoursBarChart();
+    updateCollaboratorsBarChart();
+    updateActiveDamasChart();
+}
+
+// ==========================================
+// OTHER FUNCTIONS
+// ==========================================
+function exportPDF() { window.print(); }
+function saveData() { saveAllToStorage(); alert('✅ Datos guardados'); }
+function clearData() {
+    if (confirm('Borrar todo?')) {
+        activities = [];
+        damasActivas = [];
+        saveAllToStorage();
+        actualizarListaDamas();
+        renderActivities();
+        updateCharts();
+        alert('🗑️ Datos borrados');
+    }
+}
+
 
 function exportPDF() {
     window.print();
@@ -2073,13 +1848,20 @@ function exportToExcel() {
 // ==========================================
 // QR IMPORT FUNCTIONS
 // ==========================================
+// ==========================================
+// QR IMPORT FUNCTIONS - KEEP ONLY THIS VERSION
+// ==========================================
+
 
 function showImportQRModal() {
     document.getElementById('qrImportModal').style.display = 'flex';
 }
 
 function closeQRImportModal() {
-    if (qrStream) { qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
+    if (qrStream) { 
+        qrStream.getTracks().forEach(t => t.stop()); 
+        qrStream = null; 
+    }
     document.getElementById('qrImportModal').style.display = 'none';
     document.getElementById('qrPreview').innerHTML = '';
     document.getElementById('qrStatus').innerHTML = 'Listo para escanear';
@@ -2096,7 +1878,9 @@ function startQRScanner() {
             video.play();
             scanQRFromVideo(video);
         })
-        .catch(err => { document.getElementById('qrStatus').innerHTML = '❌ No se pudo acceder a la cámara'; });
+        .catch(err => { 
+            document.getElementById('qrStatus').innerHTML = '❌ No se pudo acceder a la cámara. Usa la opción manual.'; 
+        });
 }
 
 function scanQRFromVideo(video) {
@@ -2111,7 +1895,7 @@ function scanQRFromVideo(video) {
             const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
             const code = jsQR(imageData.data, canvas.width, canvas.height);
             if (code) {
-                document.getElementById('qrStatus').innerHTML = '✅ QR detectado!';
+                document.getElementById('qrStatus').innerHTML = '✅ QR detectado! Procesando...';
                 stopQRScanner();
                 processImportedData(code.data);
                 return;
@@ -2123,41 +1907,57 @@ function scanQRFromVideo(video) {
 }
 
 function stopQRScanner() {
-    if (qrStream) { qrStream.getTracks().forEach(track => track.stop()); qrStream = null; }
+    if (qrStream) { 
+        qrStream.getTracks().forEach(track => track.stop()); 
+        qrStream = null; 
+    }
 }
 
 function processManualQR() {
     const data = document.getElementById('manualQRData').value.trim();
-    if (data) processImportedData(data);
-    else alert('Ingresa el código QR');
+    if (data) {
+        processImportedData(data);
+    } else {
+        alert('Ingresa el código QR');
+    }
 }
-
 function processImportedData(encodedData) {
     try {
         let jsonStr = decodeURIComponent(encodedData);
         let importData = JSON.parse(jsonStr);
         if (importData.type !== 'dama_export') throw new Error('Invalid format');
         
-        // Find or create dama
-        let dama = damasActivas.find(d => d.id === importData.dama.id);
-        if (!dama) {
-            dama = damasActivas.find(d => d.nombre.toLowerCase() === importData.dama.nombre.toLowerCase());
+        // Find or create dama profile
+        let damaProfile = damaProfiles.find(d => d.id === importData.dama.id);
+        if (!damaProfile) {
+            damaProfile = damaProfiles.find(d => d.nombre.toLowerCase() === importData.dama.nombre.toLowerCase());
         }
-        if (!dama) {
-            dama = {
-                id: importData.dama.id,
+        if (!damaProfile) {
+            // Create new profile from imported data
+            damaProfile = {
+                id: importData.dama.id || `profile_${Date.now()}`,
                 identidadSuffix: importData.dama.identidadSuffix || '000000',
                 nombre: importData.dama.nombre,
                 rolId: importData.dama.rolId || 'voluntaria',
                 rolNombre: importData.dama.rolNombre || 'Voluntaria',
-                totalHoras: 0, actividadesCount: 0, mergedFrom: []
+                totalHoras: 0,
+                actividadesCount: 0,
+                isPlaceholder: importData.dama.identidadSuffix === '000000',
+                mergedFrom: []
             };
-            damasActivas.push(dama);
+            damaProfiles.push(damaProfile);
+            saveProfiles();
+            renderProfileSelector();
         }
         
-        // Import activities
+        let importedHours = 0;
+        let importedCount = 0;
+        
+        // Import activities - attribute to this dama profile
         importData.data.actividades.forEach(impAct => {
-            const exists = activities.some(act => act.date === impAct.date && act.name === impAct.name);
+            const exists = activities.some(act => act.date === impAct.date && 
+                                               act.name === impAct.name && 
+                                               act.createdBy === damaProfile.id);
             if (!exists) {
                 const newAct = {
                     id: Date.now() + Math.random(),
@@ -2171,27 +1971,40 @@ function processImportedData(encodedData) {
                     links: impAct.link ? [impAct.link] : [],
                     lat: impAct.lat || '',
                     lng: impAct.lng || '',
-                    importedFrom: [importData.dama.id]
+                    createdBy: damaProfile.id,
+                    createdByName: damaProfile.nombre,
+                    importedFromQR: true
                 };
                 activities.push(newAct);
+                importedHours += impAct.horas || 0;
+                importedCount++;
             }
         });
         
-        dama.totalHoras += importData.data.totalHoras;
-        dama.actividadesCount += importData.data.actividadesCount;
+        // Update dama profile hours
+        damaProfile.totalHoras += importData.data.totalHoras;
+        damaProfile.actividadesCount += importData.data.actividadesCount;
         
+        // Save everything
+        saveProfiles();
         sortActivitiesByDate();
         renderActivities();
         actualizarListaDamas();
         saveAllToStorage();
         updateCharts();
-        alert(`✅ Importado: ${importData.dama.nombre} - ${importData.data.totalHoras} horas`);
+        renderProfileSelector();
+        
+        alert(`✅ Importado: ${damaProfile.nombre}\n📊 Horas agregadas: ${importData.data.totalHoras}\n📋 Actividades: ${importedCount}`);
         closeQRImportModal();
+        
+        // Clear manual input
+        document.getElementById('manualQRData').value = '';
+        
     } catch(e) {
-        alert('❌ Error al procesar el QR');
+        console.error(e);
+        alert('❌ Error al procesar el QR: ' + e.message);
     }
 }
-
 
 // ==========================================
 // SERVICE WORKER WITH UPDATE HANDLING
@@ -2205,30 +2018,31 @@ function applyUpdate() {
 }
 
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').then(reg => {
-        console.log('Service Worker registered successfully');
-        
-        // Check for updates
-        reg.onupdatefound = () => {
-            newWorker = reg.installing;
-            newWorker.onstatechange = () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    // New version available - show update banner
-                    const banner = document.getElementById('update-banner');
-                    if (banner) {
-                        banner.style.display = 'block';
-                    } else {
-                        // Create banner if it doesn't exist
-                        const updateBanner = document.createElement('div');
-                        updateBanner.id = 'update-banner';
-                        updateBanner.style.cssText = 'display:block; background:var(--secondary); color:white; padding:12px; text-align:center; position:fixed; top:0; left:0; right:0; z-index:1000; font-weight:bold;';
-                        updateBanner.innerHTML = 'Nueva versión disponible <button onclick="applyUpdate()" style="margin-left:15px; padding:5px 15px; border-radius:20px; border:none; background:white; color:var(--secondary); cursor:pointer;">Actualizar Ahora</button>';
-                        document.body.insertBefore(updateBanner, document.body.firstChild);
+    navigator.serviceWorker.register('./sw.js')
+        .then(reg => {
+            console.log('Service Worker registered successfully');
+            
+            // Check for updates
+            reg.onupdatefound = () => {
+                newWorker = reg.installing;
+                newWorker.onstatechange = () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        // New version available - show update banner
+                        const banner = document.getElementById('update-banner');
+                        if (banner) {
+                            banner.style.display = 'block';
+                        } else {
+                            const updateBanner = document.createElement('div');
+                            updateBanner.id = 'update-banner';
+                            updateBanner.style.cssText = 'display:block; background:var(--secondary); color:white; padding:12px; text-align:center; position:fixed; top:0; left:0; right:0; z-index:1000; font-weight:bold; cursor:pointer;';
+                            updateBanner.innerHTML = '🔄 Nueva versión disponible <button onclick="applyUpdate()" style="margin-left:15px; padding:5px 15px; border-radius:20px; border:none; background:white; color:var(--secondary); cursor:pointer;">Actualizar Ahora</button>';
+                            document.body.insertBefore(updateBanner, document.body.firstChild);
+                        }
                     }
-                }
+                };
             };
-        };
-    }).catch(err => console.log('Service Worker error:', err));
+        })
+        .catch(err => console.log('Service Worker error:', err));
 
     // Auto-reload when update is applied
     let refreshing;
@@ -2238,11 +2052,32 @@ if ('serviceWorker' in navigator) {
         refreshing = true;
     });
 }
-function applyUpdate() {
-  if (newWorker) {
-    newWorker.postMessage({ type: 'SKIP_WAITING' });
-  }
-}
+
+// Check if online/offline and show status
+window.addEventListener('load', () => {
+    function updateOnlineStatus() {
+        const statusDiv = document.getElementById('onlineStatus');
+        if (!statusDiv) {
+            const status = document.createElement('div');
+            status.id = 'onlineStatus';
+            status.style.cssText = 'position:fixed; bottom:10px; right:10px; background:rgba(0,0,0,0.7); color:white; padding:4px 12px; border-radius:20px; font-size:0.7rem; z-index:1000;';
+            document.body.appendChild(status);
+        }
+        const statusEl = document.getElementById('onlineStatus');
+        if (navigator.onLine) {
+            statusEl.innerHTML = '✅ En línea';
+            statusEl.style.backgroundColor = 'rgba(46,125,50,0.9)';
+        } else {
+            statusEl.innerHTML = '📴 Modo offline - Los datos se guardarán localmente';
+            statusEl.style.backgroundColor = 'rgba(237,106,94,0.9)';
+        }
+    }
+    
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     // Populate roles dropdown
     const roleSelect = document.getElementById('damasRoles');
