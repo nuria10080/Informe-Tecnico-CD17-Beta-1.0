@@ -1,6 +1,6 @@
 // sw.js - Service Worker for offline support
 
-const CACHE_NAME = 'cd17-report-v2'; // 🔥 CHANGE THIS on every deploy
+const CACHE_NAME = 'cd17-report-v1.2'; // 🔥 CHANGE THIS on every deploy
 
 const urlsToCache = [
     './',
@@ -86,4 +86,10 @@ self.addEventListener('fetch', event => {
             });
         })
     );
+});
+// 🔥 Listen for update trigger from UI
+self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
