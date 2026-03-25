@@ -78,7 +78,6 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
 /* Mobile Responsive */
 @media (max-width: 800px) { .charts-container { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 600px) { 
-.damas-dropdown {min-width: 85vw} 
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .desc-grid { grid-template-columns: 1fr; }
     .report-header { flex-direction: column; align-items: flex-start; }
@@ -325,18 +324,39 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
     <button class="action-button print" onclick="exportPDF()">📄 Imprimir</button>
     <button class="action-button save" onclick="saveData()">💾 Guardar</button>
     <button class="action-button clear" onclick="clearData()">🗑️ Borrar</button>
-    <!-- QR Import Modal -->
-    <div id="qrImportModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center;">
-        <div style="background:white; border-radius:30px; max-width:90%; width:400px; padding:20px;">
-            <h3 style="margin-bottom:15px;">📷 Importar desde QR</h3>
-            <div id="qrPreview" style="background:#000; border-radius:16px; min-height:200px;"></div>
-            <button onclick="startQRScanner()" style="margin:10px 0; padding:10px; background:var(--accent); color:white; border:none; border-radius:30px; width:100%; cursor:pointer;">📷 Iniciar Cámara</button>
-            <input type="text" id="manualQRData" placeholder="O pegar código QR aquí" style="width:100%; padding:10px; margin:10px 0; border-radius:30px; border:1px solid var(--neutral-border);">
-            <button onclick="processManualQR()" style="padding:10px; background:var(--primary); color:white; border:none; border-radius:30px; width:100%; cursor:pointer;">🔍 Procesar QR Manual</button>
-            <button onclick="closeQRImportModal()" style="margin-top:10px; padding:10px; background:var(--warning); color:white; border:none; border-radius:30px; width:100%; cursor:pointer;">❌ Cerrar</button>
-            <p id="qrStatus" style="font-size:0.7rem; margin-top:8px; text-align:center;"></p>
+</div>
+<!-- QR Import Modal -->
+<div id="qrImportModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:30px; max-width:90%; width:400px; padding:20px; max-height:90vh; overflow-y:auto;">
+        <h3 style="margin-bottom:15px;">📷 Importar desde QR</h3>
+        
+        <!-- Camera Preview -->
+        <div id="qrPreview" style="background:#000; border-radius:16px; min-height:200px; display:flex; align-items:center; justify-content:center;">
+            <p style="color:white; font-size:0.7rem;">Presiona "Iniciar Cámara"</p>
+        </div>
+        <button onclick="startQRScanner()" style="margin:10px 0; padding:12px; background:var(--accent); color:white; border:none; border-radius:30px; width:100%; cursor:pointer;">📷 Iniciar Cámara</button>
+        
+        <!-- Divider -->
+        <div style="border-top:1px solid var(--neutral-border); margin:15px 0;"></div>
+        
+        <!-- Image Upload for QR Code -->
+        <div id="qrImageUploadContainer" style="margin:10px 0; padding:12px; background:var(--neutral-light); border-radius:16px; border:1px dashed var(--accent); text-align:center;">
+            <label style="display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer;">
+                <span style="font-size:1.5rem;">📁</span>
+                <span style="font-size:0.75rem; font-weight:500;">Subir imagen del código QR</span>
+                <span style="font-size:0.6rem; color:var(--text-medium);">(selecciona una foto del código QR)</span>
+                <input type="file" id="qrImageUpload" accept="image/*" style="display:none;">
+            </label>
+        </div>
+        
+        <p id="qrStatus" style="font-size:0.7rem; margin:12px 0; text-align:center; color:var(--text-medium);">Esperando imagen o escaneo...</p>
+        
+        <!-- Action Buttons -->
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button onclick="closeQRImportModal()" style="flex:1; padding:12px; background:var(--warning); color:white; border:none; border-radius:30px; cursor:pointer;">❌ Cerrar</button>
         </div>
     </div>
+</div>
 </div>
 
 
@@ -1028,19 +1048,29 @@ function addColaboradorToForm(formId) {
 }
 
 // ==========================================
-// QR IMPORT FUNCTIONS
+// QR IMPORT FUNCTIONS - UPDATED FOR GITHUB GIST
 // ==========================================
 let qrStream = null;
 
 function showImportQRModal() {
     document.getElementById('qrImportModal').style.display = 'flex';
+    // Clear previous status
+    document.getElementById('qrStatus').innerHTML = 'Esperando imagen o escaneo...';
+    document.getElementById('qrStatus').style.color = 'var(--text-medium)';
+    // Clear file input
+    const fileInput = document.getElementById('qrImageUpload');
+    if (fileInput) fileInput.value = '';
 }
 
 function closeQRImportModal() {
-    if (qrStream) { qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
+    if (qrStream) { 
+        qrStream.getTracks().forEach(t => t.stop()); 
+        qrStream = null; 
+    }
     document.getElementById('qrImportModal').style.display = 'none';
-    document.getElementById('qrPreview').innerHTML = '';
-    document.getElementById('qrStatus').innerHTML = 'Listo para escanear';
+    document.getElementById('qrPreview').innerHTML = '<p style="color:white; font-size:0.7rem;">Presiona "Iniciar Cámara"</p>';
+    document.getElementById('qrStatus').innerHTML = 'Esperando imagen o escaneo...';
+    document.getElementById('qrStatus').style.color = 'var(--text-medium)';
 }
 
 function startQRScanner() {
@@ -1053,13 +1083,19 @@ function startQRScanner() {
             video.srcObject = stream;
             video.play();
             scanQRFromVideo(video);
+            document.getElementById('qrStatus').innerHTML = '📷 Escaneando... Apunta al código QR';
+            document.getElementById('qrStatus').style.color = 'var(--accent)';
         })
-        .catch(err => { document.getElementById('qrStatus').innerHTML = '❌ No se pudo acceder a la cámara'; });
+        .catch(err => { 
+            document.getElementById('qrStatus').innerHTML = '❌ No se pudo acceder a la cámara';
+            document.getElementById('qrStatus').style.color = 'var(--warning)';
+        });
 }
 
 function scanQRFromVideo(video) {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
+    
     function scanFrame() {
         if (!qrStream) return;
         if (video.videoWidth > 0) {
@@ -1068,8 +1104,10 @@ function scanQRFromVideo(video) {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
             const code = jsQR(imageData.data, canvas.width, canvas.height);
+            
             if (code) {
-                document.getElementById('qrStatus').innerHTML = '✅ QR detectado!';
+                document.getElementById('qrStatus').innerHTML = '✅ QR detectado! Procesando...';
+                document.getElementById('qrStatus').style.color = 'var(--success)';
                 stopQRScanner();
                 processImportedData(code.data);
                 return;
@@ -1081,25 +1119,151 @@ function scanQRFromVideo(video) {
 }
 
 function stopQRScanner() {
-    if (qrStream) { qrStream.getTracks().forEach(track => track.stop()); qrStream = null; }
+    if (qrStream) { 
+        qrStream.getTracks().forEach(track => track.stop()); 
+        qrStream = null; 
+    }
 }
 
-function processManualQR() {
-    const data = document.getElementById('manualQRData').value.trim();
-    if (data) processImportedData(data);
-    else alert('Ingresa el código QR');
+// Handle image upload - this runs when user selects a file
+function setupQRImageUpload() {
+    const fileInput = document.getElementById('qrImageUpload');
+    if (!fileInput) return;
+    
+    // Remove any existing listener to avoid duplicates
+    fileInput.removeEventListener('change', handleImageUpload);
+    fileInput.addEventListener('change', handleImageUpload);
 }
 
-function processImportedData(encodedData) {
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const statusDiv = document.getElementById('qrStatus');
+    statusDiv.innerHTML = '📷 Procesando imagen...';
+    statusDiv.style.color = 'var(--accent)';
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            // Create canvas to read QR code
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            // Scale image for better detection
+            let width = img.width;
+            let height = img.height;
+            const maxSize = 800;
+            
+            if (width > maxSize || height > maxSize) {
+                const ratio = Math.min(maxSize / width, maxSize / height);
+                width = Math.floor(width * ratio);
+                height = Math.floor(height * ratio);
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            context.drawImage(img, 0, 0, width, height);
+            
+            // Try to detect QR code
+            const imageData = context.getImageData(0, 0, width, height);
+            const code = jsQR(imageData.data, canvas.width, canvas.height, {
+                inversionAttempts: "attemptBoth"
+            });
+            
+            if (code) {
+                statusDiv.innerHTML = '✅ QR detectado en la imagen! Procesando...';
+                statusDiv.style.color = 'var(--success)';
+                // Show success alert
+                alert('✅ Imagen procesada correctamente. Importando datos...');
+                // Process the data
+                processImportedData(code.data);
+                // Clear the file input
+                document.getElementById('qrImageUpload').value = '';
+            } else {
+                statusDiv.innerHTML = '❌ No se encontró código QR en la imagen. Intenta con otra foto más clara.';
+                statusDiv.style.color = 'var(--warning)';
+                alert('❌ No se pudo leer el código QR. Asegúrate que la imagen esté clara y el código sea visible.');
+                // Clear the file input so user can try again
+                document.getElementById('qrImageUpload').value = '';
+            }
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    setupQRImageUpload();
+});
+
+// 👈 NEW: Fetch data from GitHub Gist URL
+async function fetchDataFromGist(url) {
     try {
-        let jsonStr = decodeURIComponent(encodedData);
-        let importData = JSON.parse(jsonStr);
-        if (importData.type !== 'dama_export') throw new Error('Invalid format');
+        // Extract gist ID from URL
+        // URL format: https://gist.github.com/username/gist-id
+        const gistIdMatch = url.match(/gist\.github\.com\/[^\/]+\/([a-f0-9]+)/);
+        if (!gistIdMatch) {
+            throw new Error('URL de Gist inválida');
+        }
         
-        // Find or create dama
+        const gistId = gistIdMatch[1];
+        
+        // Fetch the raw data from GitHub API
+        const response = await fetch(`https://api.github.com/gists/${gistId}`);
+        if (!response.ok) {
+            throw new Error(`Error fetching gist: ${response.status}`);
+        }
+        
+        const gistData = await response.json();
+        
+        // Get the first file from the gist (there's only one file)
+        const files = gistData.files;
+        const firstFileName = Object.keys(files)[0];
+        const fileContent = files[firstFileName].content;
+        
+        // Parse the JSON content
+        return JSON.parse(fileContent);
+        
+    } catch (error) {
+        console.error('Error fetching gist:', error);
+        throw new Error('No se pudo obtener los datos del enlace');
+    }
+}
+
+// 👈 REPLACE: Updated processImportedData to handle both direct JSON and Gist URLs
+async function processImportedData(scannedData) {
+    try {
+        let importData;
+        let isGistUrl = false;
+        
+        // Check if scanned data is a GitHub Gist URL
+        if (scannedData.includes('gist.github.com')) {
+            isGistUrl = true;
+            document.getElementById('qrStatus').innerHTML = '📥 Descargando datos del Gist...';
+            
+            // Fetch data from GitHub Gist
+            importData = await fetchDataFromGist(scannedData);
+            
+        } else {
+            // Original behavior: decode direct JSON from QR
+            let jsonStr = decodeURIComponent(scannedData);
+            importData = JSON.parse(jsonStr);
+        }
+        
+        // Validate the imported data
+        if (importData.type !== 'dama_export') {
+            throw new Error('Formato inválido: no es un reporte de Damas');
+        }
+        
+        document.getElementById('qrStatus').innerHTML = '📊 Procesando datos...';
+        
+        // Find or create dama (same as before)
         let dama = damasActivas.find(d => d.id === importData.dama.id);
         if (!dama) {
-            dama = damasActivas.find(d => d.nombre.toLowerCase() === importData.dama.nombre.toLowerCase());
+            dama = damasActivas.find(d => d.nombre && d.nombre.toLowerCase() === importData.dama.nombre?.toLowerCase());
         }
         if (!dama) {
             dama = {
@@ -1108,15 +1272,40 @@ function processImportedData(encodedData) {
                 nombre: importData.dama.nombre,
                 rolId: importData.dama.rolId || 'voluntaria',
                 rolNombre: importData.dama.rolNombre || 'Voluntaria',
-                totalHoras: 0, actividadesCount: 0, mergedFrom: []
+                totalHoras: 0, 
+                actividadesCount: 0, 
+                mergedFrom: []
             };
             damasActivas.push(dama);
         }
         
         // Import activities
-        importData.data.actividades.forEach(impAct => {
-            const exists = activities.some(act => act.date === impAct.date && act.name === impAct.name);
+        let importedCount = 0;
+        let totalHoras = 0;
+        
+        // Handle both data structures (old version had 'data', new version has 'actividades')
+        const actividades = importData.data?.actividades || importData.actividades || [];
+        
+        actividades.forEach(impAct => {
+            // Check if activity already exists
+            const exists = activities.some(act => 
+                act.date === impAct.date && 
+                act.name === impAct.name &&
+                act.createdBy === dama.id
+            );
+            
             if (!exists) {
+                // Handle links - could be string or array
+                let linksArray = [];
+                if (impAct.link) {
+                    if (typeof impAct.link === 'string') {
+                        // Split by comma if multiple links
+                        linksArray = impAct.link.split(',').map(l => l.trim()).filter(l => l);
+                    } else if (Array.isArray(impAct.link)) {
+                        linksArray = impAct.link;
+                    }
+                }
+                
                 const newAct = {
                     id: Date.now() + Math.random(),
                     date: impAct.date,
@@ -1126,29 +1315,55 @@ function processImportedData(encodedData) {
                     beneficiadas_mujeres: impAct.beneficiadas_mujeres || 0,
                     beneficiados_hombres: impAct.beneficiados_hombres || 0,
                     voluntarias: 1,
-                    links: impAct.link ? [impAct.link] : [],
+                    links: linksArray,
                     lat: impAct.lat || '',
                     lng: impAct.lng || '',
+                    createdBy: dama.id,
+                    createdByName: dama.nombre,
                     importedFrom: [importData.dama.id]
                 };
                 activities.push(newAct);
+                importedCount++;
+                totalHoras += impAct.horas || 0;
             }
         });
         
-        dama.totalHoras += importData.data.totalHoras;
-        dama.actividadesCount += importData.data.actividadesCount;
+        // Update dama totals
+        dama.totalHoras += importData.data?.totalHoras || totalHoras;
+        dama.actividadesCount += importedCount;
+        
+        // Also import feedback if available (new version)
+        if (importData.feedback) {
+            // Store feedback in a separate structure or attach to dama
+            if (!dama.feedback) dama.feedback = {};
+            dama.feedback = {
+                ...dama.feedback,
+                scope: importData.feedback.scope,
+                difficulties: importData.feedback.difficulties,
+                recommendations: importData.feedback.recommendations,
+                impact: importData.feedback.impact,
+                lastUpdate: new Date().toISOString()
+            };
+        }
         
         sortActivitiesByDate();
         renderActivities();
         actualizarListaDamas();
         saveAllToStorage();
         updateCharts();
-        alert(`✅ Importado: ${importData.dama.nombre} - ${importData.data.totalHoras} horas`);
+        
+        const sourceType = isGistUrl ? 'GitHub Gist' : 'QR directo';
+        alert(`✅ Importado desde ${sourceType}: ${importData.dama.nombre}\n📋 ${importedCount} actividades\n⏱️ ${totalHoras} horas`);
+        
         closeQRImportModal();
+        
     } catch(e) {
-        alert('❌ Error al procesar el QR');
+        console.error('Import error:', e);
+        alert(`❌ Error al procesar: ${e.message}`);
+        document.getElementById('qrStatus').innerHTML = '❌ Error al procesar el código';
     }
 }
+
 
 function submitActivityForm(formId) {
     console.log('Submitting form:', formId);
