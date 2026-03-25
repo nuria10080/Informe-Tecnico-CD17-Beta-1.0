@@ -2113,130 +2113,6 @@ function exportToExcel() {
     URL.revokeObjectURL(link.href);
 }
 
-
-function scanQRFromVideo(video) {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    function scanFrame() {
-        if (!qrStream) return;
-        if (video.videoWidth > 0) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, canvas.width, canvas.height);
-            if (code) {
-                document.getElementById('qrStatus').innerHTML = '✅ QR detectado! Procesando...';
-                stopQRScanner();
-                processImportedData(code.data);
-                return;
-            }
-        }
-        requestAnimationFrame(scanFrame);
-    }
-    scanFrame();
-}
-
-function stopQRScanner() {
-    if (qrStream) { 
-        qrStream.getTracks().forEach(track => track.stop()); 
-        qrStream = null; 
-    }
-}
-
-function processManualQR() {
-    const data = document.getElementById('manualQRData').value.trim();
-    if (data) {
-        processImportedData(data);
-    } else {
-        alert('Ingresa el código QR');
-    }
-}
-function processImportedData(encodedData) {
-    try {
-        let jsonStr = decodeURIComponent(encodedData);
-        let importData = JSON.parse(jsonStr);
-        if (importData.type !== 'dama_export') throw new Error('Invalid format');
-        
-        // Find or create dama profile
-        let damaProfile = damaProfiles.find(d => d.id === importData.dama.id);
-        if (!damaProfile) {
-            damaProfile = damaProfiles.find(d => d.nombre.toLowerCase() === importData.dama.nombre.toLowerCase());
-        }
-        if (!damaProfile) {
-            // Create new profile from imported data
-            damaProfile = {
-                id: importData.dama.id || `profile_${Date.now()}`,
-                identidadSuffix: importData.dama.identidadSuffix || '000000',
-                nombre: importData.dama.nombre,
-                rolId: importData.dama.rolId || 'voluntaria',
-                rolNombre: importData.dama.rolNombre || 'Voluntaria',
-                totalHoras: 0,
-                actividadesCount: 0,
-                isPlaceholder: importData.dama.identidadSuffix === '000000',
-                mergedFrom: []
-            };
-            damaProfiles.push(damaProfile);
-            saveProfiles();
-            renderProfileSelector();
-        }
-        
-        let importedHours = 0;
-        let importedCount = 0;
-        
-        // Import activities - attribute to this dama profile
-        importData.data.actividades.forEach(impAct => {
-            const exists = activities.some(act => act.date === impAct.date && 
-                                               act.name === impAct.name && 
-                                               act.createdBy === damaProfile.id);
-            if (!exists) {
-                const newAct = {
-                    id: Date.now() + Math.random(),
-                    date: impAct.date,
-                    name: impAct.name,
-                    actionType: impAct.actionType || 'campo',
-                    horas: impAct.horas || 0,
-                    beneficiadas_mujeres: impAct.beneficiadas_mujeres || 0,
-                    beneficiados_hombres: impAct.beneficiados_hombres || 0,
-                    voluntarias: 1,
-                    links: impAct.link ? [impAct.link] : [],
-                    lat: impAct.lat || '',
-                    lng: impAct.lng || '',
-                    createdBy: damaProfile.id,
-                    createdByName: damaProfile.nombre,
-                    importedFromQR: true
-                };
-                activities.push(newAct);
-                importedHours += impAct.horas || 0;
-                importedCount++;
-            }
-        });
-        
-        // Update dama profile hours
-        damaProfile.totalHoras += importData.data.totalHoras;
-        damaProfile.actividadesCount += importData.data.actividadesCount;
-        
-        // Save everything
-        saveProfiles();
-        sortActivitiesByDate();
-        renderActivities();
-        actualizarListaDamas();
-        saveAllToStorage();
-        updateCharts();
-        renderProfileSelector();
-        
-        alert(`✅ Importado: ${damaProfile.nombre}\n📊 Horas agregadas: ${importData.data.totalHoras}\n📋 Actividades: ${importedCount}`);
-        closeQRImportModal();
-        
-        // Clear manual input
-        document.getElementById('manualQRData').value = '';
-        
-    } catch(e) {
-        console.error(e);
-        alert('❌ Error al procesar el QR: ' + e.message);
-    }
-}
-
 // ==========================================
 // SERVICE WORKER WITH UPDATE HANDLING
 // ==========================================
@@ -2326,6 +2202,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadCurrentMonthData();
     loadTimerState();
     setInterval(saveAllToStorage, 30000);
+    setupQRImageUpload();
 });
 
   
