@@ -1,5 +1,7 @@
 // sw.js - Service Worker for offline support
-const CACHE_NAME = 'cd17-report-v1';
+
+const CACHE_NAME = 'cd17-report-v2'; // 🔥 CHANGE THIS on every deploy
+
 const urlsToCache = [
     './',
     './index.html',
@@ -9,9 +11,11 @@ const urlsToCache = [
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
 
-// Install event - cache essential files
+// 🔧 INSTALL - cache core files
 self.addEventListener('install', event => {
     console.log('[Service Worker] Installing...');
+    self.skipWaiting();
+
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
@@ -20,12 +24,12 @@ self.addEventListener('install', event => {
             })
             .catch(err => console.log('[Service Worker] Cache error:', err))
     );
-    self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// 🔧 ACTIVATE - delete old caches
 self.addEventListener('activate', event => {
     console.log('[Service Worker] Activating...');
+
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
@@ -38,33 +42,48 @@ self.addEventListener('activate', event => {
             );
         })
     );
+
     return self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// 🔥 FETCH - smart caching strategy
 self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                // Return cached response if found
-                if (response) {
-                    return response;
-                }
-                // Otherwise fetch from network
-                return fetch(event.request)
-                    .then(response => {
-                        // Don't cache non-successful responses
-                        if (!response || response.status !== 200) {
-                            return response;
-                        }
-                        // Clone the response
-                        const responseToCache = response.clone();
-                        caches.open(CACHE_NAME)
-                            .then(cache => {
-                                cache.put(event.request, responseToCache);
-                            });
-                        return response;
+    const request = event.request;
+
+    // ✅ NETWORK-FIRST for HTML (ensures updates show)
+    if (request.headers.get('accept')?.includes('text/html')) {
+        event.respondWith(
+            fetch(request)
+                .then(response => {
+                    const responseClone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(request, responseClone);
                     });
-            })
+                    return response;
+                })
+                .catch(() => caches.match(request)) // offline fallback
+        );
+        return;
+    }
+
+    // 📦 CACHE-FIRST for assets (fast + offline)
+    event.respondWith(
+        caches.match(request).then(response => {
+            if (response) return response;
+
+            return fetch(request).then(networkResponse => {
+                if (!networkResponse || networkResponse.status !== 200) {
+                    return networkResponse;
+                }
+
+                const responseClone = networkResponse.clone();
+
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(request, responseClone);
+                });
+
+                return networkResponse;
+            });
+        })
     );
 });
