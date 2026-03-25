@@ -1175,6 +1175,17 @@ function handleImageUpload(event) {
     
     console.log('📁 File selected:', file.name, file.type, file.size);
     
+    // Check if jsQR is loaded
+    if (typeof jsQR === 'undefined') {
+        console.error('❌ jsQR library not loaded!');
+        const statusDiv = document.getElementById('qrStatus');
+        if (statusDiv) {
+            statusDiv.innerHTML = '❌ Error: Biblioteca QR no cargada. Recarga la página.';
+            statusDiv.style.color = 'var(--warning)';
+        }
+        return;
+    }
+    
     const statusDiv = document.getElementById('qrStatus');
     if (statusDiv) {
         statusDiv.innerHTML = '📷 Procesando imagen...';
@@ -1205,6 +1216,8 @@ function handleImageUpload(event) {
             context.drawImage(img, 0, 0, width, height);
             
             const imageData = context.getImageData(0, 0, width, height);
+            
+            console.log('🔍 Attempting to scan QR code...');
             const code = jsQR(imageData.data, canvas.width, canvas.height, {
                 inversionAttempts: "attemptBoth"
             });
@@ -1246,7 +1259,6 @@ function handleImageUpload(event) {
     };
     reader.readAsDataURL(file);
 }
-
 // Fetch data from GitHub Gist URL
 async function fetchDataFromGist(url) {
     console.log('📥 Fetching from Gist URL:', url);
@@ -1287,24 +1299,62 @@ async function processImportedData(scannedData) {
         let importData;
         let isGistUrl = false;
         
-        // 👈 KEY: Check if scanned data is a GitHub Gist URL
+        // Check if scanned data is a GitHub Gist URL
         if (scannedData.includes('gist.github.com')) {
             isGistUrl = true;
             const statusDiv = document.getElementById('qrStatus');
             if (statusDiv) statusDiv.innerHTML = '📥 Descargando datos del Gist...';
             
             console.log('🔗 Detected Gist URL, fetching...');
-            importData = await fetchDataFromGist(scannedData);
+            
+            // Parse the Gist URL to get the raw content URL
+            let rawUrl = scannedData;
+            if (scannedData.includes('gist.github.com')) {
+                // Convert to raw URL format
+                const gistMatch = scannedData.match(/gist\.github\.com\/[^\/]+\/([a-f0-9]+)/);
+                if (gistMatch) {
+                    rawUrl = `https://gist.githubusercontent.com/raw/${gistMatch[1]}`;
+                }
+            }
+            
+            console.log('📥 Fetching from:', rawUrl);
+            
+            // Try to fetch with CORS handling
+            const response = await fetch(rawUrl, {
+                mode: 'cors',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Error fetching: ${response.status}`);
+            }
+            
+            const text = await response.text();
+            console.log('📥 Received data:', text.substring(0, 100));
+            
+            try {
+                importData = JSON.parse(text);
+            } catch (e) {
+                // Try to decode if it's URL encoded
+                importData = JSON.parse(decodeURIComponent(text));
+            }
             
         } else {
             // Original behavior: decode direct JSON from QR
             console.log('📄 Processing direct JSON data');
-            let jsonStr = decodeURIComponent(scannedData);
-            importData = JSON.parse(jsonStr);
+            let jsonStr = scannedData;
+            try {
+                importData = JSON.parse(jsonStr);
+            } catch (e) {
+                // Try to decode if it's URL encoded
+                importData = JSON.parse(decodeURIComponent(jsonStr));
+            }
         }
         
         // Validate the imported data
-        if (importData.type !== 'dama_export') {
+        if (!importData || importData.type !== 'dama_export') {
             throw new Error('Formato inválido: no es un reporte de Damas');
         }
         
@@ -1369,7 +1419,7 @@ async function processImportedData(scannedData) {
                     horas: impAct.horas || 0,
                     beneficiadas_mujeres: impAct.beneficiadas_mujeres || 0,
                     beneficiados_hombres: impAct.beneficiados_hombres || 0,
-                    voluntarias: 1,
+                    voluntarias: impAct.voluntarias || 1,
                     links: linksArray,
                     lat: impAct.lat || '',
                     lng: impAct.lng || '',
@@ -1384,8 +1434,8 @@ async function processImportedData(scannedData) {
         });
         
         // Update dama profile hours
-        damaProfile.totalHoras += importData.data?.totalHoras || importedHours;
-        damaProfile.actividadesCount += importedCount;
+        damaProfile.totalHoras = (damaProfile.totalHoras || 0) + importedHours;
+        damaProfile.actividadesCount = (damaProfile.actividadesCount || 0) + importedCount;
         
         // Save everything
         saveProfiles();
@@ -1412,7 +1462,6 @@ async function processImportedData(scannedData) {
         if (statusDiv) statusDiv.innerHTML = '❌ Error al procesar el código';
     }
 }
-
 
 
 
@@ -2016,29 +2065,44 @@ document.getElementById('impactText').addEventListener('input', function() {
     saveAllToStorage();
 });
 
-
-// Single DOMContentLoaded event - NO initial form
+// Single DOMContentLoaded event - everything combined
 document.addEventListener('DOMContentLoaded', () => {
-    checkAndClearMonthChange();
-    setupQRImageUpload();
+    // QR upload setup
+    const setupImageUpload = () => {
+        const fileInput = document.getElementById('qrImageUpload');
+        if (fileInput) {
+            console.log('✅ Found qrImageUpload element');
+            fileInput.removeEventListener('change', handleImageUpload);
+            fileInput.addEventListener('change', handleImageUpload);
+            console.log('✅ QR image upload handler attached');
+        } else {
+            console.warn('❌ qrImageUpload element not found, retrying...');
+            setTimeout(setupImageUpload, 100);
+        }
+    };
     
+    setupImageUpload();
     
+    // Set current date
     document.getElementById('currentDate').innerText = formatMonthYearForDisplay(new Date());
     
-    // NO initial form - start with just the button
-    // addNewActivityForm(); // This line is commented out
+    // Populate roles dropdown
+    const roleSelect = document.getElementById('damasRoles');
+    if (roleSelect) {
+        roleSelect.innerHTML = '<option value="">Seleccionar rol</option>';
+        rolesDisponibles.forEach(role => {
+            const option = document.createElement('option');
+            option.value = role.id;
+            option.textContent = role.nombre;
+            roleSelect.appendChild(option);
+        });
+    }
     
-    rolesDisponibles.forEach(r => {
-        const sel = document.getElementById('damasRoles');
-        const opt = document.createElement('option');
-        opt.value = r.id;
-        opt.textContent = r.nombre;
-        sel.appendChild(opt);
-    });
-    
+    // Load data
     loadCurrentMonthData();
     updateCharCounts();
     
+    // Set up auto-save
     setInterval(saveAllToStorage, 30000);
     window.addEventListener('beforeunload', saveAllToStorage);
 });
@@ -2185,25 +2249,6 @@ window.addEventListener('load', () => {
     updateOnlineStatus();
 });
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Populate roles dropdown
-    const roleSelect = document.getElementById('damasRoles');
-    if (roleSelect) {
-        roleSelect.innerHTML = '<option value="">Seleccionar rol</option>';
-        rolesDisponibles.forEach(role => {
-            const option = document.createElement('option');
-            option.value = role.id;
-            option.textContent = role.nombre;
-            roleSelect.appendChild(option);
-        });
-    }
-    
-    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('es-ES', { month:'short', year:'numeric' }).toUpperCase();
-    loadCurrentMonthData();
-    loadTimerState();
-    setInterval(saveAllToStorage, 30000);
-    setupQRImageUpload();
-});
 
   
 
