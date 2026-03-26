@@ -11,7 +11,52 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
-
+<script>
+    // Force load jsQR with proper error handling
+    window.jsQRLoaded = false;
+    
+    function loadJSQR() {
+    if (typeof jsQR !== 'undefined') {
+        console.log('✅ jsQR already loaded');
+        window.jsQRLoaded = true;
+        return true;
+    }
+    
+    console.log('📥 Attempting to load jsQR...');
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js';
+    script.onload = function() {
+        console.log('✅ jsQR loaded successfully from Cloudflare');
+        window.jsQRLoaded = true;
+        
+        // Update UI to show QR is ready
+        const statusDiv = document.getElementById('qrStatus');
+        if (statusDiv && statusDiv.innerHTML.includes('Cargando')) {
+            statusDiv.innerHTML = '✅ Listo para escanear o subir imagen';
+        }
+    };
+    script.onerror = function() {
+        console.log('❌ Failed to load from Cloudflare, trying fallback...');
+        const fallbackScript = document.createElement('script');
+        fallbackScript.src = 'https://unpkg.com/jsqr@1.4.0/dist/jsQR.min.js';
+        fallbackScript.onload = function() {
+            console.log('✅ jsQR loaded successfully from fallback');
+            window.jsQRLoaded = true;
+        };
+        fallbackScript.onerror = function() {
+            console.error('❌ Failed to load jsQR from all sources');
+            const statusDiv = document.getElementById('qrStatus');
+            if (statusDiv) {
+                statusDiv.innerHTML = '❌ Error: No se pudo cargar la biblioteca QR. Verifica tu conexión a internet.';
+            }
+            alert('Error: No se pudo cargar la biblioteca QR. Verifica tu conexión a internet y recarga la página.');
+        };
+        document.head.appendChild(fallbackScript);
+    };
+    document.head.appendChild(script);
+    return false;
+}
+</script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root{
@@ -1053,76 +1098,48 @@ function addColaboradorToForm(formId) {
 let qrStream = null;
 
 function showImportQRModal() {
-    const modal = document.getElementById('qrImportModal');
-    if (modal) modal.style.display = 'flex';
+    document.getElementById('qrImportModal').style.display = 'flex';
     
-    // Clear previous status
+    // Re-attach upload handler when modal opens
+    setTimeout(() => {
+        setupQRImageUpload();
+    }, 100);
+    
+    // Update status
     const statusDiv = document.getElementById('qrStatus');
     if (statusDiv) {
-        statusDiv.innerHTML = 'Esperando imagen o escaneo...';
-        statusDiv.style.color = 'var(--text-medium)';
+        if (window.jsQRLoaded) {
+            statusDiv.innerHTML = '✅ Listo para subir imagen o escanear';
+        } else {
+            statusDiv.innerHTML = '⏳ Cargando biblioteca QR...';
+        }
     }
-    
-    // Clear file input
-    const fileInput = document.getElementById('qrImageUpload');
-    if (fileInput) fileInput.value = '';
-    
-    // IMPORTANT: Re-attach event listener every time modal opens
-    setupQRImageUpload();
 }
 
 function closeQRImportModal() {
-    if (qrStream) { 
-        qrStream.getTracks().forEach(t => t.stop()); 
-        qrStream = null; 
-    }
-    const modal = document.getElementById('qrImportModal');
-    if (modal) modal.style.display = 'none';
-    
-    const preview = document.getElementById('qrPreview');
-    if (preview) preview.innerHTML = '<p style="color:white; font-size:0.7rem;">Presiona "Iniciar Cámara"</p>';
-    
-    const statusDiv = document.getElementById('qrStatus');
-    if (statusDiv) {
-        statusDiv.innerHTML = 'Esperando imagen o escaneo...';
-        statusDiv.style.color = 'var(--text-medium)';
-    }
+    if (qrStream) { qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
+    document.getElementById('qrImportModal').style.display = 'none';
+    document.getElementById('qrPreview').innerHTML = '';
+    document.getElementById('qrStatus').innerHTML = 'Listo para escanear';
 }
 
 function startQRScanner() {
     const preview = document.getElementById('qrPreview');
-    if (!preview) return;
-    
     preview.innerHTML = '<video id="qrVideo" style="width:100%; border-radius:16px;"></video>';
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
         .then(stream => {
             qrStream = stream;
             const video = document.getElementById('qrVideo');
-            if (video) {
-                video.srcObject = stream;
-                video.play();
-                scanQRFromVideo(video);
-            }
-            const statusDiv = document.getElementById('qrStatus');
-            if (statusDiv) {
-                statusDiv.innerHTML = '📷 Escaneando... Apunta al código QR';
-                statusDiv.style.color = 'var(--accent)';
-            }
+            video.srcObject = stream;
+            video.play();
+            scanQRFromVideo(video);
         })
-        .catch(err => { 
-            console.error('Camera error:', err);
-            const statusDiv = document.getElementById('qrStatus');
-            if (statusDiv) {
-                statusDiv.innerHTML = '❌ No se pudo acceder a la cámara';
-                statusDiv.style.color = 'var(--warning)';
-            }
-        });
+        .catch(err => { document.getElementById('qrStatus').innerHTML = '❌ No se pudo acceder a la cámara'; });
 }
 
 function scanQRFromVideo(video) {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
-    
     function scanFrame() {
         if (!qrStream) return;
         if (video.videoWidth > 0) {
@@ -1131,13 +1148,8 @@ function scanQRFromVideo(video) {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
             const code = jsQR(imageData.data, canvas.width, canvas.height);
-            
             if (code) {
-                const statusDiv = document.getElementById('qrStatus');
-                if (statusDiv) {
-                    statusDiv.innerHTML = '✅ QR detectado! Procesando...';
-                    statusDiv.style.color = 'var(--success)';
-                }
+                document.getElementById('qrStatus').innerHTML = '✅ QR detectado!';
                 stopQRScanner();
                 processImportedData(code.data);
                 return;
@@ -1149,17 +1161,18 @@ function scanQRFromVideo(video) {
 }
 
 function stopQRScanner() {
-    if (qrStream) { 
-        qrStream.getTracks().forEach(track => track.stop()); 
-        qrStream = null; 
-    }
+    if (qrStream) { qrStream.getTracks().forEach(track => track.stop()); qrStream = null; }
 }
 
-// Setup image upload handler - call this when page loads AND when modal opens
+// Global flag to track jsQR loading
+window.jsQRLoaded = false;
+let qrRetryAttempts = 0;
+
 function setupQRImageUpload() {
     const fileInput = document.getElementById('qrImageUpload');
     if (!fileInput) {
-        console.warn('QR image upload element not found');
+        console.warn('QR image upload element not found, retrying...');
+        setTimeout(setupQRImageUpload, 500);
         return;
     }
     
@@ -1167,26 +1180,62 @@ function setupQRImageUpload() {
     fileInput.removeEventListener('change', handleImageUpload);
     fileInput.addEventListener('change', handleImageUpload);
     console.log('✅ QR image upload handler attached');
+    
+    // Also attach click handler to label for better UX
+    const label = fileInput.parentElement;
+    if (label && label.tagName === 'LABEL') {
+        label.addEventListener('click', (e) => {
+            console.log('📁 Clicked on upload area');
+        });
+    }
 }
 
 function handleImageUpload(event) {
     const file = event.target.files[0];
-    if (!file) return;
+    if (!file) {
+        console.log('❌ No file selected');
+        return;
+    }
     
-    console.log('📁 File selected:', file.name, file.type, file.size);
+    console.log('📁 File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
+    
+    const statusDiv = document.getElementById('qrStatus');
     
     // Check if jsQR is loaded
-    if (typeof jsQR === 'undefined') {
-        console.error('❌ jsQR library not loaded!');
-        const statusDiv = document.getElementById('qrStatus');
+    if (!window.jsQRLoaded) {
+        console.log('⏳ Waiting for jsQR to load... Current attempts:', qrRetryAttempts);
         if (statusDiv) {
-            statusDiv.innerHTML = '❌ Error: Biblioteca QR no cargada. Recarga la página.';
-            statusDiv.style.color = 'var(--warning)';
+            statusDiv.innerHTML = '⏳ Cargando biblioteca QR, espera un momento...';
+        }
+        
+        qrRetryAttempts++;
+        if (qrRetryAttempts > 10) {
+            console.error('❌ Too many retries, giving up');
+            if (statusDiv) {
+                statusDiv.innerHTML = '❌ Error: Biblioteca QR no cargada. Recarga la página.';
+            }
+            document.getElementById('qrImageUpload').value = '';
+            qrRetryAttempts = 0;
+            return;
+        }
+        
+        // Retry after 1 second
+        setTimeout(() => handleImageUpload(event), 1000);
+        return;
+    }
+    
+    // Reset retry counter on successful load
+    qrRetryAttempts = 0;
+    
+    if (typeof jsQR === 'undefined') {
+        console.error('❌ jsQR still undefined despite flag');
+        if (statusDiv) {
+            statusDiv.innerHTML = '❌ Error: Biblioteca QR no disponible. Recarga la página.';
         }
         return;
     }
     
-    const statusDiv = document.getElementById('qrStatus');
+    console.log('✅ jsQR is ready, processing image...');
     if (statusDiv) {
         statusDiv.innerHTML = '📷 Procesando imagen...';
         statusDiv.style.color = 'var(--accent)';
@@ -1194,7 +1243,9 @@ function handleImageUpload(event) {
     
     const reader = new FileReader();
     reader.onload = function(e) {
+        console.log('📖 File read successfully');
         const img = new Image();
+        
         img.onload = function() {
             console.log('🖼️ Image loaded:', img.width, 'x', img.height);
             
@@ -1209,6 +1260,7 @@ function handleImageUpload(event) {
                 const ratio = Math.min(maxSize / width, maxSize / height);
                 width = Math.floor(width * ratio);
                 height = Math.floor(height * ratio);
+                console.log('📐 Resized to:', width, 'x', height);
             }
             
             canvas.width = width;
@@ -1217,79 +1269,91 @@ function handleImageUpload(event) {
             
             const imageData = context.getImageData(0, 0, width, height);
             
-            console.log('🔍 Attempting to scan QR code...');
-            const code = jsQR(imageData.data, canvas.width, canvas.height, {
-                inversionAttempts: "attemptBoth"
-            });
-            
-            if (code) {
-                console.log('✅ QR detected in image:', code.data);
-                if (statusDiv) {
-                    statusDiv.innerHTML = '✅ QR detectado en la imagen! Procesando...';
-                    statusDiv.style.color = 'var(--success)';
+            console.log('🔍 Scanning for QR code...');
+            try {
+                const code = jsQR(imageData.data, canvas.width, canvas.height, {
+                    inversionAttempts: "attemptBoth"
+                });
+                
+                if (code) {
+                    console.log('✅ QR detected! Data:', code.data.substring(0, 100));
+                    if (statusDiv) {
+                        statusDiv.innerHTML = '✅ QR detectado! Procesando datos...';
+                        statusDiv.style.color = 'var(--success)';
+                    }
+                    
+                    // Process the data
+                    processImportedData(code.data);
+                    
+                    // Clear the file input
+                    document.getElementById('qrImageUpload').value = '';
+                    
+                    // Close modal after successful import (optional)
+                    setTimeout(() => {
+                        closeQRImportModal();
+                    }, 1500);
+                    
+                } else {
+                    console.log('❌ No QR code found in image');
+                    if (statusDiv) {
+                        statusDiv.innerHTML = '❌ No se encontró código QR en la imagen';
+                        statusDiv.style.color = 'var(--warning)';
+                    }
+                    alert('❌ No se pudo leer el código QR. Asegúrate de que la imagen muestre claramente un código QR válido.');
+                    document.getElementById('qrImageUpload').value = '';
                 }
-                alert('✅ Imagen procesada correctamente. Importando datos...');
-                processImportedData(code.data);
-                document.getElementById('qrImageUpload').value = '';
-            } else {
-                console.log('❌ No QR code found in image');
+            } catch (qrError) {
+                console.error('❌ jsQR error:', qrError);
                 if (statusDiv) {
-                    statusDiv.innerHTML = '❌ No se encontró código QR en la imagen. Intenta con otra foto más clara.';
-                    statusDiv.style.color = 'var(--warning)';
+                    statusDiv.innerHTML = '❌ Error al procesar el código QR';
                 }
-                alert('❌ No se pudo leer el código QR. Asegúrate que la imagen esté clara y el código sea visible.');
                 document.getElementById('qrImageUpload').value = '';
             }
         };
-        img.onerror = function() {
-            console.error('Failed to load image');
+        
+        img.onerror = () => {
+            console.error('❌ Failed to load image');
             if (statusDiv) {
-                statusDiv.innerHTML = '❌ Error al cargar la imagen';
-                statusDiv.style.color = 'var(--warning)';
+                statusDiv.innerHTML = '❌ Error al cargar la imagen. El archivo puede estar corrupto.';
             }
+            document.getElementById('qrImageUpload').value = '';
         };
+        
         img.src = e.target.result;
     };
-    reader.onerror = function() {
-        console.error('Failed to read file');
+    
+    reader.onerror = () => {
+        console.error('❌ Failed to read file:', reader.error);
         if (statusDiv) {
-            statusDiv.innerHTML = '❌ Error al leer el archivo';
-            statusDiv.style.color = 'var(--warning)';
+            statusDiv.innerHTML = '❌ Error al leer el archivo. Intenta con otra imagen.';
         }
+        document.getElementById('qrImageUpload').value = '';
     };
+    
     reader.readAsDataURL(file);
 }
-// Fetch data from GitHub Gist URL
+
+
 async function fetchDataFromGist(url) {
-    console.log('📥 Fetching from Gist URL:', url);
+    console.log('📥 Fetching from URL:', url);
     try {
-        const gistIdMatch = url.match(/gist\.github\.com\/[^\/]+\/([a-f0-9]+)/);
-        if (!gistIdMatch) {
-            throw new Error('URL de Gist inválida');
-        }
+        // Since child now puts raw URL in QR, we can fetch directly
+        const response = await fetch(url);
         
-        const gistId = gistIdMatch[1];
-        console.log('📥 Gist ID:', gistId);
-        
-        const response = await fetch(`https://api.github.com/gists/${gistId}`);
         if (!response.ok) {
-            throw new Error(`Error fetching gist: ${response.status}`);
+            throw new Error(`Error fetching: ${response.status}`);
         }
         
-        const gistData = await response.json();
-        console.log('📥 Gist data received');
-        
-        const files = gistData.files;
-        const firstFileName = Object.keys(files)[0];
-        const fileContent = files[firstFileName].content;
+        const fileContent = await response.text();
+        console.log('📥 Content received, parsing JSON...');
         
         return JSON.parse(fileContent);
         
     } catch (error) {
-        console.error('Error fetching gist:', error);
+        console.error('Error fetching data:', error);
         throw new Error('No se pudo obtener los datos del enlace');
     }
-}
+} 
 
 // MAIN PROCESS FUNCTION - THIS IS THE ONE THAT HANDLES GIST URLs
 async function processImportedData(scannedData) {
@@ -1299,47 +1363,24 @@ async function processImportedData(scannedData) {
         let importData;
         let isGistUrl = false;
         
-        // Check if scanned data is a GitHub Gist URL
-        if (scannedData.includes('gist.github.com')) {
+        // Check if scanned data is a URL (raw gist URL or any URL)
+        if (scannedData.includes('http://') || scannedData.includes('https://')) {
             isGistUrl = true;
             const statusDiv = document.getElementById('qrStatus');
-            if (statusDiv) statusDiv.innerHTML = '📥 Descargando datos del Gist...';
+            if (statusDiv) statusDiv.innerHTML = '📥 Descargando datos...';
             
-            console.log('🔗 Detected Gist URL, fetching...');
+            console.log('🔗 Detected URL, fetching directly...');
             
-            // Parse the Gist URL to get the raw content URL
-            let rawUrl = scannedData;
-            if (scannedData.includes('gist.github.com')) {
-                // Convert to raw URL format
-                const gistMatch = scannedData.match(/gist\.github\.com\/[^\/]+\/([a-f0-9]+)/);
-                if (gistMatch) {
-                    rawUrl = `https://gist.githubusercontent.com/raw/${gistMatch[1]}`;
-                }
-            }
-            
-            console.log('📥 Fetching from:', rawUrl);
-            
-            // Try to fetch with CORS handling
-            const response = await fetch(rawUrl, {
-                mode: 'cors',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
+            // Fetch the URL directly - no token needed!
+            const response = await fetch(scannedData);
             
             if (!response.ok) {
                 throw new Error(`Error fetching: ${response.status}`);
             }
             
-            const text = await response.text();
-            console.log('📥 Received data:', text.substring(0, 100));
-            
-            try {
-                importData = JSON.parse(text);
-            } catch (e) {
-                // Try to decode if it's URL encoded
-                importData = JSON.parse(decodeURIComponent(text));
-            }
+            const fileContent = await response.text();
+            console.log('📥 Content received, parsing JSON...');
+            importData = JSON.parse(fileContent);
             
         } else {
             // Original behavior: decode direct JSON from QR
@@ -1446,7 +1487,7 @@ async function processImportedData(scannedData) {
         updateCharts();
         renderProfileSelector();
         
-        const sourceType = isGistUrl ? 'GitHub Gist' : 'QR directo';
+        const sourceType = isGistUrl ? 'URL / GitHub Gist' : 'QR directo';
         alert(`✅ Importado desde ${sourceType}: ${damaProfile.nombre}\n📊 Horas agregadas: ${importedHours}\n📋 Actividades: ${importedCount}`);
         
         closeQRImportModal();
@@ -1462,8 +1503,6 @@ async function processImportedData(scannedData) {
         if (statusDiv) statusDiv.innerHTML = '❌ Error al procesar el código';
     }
 }
-
-
 
 function submitActivityForm(formId) {
     console.log('Submitting form:', formId);
@@ -2067,6 +2106,17 @@ document.getElementById('impactText').addEventListener('input', function() {
 
 // Single DOMContentLoaded event - everything combined
 document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if (typeof jsQR !== 'undefined') {
+            console.log('🎉 jsQR is loaded and ready!');
+        } else {
+            console.error('💥 jsQR failed to load! Check your internet connection.');
+            const statusDiv = document.getElementById('qrStatus');
+            if (statusDiv) {
+                statusDiv.innerHTML = '⚠️ Biblioteca QR no cargada. Verifica tu conexión a internet.';
+            }
+        }
+    }, 3000);
     // QR upload setup
     const setupImageUpload = () => {
         const fileInput = document.getElementById('qrImageUpload');
