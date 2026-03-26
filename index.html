@@ -10,7 +10,8 @@
 <title>Informe Técnico · CD-17 </title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
 <script>
     // Force load jsQR with proper error handling
     window.jsQRLoaded = false;
@@ -24,7 +25,7 @@
     
     console.log('📥 Attempting to load jsQR...');
     const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js';
+    script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
     script.onload = function() {
         console.log('✅ jsQR loaded successfully from Cloudflare');
         window.jsQRLoaded = true;
@@ -130,6 +131,55 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
     .logo-area { width: 100%; justify-content: center; }
     .logo-area img { height: 70px; }
     .title-section h1 { font-size: 1.2rem; }
+     /* Fix the profile selector overflow */
+    .profile-selector {
+        width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+    
+    .profile-selector > div { 
+        flex-direction: column; 
+        align-items: stretch !important; 
+        width: 100%;
+    }
+    
+    .profile-selector > div > div:first-child { 
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    
+    .profile-selector select { 
+        width: 100%; 
+        min-width: 0; /* Allows it to shrink below default */
+        max-width: 100%;
+        box-sizing: border-box;
+        font-size: 0.75rem; /* Smaller font on mobile */
+        padding: 8px 12px; /* Slightly less padding */
+        
+    }
+    
+    .profile-selector button { 
+        flex: 1; 
+        text-align: center; 
+        white-space: nowrap;
+        font-size: 0.7rem;
+        padding: 6px 10px;
+    }
+    
+    /* Also make the span wrap if needed */
+    .profile-selector span {
+        white-space: normal;
+        word-break: keep-all;
+      
+        
+    }
+       .profile-selector .full-text {
+        display: none;
+    }
+    .profile-selector .mobile-text {
+        display: inline;
+    }
 }
 @media (max-width: 500px) { .charts-container { grid-template-columns: 1fr; } }
 
@@ -290,7 +340,7 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
         <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-weight: 700; color: var(--primary-dark);">👤 Usuario Actual:</span>
-            <select id="currentUserSelect" style="padding: 8px 16px; border-radius: 30px; border: 1px solid var(--accent); background: white;">
+            <select id="currentUserSelect" style="padding: 8px 16px; border-radius: 10px; border: 1px solid var(--accent); background: white;">
                 <option>Cargando...</option>
             </select>
         </div>
@@ -1453,7 +1503,7 @@ async function processImportedData(scannedData) {
                 }
                 
                 const newAct = {
-                    id: Date.now() + Math.random(),
+                    id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                     date: impAct.date,
                     name: impAct.name,
                     actionType: impAct.actionType || 'campo',
@@ -1768,37 +1818,54 @@ function renderActivities() {
     updateHoursBarChart();
     updateCollaboratorsBarChart();
     // Generate QR codes for activities with links
-    // Generate QR codes for activities with links
     setTimeout(() => {
-        if (typeof QRCode === 'undefined') return;
+        if (typeof QRCode === 'undefined') {
+            console.log('❌ QRCode library not loaded');
+            return;
+        }
 
+        console.log('🔍 Starting QR generation for', activities.length, 'activities');
+        
         activities.forEach((a, idx) => {
             const qrDataArray = getQRCodeData(a);
             if (!qrDataArray || qrDataArray.length === 0) return;
 
-            // Generate QR for each link
+            console.log(`📱 Activity ${idx} has ${qrDataArray.length} links`);
+            
             qrDataArray.forEach((link, linkIndex) => {
                 const qrId = `qr_${a.id || idx}_${linkIndex}`;
+                console.log(`Looking for element: ${qrId}`);
                 const qrDiv = document.getElementById(qrId);
 
                 if (qrDiv) {
+                    console.log(`✅ Found element ${qrId}`);
+                    // Clear any existing content
                     qrDiv.innerHTML = '';
-                    try {
-                        new QRCode(qrDiv, {
-                            text: link,  // Use the specific link, not the array
-                            width: 60,
-                            height: 60,
-                            colorDark: "#000000",
-                            colorLight: "#ffffff",
-                            correctLevel: QRCode.CorrectLevel.L
-                        });
-                    } catch (e) {
-                        console.error('QR error for link:', link, e);
+                    
+                    // Ensure the div has dimensions before generating QR
+                    if (qrDiv.offsetWidth > 0 && qrDiv.offsetHeight > 0) {
+                        try {
+                            new QRCode(qrDiv, {
+                                text: link,
+                                width: 60,
+                                height: 60,
+                                colorDark: "#000000",
+                                colorLight: "#ffffff",
+                                correctLevel: QRCode.CorrectLevel.L
+                            });
+                            console.log(`✅ QR generated for ${qrId}`);
+                        } catch (e) {
+                            console.error('QR error for link:', link, e);
+                        }
+                    } else {
+                        console.warn('QR div not ready (dimensions zero):', qrId, 'size:', qrDiv.offsetWidth, 'x', qrDiv.offsetHeight);
                     }
+                } else {
+                    console.warn('QR div not found:', qrId);
                 }
             });
         });
-    }, 300);
+    }, 500);
 }
 function deleteActivity(idx) {
     activities.splice(idx, 1);
@@ -2107,16 +2174,17 @@ document.getElementById('impactText').addEventListener('input', function() {
 // Single DOMContentLoaded event - everything combined
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
-        if (typeof jsQR !== 'undefined') {
-            console.log('🎉 jsQR is loaded and ready!');
-        } else {
-            console.error('💥 jsQR failed to load! Check your internet connection.');
-            const statusDiv = document.getElementById('qrStatus');
-            if (statusDiv) {
-                statusDiv.innerHTML = '⚠️ Biblioteca QR no cargada. Verifica tu conexión a internet.';
-            }
+    if (typeof jsQR !== 'undefined') {
+        console.log('🎉 jsQR is loaded and ready!');
+        window.jsQRLoaded = true;  // <-- add this
+    } else {
+        console.error('💥 jsQR failed to load! Check your internet connection.');
+        const statusDiv = document.getElementById('qrStatus');
+        if (statusDiv) {
+            statusDiv.innerHTML = '⚠️ Biblioteca QR no cargada. Verifica tu conexión a internet.';
         }
-    }, 3000);
+    }
+}, 3000);
     // QR upload setup
     const setupImageUpload = () => {
         const fileInput = document.getElementById('qrImageUpload');
