@@ -1,6 +1,6 @@
 // sw.js - Service Worker for offline support
 
-const CACHE_NAME = 'cd17-report-v1.3'; // 🔥 CHANGE THIS on every deploy
+const CACHE_NAME = 'cd17-report-v1.4'; // 🔥 CHANGE THIS on every deploy
 
 const urlsToCache = [
     './',
