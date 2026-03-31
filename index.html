@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <script>
     // Force load jsQR with proper error handling
@@ -60,45 +61,272 @@
 </script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-:root{
---primary-dark:#0A1A2F; --primary:#1E3A5F; --accent:#4F7CAC; --secondary:#E34A2F;
---success:#2E7D32; --warning:#ED6A5E; --info:#36A2EB; --neutral-light:#F4F7FB;
---neutral-border:#D9E2EC; --text-dark:#1E2B3A; --text-medium:#4A5A6E; --white:#FFFFFF;
---shadow:0 8px 20px rgba(0,20,40,0.06); --gender-f:#E83F6F; --gender-m:#2C7DA0;
+
+:root {
+    --primary-dark: #0A1A2F;
+    --primary: #1E3A5F;
+    --accent: #4F7CAC;
+    --secondary: #D52B1E;
+    --success: #2E7D32;
+    --warning: #ED6A5E;
+    --info: #36A2EB;
+    --neutral-light: #F4F7FB;
+    --neutral-border: #D9E2EC;
+    --text-dark: #1E2B3A;
+    --text-medium: #4A5A6E;
+    --white: #FFFFFF;
+    --shadow: 0 8px 20px rgba(0,20,40,0.06);
+    --gender-f: #E83F6F;
+    --gender-m: #2C7DA0;
 }
-body { font-family:'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-background:var(--neutral-light); color:var(--text-dark); padding:16px 12px; line-height:1.4; -webkit-tap-highlight-color:transparent;}
-.dashboard-card{max-width:1280px; margin:0 auto; background:var(--white); border-radius:28px; box-shadow:var(--shadow); padding:20px 16px;}
-.report-header{display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:20px; padding-bottom:10px; border-bottom:2px solid var(--secondary);}
-.logo-area{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
-.logo-area img{height:85px; width:auto; border-radius:0px; background:white; padding:4px; border:none;}
-.title-section h1{font-size:1.5rem;font-weight:700;letter-spacing:-0.3px;color:var(--primary-dark);}
-.title-section h1 span{color:var(--secondary);}
-.subhead{font-size:0.7rem;color:var(--text-medium);font-weight:500;margin-top:2px;}
-.badge{background:var(--primary-dark);color:white;padding:6px 16px;border-radius:40px;font-weight:600;font-size:0.75rem;margin-left:auto;border-left:3px solid var(--secondary);}
-.badge span:last-child { font-size: 0.7rem; margin-left: 8px; padding-left: 8px; border-left: 1px solid var(--accent);}
-.kpi-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:25px;}
-.kpi-item{background:var(--neutral-light);border-radius:20px;padding:14px 6px;text-align:center;border:1px solid var(--neutral-border);position:relative;}
-.kpi-label{font-size:0.7rem;font-weight:600;text-transform:uppercase;color:var(--text-medium);letter-spacing:0.3px;margin-bottom:4px;}
-.kpi-value{font-size:1.8rem;font-weight:700;color:var(--primary-dark); line-height:1.2;}
-.gender-breakdown{display:flex; justify-content:center; gap:10px; font-size:0.7rem; font-weight:600; margin-top:4px;}
-.gender-f{color:var(--gender-f);}
-.gender-m{color:var(--gender-m);}
-#damasActivasContainer { position: relative; cursor: default; z-index: 30; padding-bottom: 20px; }
-.damas-dropdown { position: absolute; top: calc(100% - 10px); left: 0; right: 0; background: white; border-radius: 20px; box-shadow: 0 12px 30px rgba(0,0,0,0.15); padding: 12px 10px; border: 1px solid var(--accent); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: opacity 0.2s ease, visibility 0.2s, transform 0.2s; pointer-events: none; z-index: 100; max-height: 400px; overflow-y: auto; min-width: 100%; }
-#damasActivasContainer:hover .damas-dropdown, .damas-dropdown:hover, .damas-dropdown:focus-within { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
-.damas-dropdown select:focus, .damas-dropdown input:focus, .damas-dropdown button:focus { outline: none; }
-.damas-dropdown select { width: 100%; padding: 10px; border-radius: 30px; border: 1px solid var(--accent); background: white; font-size: 0.75rem; margin-bottom: 12px; }
-#rolesActivosList{max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;}
-#rolesActivosList div{background:var(--neutral-light); border-radius:16px; padding:10px; border:1px solid var(--neutral-border); display:flex; justify-content:space-between; align-items:center;}
-#rolesActivosList button{background:var(--warning); color:white; border:none; border-radius:30px; padding:4px 10px; font-size:0.6rem; font-weight:600; cursor:pointer; margin-left:4px;}
-.section-title { font-size: 1.1rem; font-weight: 600; color: var(--primary-dark); margin: 20px 0 12px 0; display: flex; align-items: center; cursor: pointer; scroll-margin-top: 20px; }
-.section-title::after { content: ''; flex: 1; height: 2px; background: linear-gradient(90deg, var(--accent), transparent); margin-left: 14px; }
-textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); border-radius:20px; font-size:0.85rem; background:white; resize:vertical; font-family:inherit;}
-.activities-section { margin: 18px 0; border-radius: 20px; border: 1px solid var(--neutral-border); overflow-x: auto; width: 100%; }
-.activities-table { width: 100%; border-collapse: collapse; background: white; min-width: 100%; table-layout: auto; }
-.activities-table th { background: var(--primary-dark); color: white; font-size: 0.7rem; font-weight: 600; padding: 10px 4px; white-space: nowrap; }
-.activities-table td { padding: 10px 4px; border-bottom: 1px solid var(--neutral-border); text-align: center; font-size: 0.75rem; vertical-align: middle; }
+
+body {
+    font-family:'Inter', system-ui, sans-serif;
+    background:var(--neutral-light);
+    color:var(--text-dark);
+    padding:16px 12px;
+    line-height:1.4;
+}
+
+.dashboard-card {
+    max-width:1280px;
+    margin:0 auto;
+    background:var(--white);
+    border-radius:28px;
+    box-shadow:var(--shadow);
+    padding:20px 16px;
+}
+
+.report-header {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:12px;
+    margin-bottom:20px;
+    padding-bottom:10px;
+    border-bottom:2px solid var(--secondary);
+}
+
+.logo-area { display:flex; align-items:center; gap:12px; }
+.logo-area img { height:85px; }
+
+.title-section h1 {
+    font-size:1.5rem;
+    font-weight:700;
+    color:var(--primary-dark);
+}
+.title-section h1 span { color:var(--secondary); }
+
+.subhead {
+    font-size:0.7rem;
+    color:var(--text-medium);
+}
+
+.badge {
+    background:var(--primary-dark);
+    color:white;
+    padding:6px 16px;
+    border-radius:40px;
+    font-size:0.75rem;
+    margin-left:auto;
+}
+
+/* KPI */
+.kpi-grid {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    margin-bottom:25px;
+}
+
+.kpi-item {
+    background:var(--neutral-light);
+    border-radius:20px;
+    padding:14px 6px;
+    text-align:center;
+    border:1px solid var(--neutral-border);
+}
+
+.kpi-label {
+    font-size:0.7rem;
+    font-weight:600;
+    color:var(--text-medium);
+}
+
+.kpi-value {
+    font-size:1.8rem;
+    font-weight:700;
+}
+
+.gender-breakdown {
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    font-size:0.7rem;
+}
+
+.gender-f { color:var(--gender-f); }
+.gender-m { color:var(--gender-m); }
+
+/* DAMAS */
+#damasActivasContainer { position:relative; padding-bottom:20px; }
+
+.damas-dropdown {
+    position:absolute;
+    top:100%;
+    left:0;
+    right:0;
+    background:white;
+    border-radius:20px;
+    padding:12px;
+    border:1px solid var(--accent);
+    opacity:0;
+    visibility:hidden;
+    transition:0.2s;
+}
+
+#damasActivasContainer:hover .damas-dropdown {
+    opacity:1;
+    visibility:visible;
+}
+
+#rolesActivosList {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+#rolesActivosList div {
+    background:var(--neutral-light);
+    border-radius:16px;
+    padding:10px;
+    border:1px solid var(--neutral-border);
+    display:flex;
+    justify-content:space-between;
+}
+
+.section-title {
+    font-size:1.1rem;
+    font-weight:600;
+    margin:20px 0 12px;
+}
+
+/* TABLE */
+.activities-section {
+    margin:18px 0;
+    border-radius:20px;
+    border:1px solid var(--neutral-border);
+    overflow-x:auto;
+}
+
+.activities-table {
+    width:100%;
+    border-collapse:collapse;
+}
+.activities-table th { 
+    background: var(--primary-dark); 
+    color: white; 
+    font-size: 0.7rem; 
+    font-weight: 600; 
+    padding: 12px 8px;  /* Increased from 10px 4px */
+    white-space: nowrap; 
+}
+
+.activities-table td {
+    padding:10px 4px;
+    border-bottom:1px solid var(--neutral-border);
+    font-size:0.75rem;
+    text-align:center;
+}
+
+/* BUTTON */
+.btn-add-row {
+    background:#1E3A5F;
+    color:white;
+    border-radius:50%;
+    width:45px;
+    height:45px;
+    font-size:1.5rem;
+}
+
+/* DESCRIPTION */
+.desc-item {
+    background:white;
+    border-radius:20px;
+    padding:12px;
+    border:1px solid var(--neutral-border);
+}
+
+.desc-item label {
+     font-weight: 700; 
+    font-size: 0.75rem; 
+    color: var(--primary-dark); 
+    text-transform: uppercase; 
+    letter-spacing: 0.3px; 
+    display: block; 
+    margin-bottom: 6px;
+}
+
+.desc-item textarea {
+    width:100%;
+    min-height:100px;
+    border-radius: 15px;
+    padding: 10px;
+}
+
+.desc-item .print-text {
+    display:none;
+}
+
+/* CHARTS */
+.charts-container {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:16px;
+}
+
+.chart-box {
+    background:white;
+    border-radius:16px;
+    padding:12px;
+    border:1px solid var(--neutral-border);
+    height:200px;
+}
+
+.chart-box canvas {
+    width:100% !important;
+    height:160px !important;
+}
+
+.chart-title { 
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: var(--primary-dark); margin-bottom: 8px; border-bottom: 1px solid var(--secondary); display: flex; justify-content: space-between; 
+}
+
+/* FOOTER */
+.footer-info {
+    display:flex;
+    justify-content:space-between;
+    font-size:0.7rem;
+    margin:15px 15px;
+    border-top:1px dashed var(--neutral-border);
+    padding-top:12px;
+}
+
+.action-buttons {
+    display:flex;
+    gap:8px;
+    margin-top:15px;
+}
+
+.action-button {
+    flex:1;
+    padding:12px;
+    border-radius:40px;
+    font-size:0.7rem;
+    background:var(--primary-dark);
+    color:white;
+}
+
 .org-badge { background: transparent; color: var(--primary-dark); padding: 3px 8px; border-radius: 20px; font-size: 0.6rem; font-weight: 600; display: inline-block; margin: 3px; border: 1.5px dashed var(--accent); white-space: nowrap; }
 .org-badge-container { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; max-width: 200px; }
 .add-activity-row{background:transparent; padding:16px 14px; border:none;}
@@ -110,92 +338,665 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
 .action-button.save{background:var(--success);}
 .action-button.clear{background:var(--warning);}
 .action-button.export{background:var(--accent);}
+
 .desc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
 .desc-item { background: white; border-radius: 20px; padding: 12px; border: 1px solid var(--neutral-border); }
 .desc-item label { font-weight: 700; font-size: 0.75rem; color: var(--primary-dark); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 6px; }
 .desc-item textarea { width: 100%; min-height: 100px; font-size: 0.8rem; }
 .gps-badge { font-size: 1rem; color: var(--success); margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 4px; }
-.charts-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0 16px; }
-.chart-box { background: var(--white); border-radius: 16px; padding: 12px; border: 1px solid var(--neutral-border); height: 200px; position: relative; }
-.chart-box canvas { width: 100% !important; height: 160px !important; }
-.chart-title { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: var(--primary-dark); margin-bottom: 8px; border-bottom: 1px solid var(--secondary); display: flex; justify-content: space-between; }
-.desc-item .print-text { display: none; }
 
-/* Mobile Responsive */
-@media (max-width: 800px) { .charts-container { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px) { 
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-    .desc-grid { grid-template-columns: 1fr; }
-    .report-header { flex-direction: column; align-items: flex-start; }
-    .badge { margin-left: 0; width: 100%; text-align: center; }
-    .logo-area { width: 100%; justify-content: center; }
-    .logo-area img { height: 70px; }
-    .title-section h1 { font-size: 1.2rem; }
-     /* Fix the profile selector overflow */
-    .profile-selector {
-        width: 100%;
-        box-sizing: border-box;
-        overflow-x: hidden;
+
+/* ==========================================
+   NEUTRAL & BURNT WIZARD STYLES
+   ========================================== */
+
+/* OVERLAY */
+.wizard-overlay-global {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s ease;
+}
+
+.wizard-overlay-global.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* WIZARD CARD */
+.wizard-card {
+    background: #FEF9F5;
+    border-radius: 28px;
+    width: 90%;
+    max-width: 560px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    transform: scale(0.96) translateY(10px);
+    transition: transform 0.25s ease;
+}
+
+.wizard-overlay-global.active .wizard-card {
+    transform: scale(1) translateY(0);
+}
+
+/* HEADER - Soft Burnt */
+.wizard-header {
+    padding: 20px 24px 16px;
+    border-bottom: 2px solid #D9B8A4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #FEF9F5;
+    border-radius: 28px 28px 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.wizard-header h2 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #5C4B3A;
+    margin: 0;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wizard-header h2::before {
+    content: "🌾";
+    font-size: 1.4rem;
+    color: #C17B5C;
+}
+
+.wizard-close-btn {
+    background: #F0E7E0;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.3rem;
+    cursor: pointer;
+    color: #8B7A6B;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wizard-close-btn:hover {
+    background: #C17B5C;
+    color: white;
+}
+
+/* STEP INDICATOR */
+.wizard-steps-modern {
+    display: flex;
+    padding: 16px 20px 0;
+    gap: 6px;
+    flex-wrap: wrap;
+    background: #FEF9F5;
+}
+
+.step-pill {
+    flex: 1;
+    text-align: center;
+    padding: 2px 4px;
+    background: #F0E7E0;
+    border-radius: 40px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #8B7A6B;
+    transition: all 0.2s;
+    cursor: default;
+}
+
+.step-pill.active {
+    background: #C17B5C;
+    color: white;
+    box-shadow: 0 2px 8px rgba(193, 123, 92, 0.25);
+}
+
+.step-pill.completed {
+    background: #9C8A7A;
+    color: white;
+}
+
+/* CONTENT AREA */
+.wizard-body {
+    padding: 20px 24px;
+    min-height: 340px;
+}
+
+/* DYNAMIC QUESTION */
+.dynamic-question {
+    animation: slideUpFade 0.25s ease-out;
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.question-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #C17B5C;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-left: 3px solid #C17B5C;
+    padding-left: 12px;
+    letter-spacing: 0.5px;
+}
+
+/* RADIO GROUP */
+.modern-radio-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.modern-radio {
+    flex: 1;
+    background: white;
+    border: 1.5px solid #E6DCD4;
+    border-radius: 60px;
+    padding: 10px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #5C4B3A;
+}
+
+.modern-radio.selected {
+    background: #C17B5C;
+    border-color: #C17B5C;
+    color: white;
+    box-shadow: 0 2px 8px rgba(193, 123, 92, 0.2);
+}
+
+.modern-radio input {
+    display: none;
+}
+
+/* INPUTS */
+.wizard-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid #E6DCD4;
+    border-radius: 60px;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    transition: all 0.2s;
+    background: white;
+    font-family: inherit;
+    color: #5C4B3A;
+}
+
+.wizard-input:focus {
+    outline: none;
+    border-color: #C17B5C;
+    box-shadow: 0 0 0 2px rgba(193, 123, 92, 0.15);
+}
+
+.wizard-input::placeholder {
+    color: #B8A99A;
+}
+
+/* TIMER DISPLAY */
+.timer-glow {
+    background: #E6DCD4;
+    border-radius: 60px;
+    padding: 14px;
+    text-align: center;
+    margin: 16px 0;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #5C4B3A;
+    letter-spacing: 2px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05), 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* DYNAMIC DROPDOWN */
+.dynamic-dropdown {
+    margin-top: 8px;
+    margin-bottom: 16px;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dynamic-dropdown select {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 60px;
+    border: 1.5px solid #C17B5C;
+    background: white;
+    font-weight: 500;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: #5C4B3A;
+}
+
+.dynamic-dropdown select:focus {
+    outline: none;
+    border-color: #C17B5C;
+}
+
+/* COLABORADORES ROWS */
+.colab-row-modern {
+    display: grid;
+    grid-template-columns: 1fr 90px 32px;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.colab-row-modern select,
+.colab-row-modern input {
+    padding: 10px 12px;
+    border-radius: 40px;
+    border: 1.5px solid #E6DCD4;
+    font-size: 0.85rem;
+    background: white;
+    color: #5C4B3A;
+}
+
+.colab-row-modern select:focus,
+.colab-row-modern input:focus {
+    outline: none;
+    border-color: #C17B5C;
+}
+
+.remove-colab {
+    background: #C17B5C;
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.remove-colab:hover {
+    background: #A86442;
+    transform: scale(1.05);
+}
+
+/* BUTTONS */
+.wizard-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 16px 24px 24px;
+    border-top: 1px solid #E6DCD4;
+    background: #FEF9F5;
+    border-radius: 0 0 28px 28px;
+}
+
+.wiz-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 60px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    font-family: inherit;
+}
+
+.wiz-btn-primary {
+    background: #C17B5C;
+    color: white;
+    box-shadow: 0 2px 6px rgba(193, 123, 92, 0.25);
+}
+
+.wiz-btn-primary:hover {
+    background: #A86442;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(193, 123, 92, 0.3);
+}
+
+.wiz-btn-secondary {
+    background: #F0E7E0;
+    color: #5C4B3A;
+    border: 1px solid #E6DCD4;
+}
+
+.wiz-btn-secondary:hover {
+    background: #E6DCD4;
+}
+
+/* GPS STATUS */
+.gps-status-badge {
+    background: #F0E7E0;
+    border-radius: 60px;
+    padding: 10px 14px;
+    text-align: center;
+    font-size: 0.7rem;
+    margin-top: 12px;
+    color: #8B7A6B;
+}
+
+/* Minutes Helper */
+#minutesHelper {
+    background: #F0E7E0;
+    border-radius: 60px;
+    padding: 10px 14px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #C17B5C;
+}
+
+/* Hours Input Styling */
+#hoursInput {
+    font-weight: 500;
+}
+
+#hoursInput::placeholder {
+    color: #B8A99A;
+    font-weight: 400;
+}
+
+/* Scrollbar */
+.wizard-card::-webkit-scrollbar {
+    width: 4px;
+}
+
+.wizard-card::-webkit-scrollbar-track {
+    background: #F0E7E0;
+    border-radius: 4px;
+}
+
+.wizard-card::-webkit-scrollbar-thumb {
+    background: #C17B5C;
+    border-radius: 4px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+    .wizard-card {
+        width: 95%;
+        max-height: 90vh;
+        border-radius: 24px;
     }
     
-    .profile-selector > div { 
-        flex-direction: column; 
-        align-items: stretch !important; 
-        width: 100%;
+    .wizard-header {
+        padding: 16px 20px 12px;
     }
     
-    .profile-selector > div > div:first-child { 
-        width: 100%;
-        flex-wrap: wrap;
+    .wizard-header h2 {
+        font-size: 1.2rem;
     }
     
-    .profile-selector select { 
-        width: 100%; 
-        min-width: 0; /* Allows it to shrink below default */
-        max-width: 100%;
-        box-sizing: border-box;
-        font-size: 0.75rem; /* Smaller font on mobile */
-        padding: 8px 12px; /* Slightly less padding */
-        
+    .wizard-body {
+        padding: 16px 20px;
+        min-height: 300px;
     }
     
-    .profile-selector button { 
-        flex: 1; 
-        text-align: center; 
-        white-space: nowrap;
+    .wizard-steps-modern {
+        padding: 12px 16px 0;
+        gap: 4px;
+    }
+    
+    .step-pill {
+        font-size: 0.55rem;
+        padding: 6px 2px;
+    }
+    
+    .modern-radio {
+        padding: 8px 12px;
+        font-size: 0.75rem;
+    }
+    
+    .wizard-input {
+        padding: 10px 14px;
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+    }
+    
+    .timer-glow {
+        font-size: 1.2rem;
+        padding: 10px;
+    }
+    
+    .wiz-btn {
+        padding: 10px 14px;
+        font-size: 0.8rem;
+    }
+    
+    .wizard-actions {
+        padding: 12px 20px 20px;
+    }
+    
+    .colab-row-modern {
+        grid-template-columns: 1fr 70px 28px;
+        gap: 8px;
+    }
+    
+    .colab-row-modern select,
+    .colab-row-modern input {
+        padding: 8px 10px;
+        font-size: 0.75rem;
+    }
+    
+    .remove-colab {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
+    }
+    
+    .question-label {
         font-size: 0.7rem;
-        padding: 6px 10px;
+        margin-bottom: 10px;
+    }
+}
+/* MOBILE */
+@media (max-width:500px) {
+    .charts-container {
+        grid-template-columns:1fr;
+    }
+}
+
+/* PRINT (kept as-is from your final cleaned version) */
+@media print {
+    .desc-item textarea,
+    .desc-item,
+    .add-activity-row,
+    .damas-dropdown,
+    .action-buttons,
+    button:not(.activity-link-btn) {
+        display:none !important;
+    }
+
+    .report-header,
+    .kpi-grid,
+    .activities-section,
+    .activities-table,
+    .footer-info,
+    .charts-container,
+    .chart-box,
+    .desc-item {
+        display:block !important;
+    }
+
+    .activities-table {
+        width:100% !important;
+        font-size:8pt !important;
+    }
+
+    .activities-table td,
+    .activities-table th {
+        border-bottom:1px solid #ccc !important;
+    }
+
+    .desc-item .print-text {
+        display:block !important;
+        font:12pt 'Times New Roman', serif !important;
+    }
+
+    @page { size:A4; margin:0.8cm; }
+}
+
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+    .wizard-card {
+        width: 95%;
+        max-height: 90vh;
+        border-radius: 24px;
     }
     
-    /* Also make the span wrap if needed */
-    .profile-selector span {
-        white-space: normal;
-        word-break: keep-all;
-      
-        
+    .wizard-header {
+        padding: 16px 20px 12px;
     }
-       .profile-selector .full-text {
-        display: none;
+    
+    .wizard-header h2 {
+        font-size: 1.2rem;
     }
-    .profile-selector .mobile-text {
-        display: inline;
+    
+    .wizard-body {
+        padding: 16px 20px;
+        min-height: 300px;
+    }
+    
+    .wizard-steps-modern {
+        padding: 12px 16px 0;
+        gap: 4px;
+    }
+    
+    .step-pill {
+        font-size: 0.55rem;
+        padding: 6px 2px;
+    }
+    
+    .modern-radio {
+        padding: 8px 12px;
+        font-size: 0.75rem;
+    }
+    
+    .wizard-input {
+        padding: 10px 14px;
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+    }
+    
+    .timer-glow {
+        font-size: 1.2rem;
+        padding: 10px;
+    }
+    
+    .wiz-btn {
+        padding: 10px 14px;
+        font-size: 0.8rem;
+    }
+    
+    .wizard-actions {
+        padding: 12px 20px 20px;
+    }
+    
+    .colab-row-modern {
+        grid-template-columns: 1fr 70px 28px;
+        gap: 8px;
+    }
+    
+    .colab-row-modern select,
+    .colab-row-modern input {
+        padding: 8px 10px;
+        font-size: 0.75rem;
+    }
+    
+    .remove-colab {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
+    }
+    
+    .question-label {
+        font-size: 0.7rem;
+        margin-bottom: 10px;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+    .wizard-steps-modern {
+        gap: 3px;
+    }
+    
+    .step-pill {
+        font-size: 0.5rem;
+        padding: 4px 2px;
+    }
+    
+    .modern-radio-group {
+        gap: 8px;
+    }
+    
+    .modern-radio {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+        gap: 4px;
     }
 }
 @media (max-width: 500px) { .charts-container { grid-template-columns: 1fr; } }
 
 /* ===== PRINT STYLES ===== */
 @media print {
+
     /* Hide interactive elements */
     .desc-item textarea,
-     .desc-item .print-text,
     .desc-item,
     .add-activity-row, .damas-dropdown, .add-colab-btn, .action-buttons,
     .compact-input-row, .links-mini-grid, .colaboradores-section,
     .qr-ampliada-modal, button:not(.activity-link-btn) {
         display: none !important;
     }
-    
-    /* Show all essential elements */
+
+    /* Show essential elements */
     .report-header, .kpi-grid, .kpi-item, .activities-section,
     .activities-table, .footer-info, .section-title, .org-badge,
     .org-badge-container, .gender-f, .gender-m, .badge, .logo-area,
@@ -204,13 +1005,46 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
-    
-    /* Table full width */
-    .activities-section { width: 100% !important; overflow: visible !important; }
-    .activities-table { width: 100% !important; min-width: 0 !important; table-layout: auto !important; font-size: 8pt !important; }
-    .activities-table th, .activities-table td { padding: 4px 2px !important; white-space: normal !important; }
-    
-    /* QR Codes - Side by Side Horizontal */
+
+    /* Table layout */
+    .activities-section {
+        width: 100% !important;
+        overflow: visible !important;
+    }
+
+    .activities-table {
+        width: 100% !important;
+        min-width: 0 !important;
+        table-layout: auto !important;
+        font-size: 8pt !important;
+        border-collapse: collapse !important;
+    }
+
+    .activities-table th,
+    .activities-table td {
+        padding: 4px 2px !important;
+        white-space: normal !important;
+
+        /* merged from second block */
+        border-bottom: 1px solid #ccc !important;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+
+    /* Remove borders from text areas */
+    .desc-item,
+    .desc-grid,
+    .desc-item textarea,
+    .desc-item .print-text {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+
+    /* QR layout */
     .activities-table td div[id^="qr_"] {
         display: flex !important;
         flex-direction: row !important;
@@ -218,69 +1052,87 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
         justify-content: center !important;
         align-items: flex-start !important;
         padding: 10px 0 !important;
-        width: auto !important;
-        margin: 0 !important;
     }
+
     .activities-table td div[id^="qr_"] > div {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         gap: 5px !important;
     }
+
     .activities-table td div[id^="qr_"] canvas {
         width: 60px !important;
         height: 60px !important;
         display: block !important;
         border: 1px solid #ddd !important;
     }
-    .activities-table td div[id^="qr_"] img { display: none !important; }
-    .activities-table td div[id^="qr_"] span { display: block !important; font-size: 8pt !important; text-align: center !important; }
-    
-    /* Charts - 4 columns */
-    .charts-container { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 8px !important; }
-    .chart-box { height: 140px !important; padding: 4px !important; }
-    .chart-box canvas { height: 100px !important; }
-    
-    /* KPI - 4 columns */
-    .kpi-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 8px !important; }
-    
-    /* Description text */
-    .desc-item textarea { display: none !important; }
-    .desc-item .print-text { display: block !important; font: 12pt 'Times New Roman', serif !important; text-align: justify !important; line-height: 1.6 !important; white-space: pre-wrap !important; margin-top: 8px; }
-    .desc-item label { font-weight: 700 !important; font-size: 11pt !important; border-bottom: 2px solid var(--secondary) !important; margin-bottom: 6px !important; }
-    
+
+    .activities-table td div[id^="qr_"] img {
+        display: none !important;
+    }
+
+    .activities-table td div[id^="qr_"] span {
+        display: block !important;
+        font-size: 8pt !important;
+        text-align: center !important;
+    }
+
+    /* Charts */
+    .charts-container {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    .chart-box {
+        height: 140px !important;
+        padding: 4px !important;
+    }
+
+    .chart-box canvas {
+        height: 100px !important;
+    }
+
+    /* KPI */
+    .kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    /* Description text (single source of truth) */
+    .desc-item .print-text {
+        display: block !important;
+        font: 12pt 'Times New Roman', serif !important;
+        text-align: justify !important;
+        line-height: 1.6 !important;
+        white-space: pre-wrap !important;
+        margin-top: 8px;
+    }
+
+    .desc-item label {
+        font-weight: 700 !important;
+        font-size: 11pt !important;
+        border-bottom: 2px solid var(--secondary) !important;
+        margin-bottom: 6px !important;
+    }
+
     /* Page setup */
-    @page { size: A4; margin: 0.8cm; }
-    body { background: white !important; padding: 0 !important; }
-    .dashboard-card { max-width: 100% !important; box-shadow: none !important; padding: 15px 12px !important; }
-}
-@media print {
-    /* Remove borders from all text elements in print */
-    .desc-item textarea,
-    .desc-item .print-text,
-    .desc-item,
-    .desc-grid,
-    
-    .activities-table td,
-    .activities-table th
-    
-    {
-        border: none !important;
+    @page {
+        size: A4;
+        margin: 0.8cm;
+    }
+
+    body {
+        background: white !important;
+        padding: 0 !important;
+    }
+
+    .dashboard-card {
+        max-width: 100% !important;
         box-shadow: none !important;
-        background: transparent !important;
-    }
-    
-    /* Keep table borders only for structure if needed */
-    .activities-table {
-        border-collapse: collapse !important;
-    }
-    
-    .activities-table td, 
-    .activities-table th {
-        border-bottom: 1px solid #ccc !important; /* optional: keep bottom borders for readability */
-        border-top: none !important;
-        border-left: none !important;
-        border-right: none !important;
+        padding: 15px 12px !important;
     }
 }
 </style>
@@ -355,12 +1207,13 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
 </div>
 <!-- charts -->
 <div class="charts-container">
-    <div class="chart-box"><canvas id="chartDamas"></canvas><div class="chart-title">Damas por proyecto</div></div>
-    <div class="chart-box"><canvas id="chartBeneficiados"></canvas><div class="chart-title">Beneficiarios</div></div>
-    <div class="chart-box"><canvas id="chartHoras"></canvas><div class="chart-title">Duración actividades</div></div>
+    <div class="chart-box"><canvas id="chartActivityResources"></canvas><div class="chart-title">Damas por Actividad</div></div>
+    <div class="chart-box"><canvas id="chartAtencionesGenero"></canvas><div class="chart-title">Atenciones por Genero</div></div>
+    <div class="chart-box"><canvas id="chartTiempoRequerido"
+    ></canvas><div class="chart-title">Duración Actividades</div></div>
     <div class="chart-box"><canvas id="chartActiveDamas"></canvas><div class="chart-title">Damas Más Activas</div></div>
 </div>
-<div class="section-title" onclick="addActivity()">➕ Actividad Realizada</div>
+
 <div class="activities-section">
 <table class="activities-table">
 <thead><tr><th>Fecha</th><th>Actividad</th><th>Damas</th><th>Horas</th><th>F</th><th>M</th><th>Beneficiarios</th><th>Colaboradores</th><th>Ubicación</th><th>QR</th><th></th></tr></thead>
@@ -370,17 +1223,12 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
 <!-- new activity row -->
 <div class="add-activity-row">
     <div style="display: flex;  align-items: center; margin-bottom: 10px;">
-        
-        <div style="display: flex; justify-content: space-between; align-items: center;  margin-bottom: 10px;">
-            
-            <button type="button" class="btn-add-row" onclick="addNewActivityForm()">+</button>
+        <div style="display: flex; justify-content: flex-start; margin-bottom: 10px;">
+            <button type="button" class="btn-add-row" onclick="openActivityWizard()">+</button>
         </div>
     </div>
     
-    <!-- Container for multiple activity forms - initially empty -->
-    <div id="activityFormsContainer">
-        <!-- Forms will be dynamically added here by JavaScript -->
-    </div>
+    
 </div>
 
 
@@ -415,7 +1263,7 @@ textarea{width:100%; padding:12px; border:1px solid var(--neutral-border); borde
 <div class="footer-info"><span>Cruz Roja Hondureña CD-17 · Comité de Damas</span><span id="footerDate"></span></div>
 <div class="action-buttons">
     <button class="action-button" onclick="showImportQRModal()" style="background:var(--info);">📷 Importar QR</button>
-    <button class="action-button" onclick="exportToExcel()" style="background:var(--success);">📊 Exportar Excel</button>
+    <button class="action-button" onclick="exportToExcel(event)" style="background:var(--success);">📊 Exportar Excel</button>
     <button class="action-button print" onclick="exportPDF()">📄 Imprimir</button>
     <button class="action-button save" onclick="saveData()">💾 Guardar</button>
     <button class="action-button clear" onclick="clearData()">🗑️ Borrar</button>
@@ -464,6 +1312,7 @@ let activities = [];
 let damasActivas = [];
 let activityFormCount = 0;
 let timers = {};
+let wizardShowingNewColabForm = false;
 
 const rolesDisponibles = [
     { id:'directora', nombre:'Directora' },
@@ -622,52 +1471,91 @@ function formatMonthYearForDisplay(d) {
     
     return `${spanishMonths[month]} ${year}`;
 }
+
+
 // GPS Location Function
-function getLocation(formId) {
+function getGpsLocation(formId) {
     const statusEl = document.getElementById(`gpsStatus_${formId}`);
     const latInput = document.getElementById(`lat_${formId}`);
     const lngInput = document.getElementById(`lng_${formId}`);
     
-    if (!navigator.geolocation) {
-        statusEl.innerHTML = '⚠️ Geolocalización no soportada';
+    if (!statusEl || !latInput || !lngInput) {
+        console.warn("GPS elements not found for formId:", formId);
         return;
     }
     
-    statusEl.innerHTML = '📌 Obteniendo ubicación...';
+    if (!navigator.geolocation) {
+        statusEl.innerText = "⚠️ Geolocalización no soportada";
+        return;
+    }
+    
+    statusEl.innerText = "📍 Buscando ubicación...";
     
     navigator.geolocation.getCurrentPosition(
         (position) => {
             const lat = position.coords.latitude.toFixed(6);
             const lng = position.coords.longitude.toFixed(6);
+            const accuracy = Math.round(position.coords.accuracy);
+            
             latInput.value = lat;
             lngInput.value = lng;
-            statusEl.innerHTML = `✅ Ubicación registrada: ${lat}, ${lng}`;
-            setTimeout(() => { 
-                statusEl.innerHTML = '📌 Ubicación registrada ✓'; 
+            
+            if (accuracy < 50) {
+                statusEl.innerText = `✅ GPS precisa (${accuracy}m): ${lat}, ${lng}`;
+            } else if (accuracy < 200) {
+                statusEl.innerText = `📍 Ubicación (${accuracy}m): ${lat}, ${lng}`;
+            } else {
+                statusEl.innerText = `⚠️ Ubicación aproximada (${accuracy}m): ${lat}, ${lng}`;
+            }
+            
+            setTimeout(() => {
+                statusEl.innerText = "📍 Ubicación registrada ✓";
             }, 3000);
         },
         (error) => {
             console.error('GPS error:', error);
-            let msg = '❌ Error al obtener ubicación';
-            if(error.code === 1) msg = '❌ Permiso denegado. Activa ubicación.';
-            else if(error.code === 2) msg = '❌ Ubicación no disponible';
-            else if(error.code === 3) msg = '❌ Tiempo de espera agotado';
-            statusEl.innerHTML = msg;
+            let errorMsg = "❌ Error al obtener ubicación";
+            
+            if (error.code === 1) {
+                errorMsg = "❌ Permiso denegado. Activa ubicación en ajustes.";
+            } else if (error.code === 2) {
+                errorMsg = "❌ Ubicación no disponible. ¿Estás en exteriores?";
+            } else if (error.code === 3) {
+                errorMsg = "❌ Tiempo agotado. Reintenta en un lugar más abierto.";
+            }
+            statusEl.innerText = errorMsg;
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { 
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+        }
     );
 }
-
 function sortActivitiesByDate() {
     activities.sort((a, b) => new Date(a.date) - new Date(b.date));
 }
 function updateFooterDates() {
     const now = new Date();
-    const lastModified = localStorage.getItem(`lastModified_${getCurrentMonthKey()}`) || formatDateForDisplay(now, true);
-    document.getElementById('lastModifiedDate').innerText = lastModified;
-    document.getElementById('deliveryDate').innerText = formatDateForDisplay(now, true);
+    
+    // Get the most recent activity date as last modified
+    let lastModifiedDate = formatDateForDisplay(now, true);
+    if (activities.length > 0) {
+        // Sort activities by date to get the latest
+        const sortedActivities = [...activities].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const mostRecentActivity = sortedActivities[0];
+        if (mostRecentActivity && mostRecentActivity.date) {
+            lastModifiedDate = formatDateForDisplay(mostRecentActivity.date, true);
+        }
+    }
+    
+    // Update footer elements if they exist
+    const lastModifiedEl = document.getElementById('lastModifiedDate');
+    const deliveryDateEl = document.getElementById('deliveryDate');
+    
+    if (lastModifiedEl) lastModifiedEl.innerText = lastModifiedDate;
+    if (deliveryDateEl) deliveryDateEl.innerText = formatDateForDisplay(now, true);
 }
-
 // ==========================================
 // STORAGE
 // ==========================================
@@ -883,264 +1771,1227 @@ function eliminarDama(id) {
         updateActiveDamasChart();
     }
 }
+// ==========================================
+// COMPLETE WIZARD SYSTEM - PERSISTENT, MINUTE DISPLAY, RESUME CAPABLE
+// ==========================================
 
+// GLOBAL WIZARD STATE
+let activeWizard = null;
+let wizardStep = 1;
+let wizardData = {};
+let autoSaveInterval = null;
 
+// TIMER VARIABLES
+let wizardTimerInterval = null;
+let wizardTimerStart = null;
+let wizardTimerElapsedMs = 0;
 
-// ========== MULTIPLE ACTIVITY FORMS FUNCTIONS ==========
-// Create a new activity form HTML
-function createActivityForm(formId) {
-    // Get current date in Honduras timezone (America/Tegucigalpa)
-    const hondurasDate = new Date().toLocaleString('en-US', { timeZone: 'America/Tegucigalpa' });
-    const formattedToday = new Date(hondurasDate).toISOString().split('T')[0];
+// ==========================================
+// TIMER FUNCTIONS - WITH PERSISTENT STORAGE
+// ==========================================
 
-    return `
-        <div class="activity-form" id="activityForm_${formId}" style="background:var(--neutral-light); border-radius:20px; padding:16px; margin-bottom:20px; border:1px solid var(--neutral-border); position:relative;">
-            <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:10px;">
-                <button type="button" onclick="removeActivityForm(${formId})" style="background:none; border:none; color:var(--warning); font-size:1.2rem; cursor:pointer;">✖</button>
-            </div>
+function loadSavedTimerState() {
+    const savedTimer = localStorage.getItem('wizardTimerState');
+    if (savedTimer) {
+        try {
+            const timerState = JSON.parse(savedTimer);
+            wizardTimerElapsedMs = timerState.elapsedMs || 0;
             
-            <!-- Basic Info Row (Always Visible) WITH ACTION TYPE -->
-            <div style="display: flex; gap: 8px; margin-bottom:10px; flex-wrap: wrap;">
-                 <input type="date" id="newDate_${formId}" value="${formattedToday}" max="${formattedToday}" style="flex:1;" onchange="checkDateForTimer(${formId})">
+            if (timerState.isRunning && timerState.startTime) {
+                const now = Date.now();
+                const elapsedSinceClose = now - timerState.startTime;
+                wizardTimerElapsedMs += elapsedSinceClose;
+                startWizardTimerGlobal();
+            }
+            
+            const timerDisplay = document.getElementById('globalTimerDisplay');
+            if (timerDisplay) {
+                const minutes = wizardTimerElapsedMs / 60000;
+                timerDisplay.innerText = formatTimeFromMinutes(minutes);
+            }
+            
+            const minutes = Math.round(wizardTimerElapsedMs / 60000);
+            updateHoursInputDisplay(minutes);
+        } catch (e) {
+            console.error('Failed to load timer state:', e);
+        }
+    }
+}
 
-                <select id="newActName_${formId}" style="flex: 2 1 200px;">
-                    <option value="">-- actividad --</option>
-                    <option value="Mantenimiento y Adecuación">Mantenimiento y Adecuación</option>
-                    <option value="Colaboración en Actividades">Colaboración en Actividades</option>
-                    <option value="Jornada de Salud">Jornada de Salud</option>
-                    <option value="Estrategias Digitales">Estrategias Digitales</option>
-                    <option value="Capacitación Interna">Capacitación Interna</option>
-                    <option value="Encuesta y Capacitación">Encuesta y Capacitación</option>
-                    <option value="Encuesta y Localización">Encuesta y Localización</option>
-                    <option value="Gestión y Recuperación">Gestión y Recuperación</option>
-                    <option value="Gestión y Coordinación">Gestión y Coordinación</option>
-                    <option value="Recaudación Fondos">Recaudación Fondos</option>
-                    <option value="Planificación">Planificación</option>
-                    <option value="Trabajo Comunitario">Trabajo Comunitario</option>
-                    <option value="Jornadas Integración">Jornadas Integración</option>
-                    <option value="Asesoria & Alinamiento">Asesoria & Alineación</option>
-                    <option value="Gestion de Acuerdos">Gestión de Acuerdos</option>
-                    <option value="Visita y Planificación">Visita y Planificación</option>
-                    <option value="Capacitación">Capacitación</option>
-                    <option value="Convocatorio">Convocatorio</option>
-                    <option value="Reunion por Video Llamada/Whatsaap">Reunion por Video Llamada/Whatsaap</option>
-                    <option value="Junta Directiva">Junta Directiva</option>
-                </select>
-                <!-- NEW: Action Type Selector with Filial as default -->
-                <select id="newActionType_${formId}" style="flex: 0 1 100px; padding:8px; border-radius:30px; border:1px solid var(--accent);">
-                    <option value="filial" selected>🏢 Filial</option>
-                    <option value="campo">🌐 Campo</option>
-                </select>
-            </div>
-            
-            <!-- Timer / Hours Section (Always Visible) -->
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom:10px; padding:8px; background:white; border-radius:30px;">
-                <span style="font-size:0.8rem; font-weight:600; color:var(--primary-dark);">⏱️ Horas:</span>
-                <input type="number" id="newHoras_${formId}" placeholder="Horas" min="0" step="0.01" style="width: 80px; padding:6px; border-radius:20px; border:1px solid var(--accent);" oninput="checkHoursInput(${formId})">
-                <button type="button" id="startTimerBtn_${formId}" onclick="startTimer(${formId})" style="background:var(--success); color:white; border:none; border-radius:30px; padding:6px 10px; font-size:0.7rem; font-weight:bold; display:none; cursor:pointer;">▶ Iniciar</button>
-                <button type="button" id="stopTimerBtn_${formId}" onclick="stopTimer(${formId})" style="background:var(--warning); color:white; border:none; border-radius:30px; padding:6px 10px; font-size:0.7rem; font-weight:bold; display:none; cursor:pointer;">⏹ Detener</button>
-                <span id="timerDisplay_${formId}" style="font-size:0.8rem; font-weight:600; color:var(--primary); background:var(--neutral-light); padding:4px 12px; border-radius:20px; border:1px solid var(--accent); display:none;">00:00:00</span>
-            </div>
-            
-            <!-- Extended Fields (Hidden until hours are entered) -->
-            <div id="extendedFields_${formId}" style="display:none;">
-                <!-- Damas and Beneficiaries -->
-                <div style="display:flex; gap:8px; margin-bottom:10px;">
-                    <input type="number" id="newVoluntarias_${formId}" placeholder="Damas Voluntaria" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
-                    <input type="number" id="newBenMujeres_${formId}" placeholder="Beneficiarios Femeninos" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
-                    <input type="number" id="newBenHombres_${formId}" placeholder="Beneficiarios Masculinos" min="0" style="flex:1; padding:8px; border-radius:30px; border:1px solid var(--accent);">
-                </div>
-                
-                <!-- Links Section -->
-                <div class="links-mini-grid" style="margin-bottom:10px;">
-                    <div class="link-box"><input type="text" placeholder="Link 1" class="linkInput_${formId}" id="link1_${formId}"></div>
-                    <div class="link-box"><input type="text" placeholder="Link 2" class="linkInput_${formId}" id="link2_${formId}"></div>
-                </div>
-                
-                <!-- Colaboradores Section -->
-                <div class="colaboradores-section" id="colabsContainer_${formId}">
-                    <div class="colaborador-row">
-                        <select class="colab-org_${formId}" id="colabOrg1_${formId}">
-                            <option value="">-- Colaborador --</option>
-                            <option value="Voluntariado">Voluntariado</option>
-                            <option value="Juventud">Juventud</option>
-                            <option value="Soccorismo">Soccorismo</option>
-                            <option value="Junta Directiva CD-17">Junta Directiva CD-17</option>
-                            <option value="Bomberos">Bomberos</option>
-                            <option value="Alcaldía Local">Alcaldía Local</option>
-                            <option value="Autoridad Competente">Autoridad Competente</option>
-                            <option value="Iglesia Local">Iglesia Local</option>
-                            <option value="Hospital Regional">Hospital Regional</option>
-                            <option value="Damas Regional">Damas Regional</option>
-                            <option value="Cede Central">Cede Central</option>
-                            <option value="Centro Educativo">Centro Educativo</option>
-                            <option value="ONG">ONG</option>
-                        </select>
-                        <input type="number" class="colab-cant_${formId}" placeholder="Cant." min="0" style="width:70px;">
-                    </div>
-                </div>
-                <button type="button" class="add-colab-btn" onclick="addColaboradorToForm(${formId})">+ Colaborador</button>
-            </div>
-            
-            <!-- GPS Drop Pin Section -->
-            <div style="margin-top:15px; border-top: 1px solid var(--neutral-border); padding-top:10px;">
-                <button type="button" id="gpsBtn_${formId}" onclick="getLocation(${formId})" style="width:100%; background:var(--accent); color:white; border:none; border-radius:30px; padding:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">
-                    📌 Registrar Ubicación Actual
-                </button>
-                <p id="gpsStatus_${formId}" style="font-size:0.6rem; color:var(--text-medium); text-align:center; margin-top:4px;">Opcional: Captura coordenadas para actividades de campo</p>
-                <input type="hidden" id="lat_${formId}">
-                <input type="hidden" id="lng_${formId}">
-            </div>
+function saveTimerState(isRunning) {
+    const timerState = {
+        elapsedMs: wizardTimerElapsedMs,
+        isRunning: isRunning,
+        startTime: isRunning ? Date.now() : null,
+        lastUpdated: new Date().toISOString()
+    };
+    localStorage.setItem('wizardTimerState', JSON.stringify(timerState));
+}
 
-            <!-- Submit Button -->
-            <div style="display:flex; justify-content:flex-end; margin-top:15px;">
-                <button type="button" onclick="submitActivityForm(${formId})" style="background:var(--primary); color:white; border:none; border-radius:30px; padding:10px 20px; font-weight:bold; cursor:pointer;">
-                    ✅ Agregar Actividad
-                </button>
+function clearSavedTimerState() {
+    localStorage.removeItem('wizardTimerState');
+}
+
+function startWizardTimerGlobal() {
+    if (wizardTimerInterval) return;
+    
+    wizardTimerStart = Date.now() - wizardTimerElapsedMs;
+    wizardTimerInterval = setInterval(() => {
+        const elapsed = Date.now() - wizardTimerStart;
+        wizardTimerElapsedMs = elapsed;
+        
+        const hours = Math.floor(elapsed / 3600000);
+        const minutes = Math.floor((elapsed % 3600000) / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        const display = document.getElementById('globalTimerDisplay');
+        if (display) {
+            display.innerText = `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+        }
+        saveTimerState(true);
+    }, 1000);
+    saveTimerState(true);
+}
+
+function stopWizardTimerGlobal() {
+    if (wizardTimerInterval && wizardTimerStart) {
+        clearInterval(wizardTimerInterval);
+        wizardTimerInterval = null;
+        
+        const elapsedMs = Date.now() - wizardTimerStart;
+        wizardTimerElapsedMs = elapsedMs;
+        const elapsedMinutes = elapsedMs / 60000;
+        
+        let roundedMinutes = roundTimeMinutes(elapsedMinutes);
+        let roundedHoursDecimal = roundedMinutes / 60;
+        
+        wizardData.horas = roundedHoursDecimal;
+        updateHoursInputDisplay(roundedMinutes);
+        updateMinutesHelper(roundedMinutes);
+        
+        const originalMinutes = Math.floor(elapsedMinutes);
+        const originalSeconds = Math.floor((elapsedMinutes % 1) * 60);
+        const originalTime = `${originalMinutes}:${originalSeconds.toString().padStart(2,'0')}`;
+        const roundedTime = `${roundedMinutes} minutos`;
+        
+        if (originalMinutes !== roundedMinutes) {
+            showRoundingNotification(originalTime, roundedTime);
+        }
+        
+        saveTimerState(false);
+    }
+}
+
+function resetWizardTimer() {
+    if (wizardTimerInterval) {
+        clearInterval(wizardTimerInterval);
+        wizardTimerInterval = null;
+    }
+    wizardTimerStart = null;
+    wizardTimerElapsedMs = 0;
+    
+    const timerDisplay = document.getElementById('globalTimerDisplay');
+    if (timerDisplay) timerDisplay.innerText = '00:00:00';
+    
+    const hoursInput = document.getElementById('hoursInput');
+    if (hoursInput) {
+        const minutes = wizardData.horas ? Math.round(wizardData.horas * 60) : 0;
+        updateHoursInputDisplay(minutes);
+        wizardTimerElapsedMs = minutes * 60000;
+        timerDisplay.innerText = formatTimeFromMinutes(minutes);
+    }
+    clearSavedTimerState();
+}
+
+function roundTimeMinutes(minutes) {
+    if (minutes < 1) return 1;
+    if (minutes < 5) return Math.ceil(minutes);
+    
+    const roundingPoints = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+    for (let i = 0; i < roundingPoints.length; i++) {
+        if (minutes <= roundingPoints[i]) return roundingPoints[i];
+    }
+    
+    const remainder = minutes % 5;
+    return remainder >= 2.5 ? Math.ceil(minutes / 5) * 5 : Math.floor(minutes / 5) * 5;
+}
+
+function updateHoursInputDisplay(minutes) {
+    const hoursInput = document.getElementById('hoursInput');
+    if (hoursInput) {
+        if (minutes === 0) {
+            hoursInput.value = '';
+            hoursInput.placeholder = '0 minutos';
+        } else if (minutes === 1) {
+            hoursInput.value = '1 minuto';
+        } else {
+            hoursInput.value = `${minutes} minutos`;
+        }
+        hoursInput.style.color = '#E34A2F';
+        hoursInput.style.fontWeight = '600';
+        
+        const hoursDecimal = minutes / 60;
+        hoursInput.setAttribute('data-decimal-hours', hoursDecimal);
+        wizardData.horas = hoursDecimal;
+    }
+}
+
+function updateMinutesHelper(minutes) {
+    const minutesHelper = document.getElementById('minutesHelper');
+    if (minutesHelper) {
+        minutesHelper.innerHTML = minutes === 1 ? `${minutes} minuto` : `${minutes} minutos`;
+    }
+}
+
+function handleManualMinutesInput() {
+    const hoursInput = document.getElementById('hoursInput');
+    if (!hoursInput) return;
+    
+    let rawValue = hoursInput.value;
+    let minutes = 0;
+    let hoursDecimal = 0;
+    
+    const numberMatch = rawValue.match(/^[\d.]+$/);
+    
+    if (numberMatch) {
+        hoursDecimal = parseFloat(rawValue);
+        minutes = Math.round(hoursDecimal * 60);
+    } else {
+        const match = rawValue.match(/(\d+)/);
+        if (match) {
+            minutes = parseInt(match[1]);
+            hoursDecimal = minutes / 60;
+        } else {
+            return;
+        }
+    }
+    
+    if (minutes < 5 && minutes > 0) {
+        minutes = Math.ceil(minutes);
+    } else if (minutes >= 5 && minutes <= 60) {
+        const remainder = minutes % 5;
+        minutes = remainder >= 3 ? Math.ceil(minutes / 5) * 5 : Math.floor(minutes / 5) * 5;
+    }
+    
+    if (minutes < 0) minutes = 0;
+    if (minutes > 720) minutes = 720;
+    
+    hoursDecimal = minutes / 60;
+    wizardData.horas = hoursDecimal;
+    
+    if (minutes === 0) {
+        hoursInput.value = '';
+        hoursInput.placeholder = '0 minutos';
+    } else if (minutes === 1) {
+        hoursInput.value = '1 minuto';
+    } else {
+        hoursInput.value = `${minutes} minutos`;
+    }
+    
+    hoursInput.setAttribute('data-decimal-hours', hoursDecimal);
+    updateMinutesHelper(minutes);
+    
+    const timerDisplay = document.getElementById('globalTimerDisplay');
+    if (timerDisplay) timerDisplay.innerText = formatTimeFromMinutes(minutes);
+    
+    wizardTimerElapsedMs = minutes * 60000;
+    saveTimerState(wizardTimerInterval !== null);
+}
+
+function formatTimeFromMinutes(minutes) {
+    const hrs = Math.floor(minutes / 60);
+    const mins = Math.floor(minutes % 60);
+    return `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:00`;
+}
+
+function showRoundingNotification(original, rounded) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #E34A2F;
+        color: white;
+        padding: 8px 20px;
+        border-radius: 40px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        z-index: 10001;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        animation: fadeOutUp 2s ease forwards;
+    `;
+    notification.innerHTML = `⏱️ Tiempo redondeado: ${original} → ${rounded}`;
+    
+    if (!document.getElementById('roundingAnimStyle')) {
+        const style = document.createElement('style');
+        style.id = 'roundingAnimStyle';
+        style.textContent = `@keyframes fadeOutUp { 0% { opacity: 1; transform: translateX(-50%) translateY(0); } 70% { opacity: 1; transform: translateX(-50%) translateY(-10px); } 100% { opacity: 0; transform: translateX(-50%) translateY(-20px); visibility: hidden; } }`;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 2000);
+}
+
+function attachHoursInputListener() {
+    const hoursInput = document.getElementById('hoursInput');
+    if (hoursInput) {
+        hoursInput.removeEventListener('input', handleManualMinutesInput);
+        hoursInput.addEventListener('input', handleManualMinutesInput);
+    }
+}
+
+// ==========================================
+// WIZARD STATE MANAGEMENT
+// ==========================================
+
+function saveWizardState() {
+    const wizardState = { step: wizardStep, data: wizardData, timestamp: Date.now() };
+    localStorage.setItem('wizardFullState', JSON.stringify(wizardState));
+}
+
+function loadWizardState() {
+    const savedState = localStorage.getItem('wizardFullState');
+    if (savedState) {
+        try {
+            const state = JSON.parse(savedState);
+            wizardStep = state.step || 1;
+            wizardData = state.data || {};
+            return true;
+        } catch (e) {
+            console.error('Failed to load wizard state:', e);
+        }
+    }
+    return false;
+}
+
+function clearWizardState() {
+    localStorage.removeItem('wizardFullState');
+}
+
+function startAutoSave() {
+    if (autoSaveInterval) clearInterval(autoSaveInterval);
+    autoSaveInterval = setInterval(() => {
+        if (activeWizard) saveWizardState();
+    }, 2000);
+}
+
+function stopAutoSave() {
+    if (autoSaveInterval) {
+        clearInterval(autoSaveInterval);
+        autoSaveInterval = null;
+    }
+}
+
+// ==========================================
+// MAIN WIZARD FUNCTIONS
+// ==========================================
+
+function openActivityWizard() {
+    if (document.getElementById('globalWizardOverlay')) {
+        document.getElementById('globalWizardOverlay').remove();
+    }
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'globalWizardOverlay';
+    overlay.className = 'wizard-overlay-global';
+    overlay.innerHTML = `
+        <div class="wizard-card">
+            <div class="wizard-header">
+                <h2>Registro de Actividad</h2>
+                <button class="wizard-close-btn" onclick="closeGlobalWizard()">✕</button>
+            </div>
+            <div class="wizard-steps-modern" id="wizardStepsModern">
+                <div class="step-pill active" data-step="1">1</div>
+                <div class="step-pill" data-step="2">2</div>
+                <div class="step-pill" data-step="3">3</div>
+                <div class="step-pill" data-step="4">4</div>
+                <div class="step-pill" data-step="5">5</div>
+                <div class="step-pill" data-step="6">6</div>
+            </div>
+            <div class="wizard-body" id="wizardDynamicBody"></div>
+            <div class="wizard-actions">
+                <button class="wiz-btn wiz-btn-secondary" id="wizardPrevBtn" onclick="wizardGoPrev()" style="display:none">← Anterior</button>
+                <button class="wiz-btn wiz-btn-primary" id="wizardNextBtn" onclick="wizardGoNext()">Siguiente →</button>
             </div>
         </div>
     `;
+    document.body.appendChild(overlay);
+    
+    setTimeout(() => overlay.classList.add('active'), 10);
+    
+    activeWizard = true;
+    
+    const restored = loadWizardState();
+    if (!restored) {
+        wizardStep = 1;
+        wizardData = {};
+    }
+    
+    loadSavedTimerState();
+    renderWizardStep();
+    startAutoSave();
 }
 
-function addNewActivityForm() {
-    activityFormCount++;
-    const container = document.getElementById('activityFormsContainer');
-    container.insertAdjacentHTML('beforeend', createActivityForm(activityFormCount));
-}
-// Simple remove function (keep this for the X button)
-function removeActivityForm(formId) {
-    const form = document.getElementById(`activityForm_${formId}`);
-    if (form) {
-        if (timers[formId]) {
-            clearInterval(timers[formId]);
-            delete timers[formId];
-            delete timers[`${formId}_startTime`];
-        }
-        form.remove();
+function closeGlobalWizard() {
+    const overlay = document.getElementById('globalWizardOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        setTimeout(() => overlay.remove(), 300);
+    }
+    activeWizard = null;
+    stopAutoSave();
+    
+    if (wizardTimerInterval || Object.keys(wizardData).length > 0) {
+        saveWizardState();
+        if (wizardTimerInterval) saveTimerState(true);
+    } else {
+        clearWizardState();
+        clearSavedTimerState();
     }
 }
 
-// Check date for timer visibility
-function checkDateForTimer(formId) {
-    const dateInput = document.getElementById(`newDate_${formId}`);
-    const startBtn = document.getElementById(`startTimerBtn_${formId}`);
-    const hoursInput = document.getElementById(`newHoras_${formId}`);
+function renderWizardStep() {
+    const body = document.getElementById('wizardDynamicBody');
+    if (!body) return;
     
-    if (!dateInput || !startBtn || !hoursInput) return;
+    let html = '';
+    const currentMinutes = Math.round((wizardData.horas || 0) * 60);
     
-    const selectedDate = new Date(dateInput.value + 'T12:00:00');
-    const today = new Date();
-    const isToday = selectedDate.toDateString() === today.toDateString();
-    
-    if (isToday && !hoursInput.value) {
-        startBtn.style.display = 'inline-block';
-    } else {
-        startBtn.style.display = 'none';
+    switch(wizardStep) {
+        case 1:
+            html = `
+                <div class="dynamic-question">
+                    <div class="question-label"> ¿Qué tipo de actividad realizaste?</div>
+                    <div class="modern-radio-group" id="radioTypeGroup">
+                        <div class="modern-radio ${wizardData.actionType === 'filial' ? 'selected' : ''}" data-value="filial" onclick="selectWizardRadio('actionType', 'filial')">
+                            <span>🏢</span> Filial (Oficina/Base)
+                        </div>
+                        <div class="modern-radio ${wizardData.actionType === 'campo' ? 'selected' : ''}" data-value="campo" onclick="selectWizardRadio('actionType', 'campo')">
+                            <span>🌐</span> Campo (Territorio/Comunidad)
+                        </div>
+                    </div>
+                    <div class="question-label"> Selecciona la actividad principal</div>
+                    <select id="mainActivitySelect" class="wizard-input" onchange="handleActivityChange()">
+                        ${generateActivityOptions(wizardData.activityName || '')}
+                    </select>
+                    <div id="conditionalDetailContainer"></div>
+                    <div class="question-label"> Fecha de la actividad</div>
+                    <input type="date" id="activityDate" class="wizard-input" value="${getHondurasDate()}" max="${getHondurasDate()}">
+                </div>
+            `;
+            break;
+            
+        case 2:
+            const displayMinutes = currentMinutes === 1 ? '1 minuto' : (currentMinutes > 0 ? `${currentMinutes} minutos` : '');
+            html = `
+                <div class="dynamic-question">
+                    <div class="question-label">⏱ Duración de la actividad</div>
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
+                        <input type="text" id="hoursInput" class="wizard-input" placeholder="Ej: 30 minutos" value="${displayMinutes}" style="flex:2">
+                        <div id="minutesHelper" style="flex:1; background: #f0f2f5; border-radius: 60px; padding: 12px 16px; text-align: center; font-weight: 600; color: #E34A2F;">
+                            ${currentMinutes === 1 ? '1 minuto' : (currentMinutes > 0 ? `${currentMinutes} minutos` : '0 minutos')}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px; margin: 16px 0;">
+                        <button class="wiz-btn wiz-btn-secondary" style="flex:1" onclick="startWizardTimerGlobal()">▶ Iniciar Timer</button>
+                        <button class="wiz-btn wiz-btn-secondary" style="flex:1" onclick="stopWizardTimerGlobal()">⏹ Detener Timer</button>
+                    </div>
+                    <div class="timer-glow" id="globalTimerDisplay">${formatTimeFromMinutes(currentMinutes)}</div>
+                    <p style="font-size:0.7rem; text-align:center; margin-top:8px;"> Al detener el timer, se redondea automáticamente.<br>• Menos de 1 min → 1 min • Menos de 5 min → siguiente min • 5-60 min → múltiplo de 5</p>
+                </div>
+            `;
+            break;
+            
+        case 3:
+            html = `
+                <div class="dynamic-question">
+                    <div class="question-label"> Participación y Beneficiarios</div>
+                    <input type="number" id="voluntariasInput" class="wizard-input" placeholder=" Número de Damas Voluntarias" min="0" value="${wizardData.voluntarias || ''}">
+                    <input type="number" id="mujeresInput" class="wizard-input" placeholder=" Beneficiarias Mujeres" min="0" value="${wizardData.beneficiadas_mujeres || ''}">
+                    <input type="number" id="hombresInput" class="wizard-input" placeholder=" Beneficiarios Hombres" min="0" value="${wizardData.beneficiados_hombres || ''}">
+                </div>
+            `;
+            break;
+            
+        case 4:
+            html = `
+                <div class="dynamic-question">
+                    <div class="question-label">🔗 Enlaces de evidencia (Fotos, Videos, Drive)</div>
+                    <input type="url" id="link1Input" class="wizard-input" placeholder="https://..." value="${wizardData.link1 || ''}">
+                    <input type="url" id="link2Input" class="wizard-input" placeholder="https://... (opcional)" value="${wizardData.link2 || ''}">
+                    <p style="font-size:0.7rem; color:#666;">📸 Comparte hasta 2 enlaces con evidencia de la actividad</p>
+                </div>
+            `;
+            break;
+            
+        case 5:
+            html = `
+                <div class="dynamic-question">
+                    <div class="question-label"> Colaboradores (Aliados / Instituciones)</div>
+                    <div id="colabsDynamicContainer">${renderColaboratorsDynamic()}</div>
+                </div>
+            `;
+            break;
+            
+        case 6:
+            html = `
+                <div class="dynamic-question">
+                    <div class="question-label">📌 Ubicación de la actividad (Opcional)</div>
+                    <button class="wiz-btn wiz-btn-secondary" style="width:100%; margin-bottom:16px;" onclick="captureWizardLocation()">📌 Registrar ubicación GPS</button>
+                    <div class="gps-status-badge" id="wizardGpsStatus">⚡ No se ha registrado ubicación</div>
+                    <input type="hidden" id="wizardLat" value="${wizardData.lat || ''}">
+                    <input type="hidden" id="wizardLng" value="${wizardData.lng || ''}">
+                    <p style="font-size:0.7rem; margin-top:12px;">✨ La ubicación ayuda a mapear el impacto territorial</p>
+                </div>
+            `;
+            break;
     }
-}
-
-// Check hours input to show extended fields
-function checkHoursInput(formId) {
-    const hoursInput = document.getElementById(`newHoras_${formId}`);
-    const extendedFields = document.getElementById(`extendedFields_${formId}`);
-    const startBtn = document.getElementById(`startTimerBtn_${formId}`);
     
-    if (hoursInput.value && hoursInput.value > 0) {
-        extendedFields.style.display = 'block';
-        startBtn.style.display = 'none';
-    } else {
-        extendedFields.style.display = 'none';
-        // Check if we should show timer button
-        const dateInput = document.getElementById(`newDate_${formId}`);
-        if (dateInput) {
-            const selectedDate = new Date(dateInput.value + 'T12:00:00');
-            const today = new Date();
-            const isToday = selectedDate.toDateString() === today.toDateString();
-            if (isToday) {
-                startBtn.style.display = 'inline-block';
+    body.innerHTML = html;
+        // After setting innerHTML, update step pills and buttons
+        updateStepPills();
+
+        const prevBtn = document.getElementById('wizardPrevBtn');
+        if (prevBtn) prevBtn.style.display = wizardStep === 1 ? 'none' : 'flex';
+
+        const nextBtn = document.getElementById('wizardNextBtn');
+        if (nextBtn) nextBtn.innerText = wizardStep === 6 ? '✅ Finalizar Actividad' : 'Siguiente →';
+
+        if (wizardStep === 1) renderConditionalDetail();
+        if (wizardStep === 2) setTimeout(() => attachHoursInputListener(), 50);
+
+        // Set button state for step 5 based on current data
+        if (wizardStep === 5) {
+        const colabs = wizardData.colaboradores || [];
+        if (nextBtn) {
+            if (colabs.length === 0) {
+                nextBtn.disabled = false;
+                nextBtn.style.opacity = '1';
+                nextBtn.style.cursor = 'pointer';
+            } else {
+                const lastColab = colabs[colabs.length - 1];
+                if (!lastColab.org || !lastColab.cant || lastColab.cant <= 0) {
+                    nextBtn.disabled = true;
+                    nextBtn.style.opacity = '0.5';
+                    nextBtn.style.cursor = 'not-allowed';
+                } else {
+                    const needsDetails = ['Voluntariado', 'Juventud', 'Socorismo'].includes(lastColab.org);
+                    if (needsDetails) {
+                        const allFilled = lastColab.participants && 
+                                        lastColab.participants.length === lastColab.cant &&
+                                        lastColab.participants.every(p => p.name && p.name.trim() !== '');
+                        nextBtn.disabled = !allFilled;
+                        nextBtn.style.opacity = allFilled ? '1' : '0.5';
+                        nextBtn.style.cursor = allFilled ? 'pointer' : 'not-allowed';
+                    } else {
+                        nextBtn.disabled = false;
+                        nextBtn.style.opacity = '1';
+                        nextBtn.style.cursor = 'pointer';
+                    }
+                }
             }
         }
     }
 }
 
-// Start timer for specific form
-function startTimer(formId) {
-    if (timers[formId]) return;
+
+
+function generateActivityOptions(selectedVal) {
+    const activities = [
+        "-- Seleccionar actividad --",
+        "Mantenimiento y Adecuación", "Jornada de Salud", "Encuesta y Capacitación",
+        "Encuesta y Localización", "Trabajo Comunitario", "Jornadas Integración",
+        "Atención a Beneficiarios", "Logística y Distribución", "Planificación",
+        "Visita y Planificación", "Visita y Seguimiento", "Gestión y Coordinación",
+        "Gestión y Recuperación", "Gestión de Acuerdos", "Recaudación Fondos",
+        "Capacitación", "Capacitación Interna", "Estrategias Digitales",
+        "Reunión por Video Llamada/Whatsapp", "Junta Directiva", "Promoción y Difusión"
+    ];
     
-    const startTime = Date.now();
-    
-    // Hide hours input, show timer
-    document.getElementById(`newHoras_${formId}`).style.display = 'none';
-    document.getElementById(`startTimerBtn_${formId}`).style.display = 'none';
-    document.getElementById(`stopTimerBtn_${formId}`).style.display = 'inline-block';
-    document.getElementById(`timerDisplay_${formId}`).style.display = 'inline-block';
-    
-    // Start timer display
-    timers[formId] = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const hours = Math.floor(elapsed / 3600000).toString().padStart(2, '0');
-        const minutes = Math.floor((elapsed % 3600000) / 60000).toString().padStart(2, '0');
-        const seconds = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
-        document.getElementById(`timerDisplay_${formId}`).innerText = `${hours}:${minutes}:${seconds}`;
-    }, 1000);
-    
-    // Store timer data
-    timers[`${formId}_startTime`] = startTime;
+    let options = '';
+    activities.forEach(act => {
+        options += `<option value="${act}" ${selectedVal === act ? 'selected' : ''}>${act}</option>`;
+    });
+    return options;
 }
 
-// Stop timer for specific form
-function stopTimer(formId) {
-    if (!timers[formId]) return;
-    
-    clearInterval(timers[formId]);
-    delete timers[formId];
-    
-    // Calculate hours
-    const elapsed = Date.now() - timers[`${formId}_startTime`];
-    const hoursDecimal = (elapsed / 3600000).toFixed(2);
-    
-    // Show hours input with value
-    const hoursInput = document.getElementById(`newHoras_${formId}`);
-    hoursInput.style.display = 'inline-block';
-    hoursInput.value = hoursDecimal;
-    
-    // Hide timer controls
-    document.getElementById(`startTimerBtn_${formId}`).style.display = 'none';
-    document.getElementById(`stopTimerBtn_${formId}`).style.display = 'none';
-    document.getElementById(`timerDisplay_${formId}`).style.display = 'none';
-    
-    // Show extended fields
-    document.getElementById(`extendedFields_${formId}`).style.display = 'block';
-    
-    delete timers[`${formId}_startTime`];
+function handleActivityChange() {
+    const select = document.getElementById('mainActivitySelect');
+    if (select) {
+        wizardData.activityName = select.value;
+        renderConditionalDetail();
+        saveWizardState();
+    }
 }
 
-// Add colaborador to specific form
-function addColaboradorToForm(formId) {
-    const container = document.getElementById(`colabsContainer_${formId}`);
-    const newRow = document.createElement('div');
-    newRow.className = 'colaborador-row';
-    newRow.innerHTML = `
-        <select class="colab-org_${formId}">
-            <option value="">-- Colaborador --</option>
-            <option value="Voluntariado">Voluntariado</option>
-            <option value="Juventud">Juventud</option>
-            <option value="Soccorismo">Soccorismo</option>
-            <option value="Junta Directiva CD-17">Junta Directiva CD-17</option>
-            <option value="Bomberos">Bomberos</option>
-            <option value="Alcaldía Local">Alcaldía Local</option>
-            <option value="Autoridad Competente">Autoridad Competente</option>
-            <option value="Iglesia Local">Iglesia Local</option>
-            <option value="Hospital Regional">Hospital Regional</option>
-            <option value="Damas Regional">Damas Regional</option>
-            <option value="Cede Central">Cede Central</option>
-            <option value="Centro Educativo">Centro Educativo</option>
-            <option value="ONG">ONG</option>
-        </select>
-        <input type="number" class="colab-cant_${formId}" placeholder="Cant." min="0" style="width:70px;">
+
+
+// ==========================================
+// COLABORADORS FUNCTIONS
+// ==========================================
+function renderColaboratorsDynamic() {
+    const colabs = wizardData.colaboradores || [];
+    
+    // If we already have collaborators and we're NOT showing the new form, show the current collaborator being edited
+    if (colabs.length > 0 && !wizardShowingNewColabForm) {
+        // Show the most recently added collaborator
+        const currentColab = colabs[colabs.length - 1];
+        const needsDetails = ['Voluntariado', 'Juventud', 'Socorismo'].includes(currentColab.org);
+        const index = colabs.length - 1;
+        
+        // Check if there are external collaborators (for person in charge section)
+        const hasExternal = colabs.some(col => {
+            const isInternal = ['Voluntariado', 'Juventud', 'Socorismo'].includes(col.org);
+            return !isInternal && col.cant > 0;
+        });
+        
+        return `
+            <div class="colab-wrapper" style="margin-bottom: 16px;">
+                <div class="colab-row-modern" style="margin-bottom: 8px;">
+                    <select class="wizard-input colab-select" style="margin:0" data-index="${index}" onchange="updateColabType(this, ${index})">
+                        <option value="">-- Seleccionar --</option>
+                        <option value="Voluntariado" ${currentColab.org === 'Voluntariado' ? 'selected' : ''}>Voluntariado</option>
+                        <option value="Juventud" ${currentColab.org === 'Juventud' ? 'selected' : ''}>Juventud</option>
+                        <option value="Socorismo" ${currentColab.org === 'Socorismo' ? 'selected' : ''}>Socorismo</option>
+                        <option value="Junta Directiva CD-17" ${currentColab.org === 'Junta Directiva CD-17' ? 'selected' : ''}>Junta Directiva CD-17</option>
+                        <option value="Bomberos" ${currentColab.org === 'Bomberos' ? 'selected' : ''}>Bomberos</option>
+                        <option value="Alcaldía Local" ${currentColab.org === 'Alcaldía Local' ? 'selected' : ''}>Alcaldía Local</option>
+                        <option value="Autoridad Competente" ${currentColab.org === 'Autoridad Competente' ? 'selected' : ''}>Autoridad Competente</option>
+                        <option value="Iglesia Local" ${currentColab.org === 'Iglesia Local' ? 'selected' : ''}>Iglesia Local</option>
+                        <option value="ONG" ${currentColab.org === 'ONG' ? 'selected' : ''}>ONG</option>
+                    </select>
+                    <input type="number" placeholder="Cant." class="wizard-input colab-cant" style="margin:0; width:100px" value="${currentColab.cant}" min="0" oninput="updateColabDetails(this, ${index})">
+                    <button class="remove-colab" onclick="removeColabRow(this)">✖</button>
+                </div>
+                <div id="colabDetails_${index}" class="colab-details-container">
+                    ${needsDetails ? renderDetailedFields(currentColab, index) : ''}
+                </div>
+            </div>
+            <div id="personInChargeContainer" style="margin-top: 20px; border-top: 1px solid var(--neutral-border); padding-top: 16px; ${hasExternal ? '' : 'display: none;'}">
+                <div class="question-label">👤 Persona a cargo de colaboradores externos</div>
+                <input type="text" id="personInChargeName" class="wizard-input" placeholder="Nombre de la persona responsable" value="${wizardData.personInChargeName || ''}">
+                <input type="text" id="personInChargeTitle" class="wizard-input" placeholder="Cargo / Título" value="${wizardData.personInChargeTitle || ''}">
+                <p style="font-size:0.7rem; color:var(--text-medium); margin-top:4px;">💡 Persona de contacto principal entre los colaboradores externos (Bomberos, Alcaldía, ONG, etc.)</p>
+            </div>
+            <button class="wiz-btn wiz-btn-secondary" style="width:100%; margin-top:16px;" onclick="addColaboratorRow()">+ Agregar otro colaborador</button>
+        `;
+    }
+    
+    // Reset flag and show blank form for new collaborator
+    wizardShowingNewColabForm = false;
+    
+    // Show blank form for first collaborator (NO "Agregar otro" button here)
+    return `
+        <div class="colab-row-modern" style="margin-bottom: 16px;">
+            <select class="wizard-input colab-select" style="margin:0" data-index="0" onchange="updateColabType(this, 0)">
+                <option value="">-- Seleccionar colaborador --</option>
+                <option value="Voluntariado">Voluntariado</option>
+                <option value="Juventud">Juventud</option>
+                <option value="Socorismo">Socorismo</option>
+                <option value="Junta Directiva CD-17">Junta Directiva CD-17</option>
+                <option value="Bomberos">Bomberos</option>
+                <option value="Alcaldía Local">Alcaldía Local</option>
+                <option value="Autoridad Competente">Autoridad Competente</option>
+                <option value="Iglesia Local">Iglesia Local</option>
+                <option value="ONG">ONG</option>
+            </select>
+            <input type="number" placeholder="Cant." class="wizard-input colab-cant" style="margin:0; width:100px" min="0" oninput="updateColabDetails(this, 0)">
+            <button class="remove-colab" onclick="removeColabRow(this)">✖</button>
+        </div>
+        <div id="colabDetails_0" class="colab-details-container"></div>
+        <div id="personInChargeContainer" style="margin-top: 20px; border-top: 1px solid var(--neutral-border); padding-top: 16px; display: none;">
+            <div class="question-label">👤 Persona a cargo de colaboradores externos</div>
+            <input type="text" id="personInChargeName" class="wizard-input" placeholder="Nombre de la persona responsable" value="${wizardData.personInChargeName || ''}">
+            <input type="text" id="personInChargeTitle" class="wizard-input" placeholder="Cargo / Título" value="${wizardData.personInChargeTitle || ''}">
+            <p style="font-size:0.7rem; color:var(--text-medium); margin-top:4px;">💡 Persona de contacto principal entre los colaboradores externos (Bomberos, Alcaldía, ONG, etc.)</p>
+        </div>
     `;
-    container.appendChild(newRow);
 }
+
+function renderDetailedFields(col, index) {
+    const participants = col.participants || [];
+    const expectedCount = col.cant || 0;
+    
+    // If no participants array exists yet, create it with empty entries matching the count
+    if (participants.length !== expectedCount && expectedCount > 0) {
+        while (participants.length < expectedCount) {
+            participants.push({ name: '', gender: '' });
+        }
+        while (participants.length > expectedCount) {
+            participants.pop();
+        }
+        col.participants = participants;
+        saveWizardState();
+    }
+    
+    if (expectedCount === 0) {
+        return `
+            <div class="detailed-participants" style="margin-left: 20px; margin-bottom: 12px; padding: 12px; background: var(--neutral-light); border-radius: 16px;">
+                <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">📋 Detalles de ${col.org}</div>
+                <p style="font-size:0.7rem; color:var(--text-medium); text-align:center; padding: 8px;">Ingresa la cantidad para registrar los nombres y géneros</p>
+            </div>
+        `;
+    }
+    
+    return `
+        <div class="detailed-participants" style="margin-left: 20px; margin-bottom: 12px; padding: 12px; background: var(--neutral-light); border-radius: 16px;">
+            <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">📋 Detalles de ${col.org} (${expectedCount} persona${expectedCount !== 1 ? 's' : ''})</div>
+            <div id="participants_${index}" class="participants-list">
+                ${participants.map((p, pIdx) => `
+                    <div class="participant-row" style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
+                        <input type="text" placeholder="Nombre completo" class="wizard-input participant-name" style="flex:2; margin:0;" value="${escapeHtml(p.name || '')}" onchange="updateParticipantAndValidate(${index}, ${pIdx}, 'name', this.value)">
+                        <select class="wizard-input participant-gender" style="flex:1; margin:0;" onchange="updateParticipantAndValidate(${index}, ${pIdx}, 'gender', this.value)">
+                            <option value="">Género</option>
+                            <option value="Femenino" ${p.gender === 'Femenino' ? 'selected' : ''}>Femenino</option>
+                            <option value="Masculino" ${p.gender === 'Masculino' ? 'selected' : ''}>Masculino</option>
+                        </select>
+                    </div>
+                `).join('')}
+            </div>
+            <p style="font-size:0.65rem; color:var(--text-medium); margin-top: 6px;">Registra el nombre y género de cada persona de ${col.org} que participó.</p>
+        </div>
+        
+    `;
+}
+
+function updateColabType(select, index) {
+    const newOrg = select.value;
+    const row = select.closest('.colab-row-modern');
+    const cantInput = row.querySelector('.colab-cant');
+    
+    if (!wizardData.colaboradores) wizardData.colaboradores = [];
+    
+    if (!wizardData.colaboradores[index]) {
+        wizardData.colaboradores[index] = { org: '', cant: 0, participants: [] };
+    }
+    
+    wizardData.colaboradores[index].org = newOrg;
+    wizardData.colaboradores[index].cant = 0;
+    wizardData.colaboradores[index].participants = [];
+    
+    if (cantInput) cantInput.value = 0;
+    
+    saveWizardState();
+    
+    // Clear details container
+    const detailsContainer = document.getElementById(`colabDetails_${index}`);
+    if (detailsContainer) {
+        detailsContainer.innerHTML = '';
+    }
+    
+    // Update button state
+    const nextBtn = document.getElementById('wizardNextBtn');
+    if (nextBtn) {
+        nextBtn.disabled = true;
+        nextBtn.style.opacity = '0.5';
+        nextBtn.style.cursor = 'not-allowed';
+    }
+    
+    // Update person in charge visibility
+    updatePersonInChargeVisibility();
+}
+
+function updatePersonInChargeVisibility() {
+    const colabs = wizardData.colaboradores || [];
+    const hasExternal = colabs.some(col => {
+        const isInternal = ['Voluntariado', 'Juventud', 'Socorismo'].includes(col.org);
+        return !isInternal && col.cant > 0;
+    });
+    
+    const personInChargeContainer = document.getElementById('personInChargeContainer');
+    if (personInChargeContainer) {
+        personInChargeContainer.style.display = hasExternal ? 'block' : 'none';
+    }
+}
+
+function updateColabDetails(input, index) {
+    const newCant = parseInt(input.value) || 0;
+    const row = input.closest('.colab-row-modern');
+    const select = row.querySelector('.colab-select');
+    const org = select ? select.value : '';
+    
+    if (!wizardData.colaboradores) wizardData.colaboradores = [];
+    
+    if (!wizardData.colaboradores[index]) {
+        wizardData.colaboradores[index] = { org: org, cant: 0, participants: [] };
+    }
+    
+    wizardData.colaboradores[index].org = org;
+    wizardData.colaboradores[index].cant = newCant;
+    
+    if (org && newCant > 0) {
+        wizardShowingNewColabForm = false;
+    }
+    
+    const needsDetails = ['Voluntariado', 'Juventud', 'Socorismo'].includes(org);
+    
+    // Find the details container
+    const detailsContainer = document.getElementById(`colabDetails_${index}`);
+    
+    if (needsDetails && newCant > 0) {
+        // Create fresh participants array
+        const participants = [];
+        for (let i = 0; i < newCant; i++) {
+            participants.push({ name: '', gender: '' });
+        }
+        wizardData.colaboradores[index].participants = participants;
+        
+        // Update only the details section, not the whole page
+        if (detailsContainer) {
+            detailsContainer.innerHTML = renderDetailedFields(wizardData.colaboradores[index], index);
+        }
+    } else {
+        wizardData.colaboradores[index].participants = [];
+        if (detailsContainer) {
+            detailsContainer.innerHTML = '';
+        }
+    }
+    
+    saveWizardState();
+    
+    // Update button state without re-rendering
+    const nextBtn = document.getElementById('wizardNextBtn');
+    if (nextBtn) {
+        if (!org || newCant <= 0) {
+            nextBtn.disabled = true;
+            nextBtn.style.opacity = '0.5';
+            nextBtn.style.cursor = 'not-allowed';
+        } else if (!needsDetails && newCant > 0) {
+            nextBtn.disabled = false;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+        } else if (needsDetails && newCant > 0) {
+            nextBtn.disabled = true;
+            nextBtn.style.opacity = '0.5';
+            nextBtn.style.cursor = 'not-allowed';
+        }
+    }
+    
+    // Update person in charge container visibility
+    updatePersonInChargeVisibility();
+    
+    // ADD THIS - manually update the button visibility in the DOM
+    const colabs = wizardData.colaboradores || [];
+    if (colabs.length > 0 && !wizardShowingNewColabForm) {
+        // Check if the "Agregar otro" button already exists
+        let addButton = document.querySelector('.add-another-btn');
+        if (!addButton) {
+            // Find the container and append the button
+            const container = document.querySelector('#colabsDynamicContainer');
+            if (container) {
+                const buttonHtml = '<button class="wiz-btn wiz-btn-secondary" style="width:100%; margin-top:16px;" onclick="addColaboratorRow()">+ Agregar otro colaborador</button>';
+                // Check if it's not already there
+                if (!container.innerHTML.includes('Agregar otro colaborador')) {
+                    // Insert before the personInChargeContainer or at the end
+                    const personInCharge = document.getElementById('personInChargeContainer');
+                    if (personInCharge) {
+                        personInCharge.insertAdjacentHTML('beforebegin', buttonHtml);
+                    } else {
+                        container.insertAdjacentHTML('beforeend', buttonHtml);
+                    }
+                }
+            }
+        }
+    }
+}
+
+function updateParticipant(colabIndex, participantIndex, field, value) {
+    if (wizardData.colaboradores && wizardData.colaboradores[colabIndex] && 
+        wizardData.colaboradores[colabIndex].participants && 
+        wizardData.colaboradores[colabIndex].participants[participantIndex]) {
+        wizardData.colaboradores[colabIndex].participants[participantIndex][field] = value;
+        saveWizardState();
+    }
+}
+
+function addColaboratorRow() {
+    // Save current collaborator data if it has any content
+    const colabRows = document.querySelectorAll('.colab-row-modern');
+    if (colabRows.length > 0 && wizardData.colaboradores && wizardData.colaboradores.length > 0) {
+        const index = wizardData.colaboradores.length - 1;
+        const select = document.querySelector('.colab-select');
+        const cantInput = document.querySelector('.colab-cant');
+        if (select && select.value) wizardData.colaboradores[index].org = select.value;
+        if (cantInput) wizardData.colaboradores[index].cant = parseInt(cantInput.value) || 0;
+        saveWizardState();
+    }
+    
+    // Add a new blank collaborator
+    if (!wizardData.colaboradores) wizardData.colaboradores = [];
+    wizardData.colaboradores.push({
+        org: '',
+        cant: 0,
+        participants: []
+    });
+    
+    // Re-render to show the new blank form
+    renderWizardStep();
+}
+
+function removeColabRow(button) {
+    const row = button.closest('.colab-row-modern');
+    const container = row.parentElement;
+    const rows = container.querySelectorAll('.colab-row-modern');
+    const index = Array.from(rows).indexOf(row);
+    
+    if (wizardData.colaboradores && wizardData.colaboradores[index]) {
+        wizardData.colaboradores.splice(index, 1);
+        saveWizardState();
+        renderWizardStep();
+        updatePersonInChargeVisibility();
+    }
+}
+
+function updateColaboratorData() {
+    // Save person in charge info
+    const personName = document.getElementById('personInChargeName');
+    const personTitle = document.getElementById('personInChargeTitle');
+    if (personName) wizardData.personInChargeName = personName.value;
+    if (personTitle) wizardData.personInChargeTitle = personTitle.value;
+    
+    saveWizardState();
+}
+
+//Conditional Details when Collaborator Type is chosen
+function renderConditionalDetail() {
+    const container = document.getElementById('conditionalDetailContainer');
+    if (!container) return;
+    
+    const requiresDetail = ['Encuesta y Capacitación', 'Encuesta y Localización', 'Capacitación', 'Capacitación Interna', 'Jornada de Salud'];
+    
+    if (requiresDetail.includes(wizardData.activityName)) {
+        container.innerHTML = `
+            <div class="dynamic-dropdown">
+                <div class="question-label"> Detalle específico</div>
+                <select id="activityDetailSelect" class="wizard-input">
+                    <option value="">-- Seleccionar enfoque --</option>
+                    <option value="Prevención Violencia" ${wizardData.detail === 'Prevención Violencia' ? 'selected' : ''}>Prevención Violencia</option>
+                    <option value="Salud Comunitaria" ${wizardData.detail === 'Salud Comunitaria' ? 'selected' : ''}>Salud Comunitaria</option>
+                    <option value="Primeros Auxilios" ${wizardData.detail === 'Primeros Auxilios' ? 'selected' : ''}>Primeros Auxilios</option>
+                    <option value="Agua y Saneamiento" ${wizardData.detail === 'Agua y Saneamiento' ? 'selected' : ''}>Agua y Saneamiento</option>
+                    <option value="Gestión de Riesgos" ${wizardData.detail === 'Gestión de Riesgos' ? 'selected' : ''}>Gestión de Riesgos</option>
+                    <option value="Medio Ambiente" ${wizardData.detail === 'Medio Ambiente' ? 'selected' : ''}>Medio Ambiente</option>
+                </select>
+            </div>
+        `;
+    } else {
+        container.innerHTML = '';
+    }
+}
+
+function selectWizardRadio(field, value) {
+    wizardData[field] = value;
+    const group = document.getElementById('radioTypeGroup');
+    if (group) {
+        group.querySelectorAll('.modern-radio').forEach(radio => {
+            if (radio.dataset.value === value) {
+                radio.classList.add('selected');
+            } else {
+                radio.classList.remove('selected');
+            }
+        });
+    }
+    saveWizardState();
+}
+
+function updateStepPills() {
+    const pills = document.querySelectorAll('.step-pill');
+    pills.forEach((pill, idx) => {
+        const stepNum = idx + 1;
+        pill.classList.remove('active', 'completed');
+        if (stepNum === wizardStep) pill.classList.add('active');
+        else if (stepNum < wizardStep) pill.classList.add('completed');
+    });
+}
+
+//Validation Steps to prevent moving forward with incomplete information
+function validateCurrentStep() {
+    switch(wizardStep) {
+        case 1:
+            if (!wizardData.activityName || wizardData.activityName === '-- Seleccionar actividad --') {
+                alert('❌ Por favor selecciona una actividad');
+                return false;
+            }
+            if (!wizardData.date) {
+                alert('❌ Por favor selecciona la fecha');
+                return false;
+            }
+            if (!wizardData.actionType) {
+                alert('❌ Por favor selecciona si la actividad fue en Filial o Campo');
+                return false;
+            }
+            return true;
+            
+        case 2:
+            if (!wizardData.horas || wizardData.horas <= 0) {
+                alert('❌ Por favor ingresa la duración (usa el timer o escribe los minutos)');
+                return false;
+            }
+            return true;
+            
+        case 5:
+            // Let the button state handle validation - no alerts here
+            return true;
+            
+        default:
+            return true;
+    }
+}
+
+function updateParticipantAndValidate(colabIndex, participantIndex, field, value) {
+    if (wizardData.colaboradores && wizardData.colaboradores[colabIndex] && 
+        wizardData.colaboradores[colabIndex].participants && 
+        wizardData.colaboradores[colabIndex].participants[participantIndex]) {
+        
+        // Update the data
+        wizardData.colaboradores[colabIndex].participants[participantIndex][field] = value;
+        saveWizardState();
+        
+        // Update button state without re-rendering
+        const lastColab = wizardData.colaboradores[colabIndex];
+        const allFilled = lastColab.participants.every(p => p.name && p.name.trim() !== '');
+        
+        const nextBtn = document.getElementById('wizardNextBtn');
+        if (nextBtn && allFilled && lastColab.cant > 0) {
+            nextBtn.disabled = false;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+        } else if (nextBtn) {
+            nextBtn.disabled = true;
+            nextBtn.style.opacity = '0.5';
+            nextBtn.style.cursor = 'not-allowed';
+        }
+    }
+}
+
+function saveCurrentStepData() {
+    switch(wizardStep) {
+        case 1:
+            // Remove the default - don't set actionType automatically
+            const dateInput = document.getElementById('activityDate');
+            if (dateInput) wizardData.date = dateInput.value;
+            const detailSelect = document.getElementById('activityDetailSelect');
+            if (detailSelect) wizardData.detail = detailSelect.value;
+            // actionType should only be set when user actually selects it
+            break;
+        case 2:
+            const hoursInput = document.getElementById('hoursInput');
+            if (hoursInput) {
+                const decimalValue = hoursInput.getAttribute('data-decimal-hours');
+                if (decimalValue) {
+                    wizardData.horas = parseFloat(decimalValue);
+                } else {
+                    const match = hoursInput.value.match(/(\d+)/);
+                    if (match) wizardData.horas = parseInt(match[1]) / 60;
+                }
+            }
+            break;
+        case 3:
+            const voluntarias = document.getElementById('voluntariasInput');
+            const mujeres = document.getElementById('mujeresInput');
+            const hombres = document.getElementById('hombresInput');
+            if (voluntarias) wizardData.voluntarias = parseInt(voluntarias.value) || 0;
+            if (mujeres) wizardData.beneficiadas_mujeres = parseInt(mujeres.value) || 0;
+            if (hombres) wizardData.beneficiados_hombres = parseInt(hombres.value) || 0;
+            break;
+        case 4:
+            const link1 = document.getElementById('link1Input');
+            const link2 = document.getElementById('link2Input');
+            if (link1) wizardData.link1 = link1.value;
+            if (link2) wizardData.link2 = link2.value;
+            break;
+        case 5:
+            // Save current collaborator data from the visible form before proceeding
+            const colabRows = document.querySelectorAll('.colab-row-modern');
+            if (colabRows.length > 0 && wizardData.colaboradores && wizardData.colaboradores.length > 0) {
+                const index = wizardData.colaboradores.length - 1;
+                const select = document.querySelector('.colab-select');
+                const cantInput = document.querySelector('.colab-cant');
+                if (select && select.value) wizardData.colaboradores[index].org = select.value;
+                if (cantInput) wizardData.colaboradores[index].cant = parseInt(cantInput.value) || 0;
+            }
+            updateColaboratorData();
+            break;
+        case 6:
+            const lat = document.getElementById('wizardLat');
+            const lng = document.getElementById('wizardLng');
+            if (lat && lat.value) wizardData.lat = lat.value;
+            if (lng && lng.value) wizardData.lng = lng.value;
+            break;
+    }
+    saveWizardState();
+}
+
+
+function wizardGoPrev() {
+    if (wizardStep > 1) {
+        saveCurrentStepData();
+        wizardStep--;
+        if (wizardStep === 2) resetWizardTimer();
+        renderWizardStep();
+    }
+}
+
+function wizardGoNext() {
+    if (wizardStep === 6) {
+        saveCurrentStepData();
+        const statusEl = document.getElementById('wizardGpsStatus');
+        if (statusEl && statusEl.innerHTML.includes('Obteniendo ubicación')) {
+            alert('⚠️ Espera a que termine de obtener la ubicación');
+            return;
+        }
+        finalizeWizardActivity();
+        return;
+    }
+    
+    saveCurrentStepData();
+    if (!validateCurrentStep()) return;
+    
+    if (wizardStep === 2 && wizardTimerInterval) stopWizardTimerGlobal();
+    
+    if (wizardStep < 6) {
+        wizardStep++;
+        renderWizardStep();
+    }
+}
+// ==========================================
+// FINALIZE ACTIVITY - FIXED VERSION
+// Preserves persistence, fixes decimal formatting and state clearing
+// ==========================================
+
+function finalizeWizardActivity() {
+    // Get final GPS data
+    const latInput = document.getElementById('wizardLat');
+    const lngInput = document.getElementById('wizardLng');
+    if (latInput && latInput.value) wizardData.lat = latInput.value;
+    if (lngInput && lngInput.value) wizardData.lng = lngInput.value;
+    
+    // Build activity name with detail
+    let finalName = wizardData.activityName;
+    if (wizardData.detail && wizardData.detail !== '') {
+        finalName = `${wizardData.activityName} - ${wizardData.detail}`;
+    }
+    
+    // Collect links
+    const links = [];
+    if (wizardData.link1 && wizardData.link1.trim()) links.push(wizardData.link1.trim());
+    if (wizardData.link2 && wizardData.link2.trim()) links.push(wizardData.link2.trim());
+    
+    // Format hours to 2 decimal places
+    const formattedHours = Math.round((wizardData.horas || 0) * 100) / 100;
+    
+    const newActivity = {
+        id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        date: wizardData.date,
+        name: finalName,
+        actionType: wizardData.actionType || 'filial',
+        horas: formattedHours,
+        voluntarias: wizardData.voluntarias || 0,
+        beneficiadas_mujeres: wizardData.beneficiadas_mujeres || 0,
+        beneficiados_hombres: wizardData.beneficiados_hombres || 0,
+        colaboradores: wizardData.colaboradores || [],
+        links: links,
+        lat: wizardData.lat || '',
+        lng: wizardData.lng || '',
+        personInCharge: {
+            name: wizardData.personInChargeName || '',
+            title: wizardData.personInChargeTitle || ''
+        },
+        createdBy: typeof currentUser !== 'undefined' && currentUser ? currentUser.id : null,
+        createdByName: typeof currentUser !== 'undefined' && currentUser ? currentUser.nombre : 'Usuario'
+    };
+    
+    // Update user hours if currentUser exists
+    if (typeof currentUser !== 'undefined' && currentUser && formattedHours > 0) {
+        currentUser.totalHoras = (currentUser.totalHoras || 0) + formattedHours;
+        currentUser.actividadesCount = (currentUser.actividadesCount || 0) + 1;
+        if (typeof saveProfiles === 'function') saveProfiles();
+        if (typeof renderProfileSelector === 'function') renderProfileSelector();
+        if (typeof actualizarListaDamas === 'function') actualizarListaDamas();
+    }
+    
+    // Add to global activities array
+    if (typeof activities !== 'undefined') {
+        activities.push(newActivity);
+        if (typeof sortActivitiesByDate === 'function') sortActivitiesByDate();
+        if (typeof renderActivities === 'function') renderActivities();
+        if (typeof saveAllToStorage === 'function') saveAllToStorage();
+        if (typeof updateCharts === 'function') updateCharts();
+    }
+    
+    // Stop timer if running
+    if (wizardTimerInterval) {
+        clearInterval(wizardTimerInterval);
+        wizardTimerInterval = null;
+    }
+    
+    // Clear saved state
+    clearSavedTimerState();
+    clearWizardState();
+    stopAutoSave();
+    
+    // Store success message info before resetting
+    const finalMinutes = Math.round(formattedHours * 60);
+    const finalHoursDisplay = formattedHours.toFixed(2);
+    const locationMsg = (wizardData.lat && wizardData.lng) ? `\n📍 Ubicación registrada` : `\n📍 Sin ubicación (opcional)`;
+    const voluntariasCount = wizardData.voluntarias || 0;
+    
+    // Reset wizard data for next use
+    wizardData = {};
+    wizardStep = 1;
+    wizardTimerElapsedMs = 0;
+    
+    // Close wizard
+    closeGlobalWizard();
+    
+    // Show success message
+    alert(`✅ ¡Actividad "${finalName}" registrada exitosamente!\n⏱️ Duración: ${finalMinutes} minutos (${finalHoursDisplay} horas)\n👥 ${voluntariasCount} damas participaron${locationMsg}`);
+}
+
+// ==========================================
+// GPS FUNCTIONS
+// ==========================================
+
+function captureWizardLocation() {
+    const statusEl = document.getElementById('wizardGpsStatus');
+    const latInput = document.getElementById('wizardLat');
+    const lngInput = document.getElementById('wizardLng');
+    
+    if (!navigator.geolocation) {
+        statusEl.innerHTML = '⚠️ Tu navegador no soporta geolocalización';
+        return;
+    }
+    
+    statusEl.innerHTML = '📌 Obteniendo ubicación...';
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude.toFixed(6);
+            const lng = position.coords.longitude.toFixed(6);
+            if (latInput) latInput.value = lat;
+            if (lngInput) lngInput.value = lng;
+            statusEl.innerHTML = `✅ Ubicación registrada: ${lat}, ${lng}`;
+            wizardData.lat = lat;
+            wizardData.lng = lng;
+            saveWizardState();
+        },
+        (error) => {
+            let msg = '❌ Error al obtener ubicación';
+            if (error.code === 1) msg = '❌ Permiso denegado. Puedes continuar sin ubicación';
+            else if (error.code === 2) msg = '❌ Ubicación no disponible';
+            else if (error.code === 3) msg = '❌ Tiempo agotado';
+            statusEl.innerHTML = msg;
+        }
+    );
+}
+
+
+function getHondurasDate() {
+    return new Date().toLocaleString('en-US', { timeZone: 'America/Tegucigalpa' }).split(',')[0].split('/').reverse().join('-');
+}
+
+
 // ==========================================
 // QR IMPORT FUNCTIONS - UPDATED FOR GITHUB GIST
 // ==========================================
@@ -1161,7 +3012,7 @@ function showImportQRModal() {
         if (window.jsQRLoaded) {
             statusDiv.innerHTML = '✅ Listo para subir imagen o escanear';
         } else {
-            statusDiv.innerHTML = '⏳ Cargando biblioteca QR...';
+            statusDiv.innerHTML = ' Cargando biblioteca QR...';
         }
     }
 }
@@ -1253,9 +3104,9 @@ function handleImageUpload(event) {
     
     // Check if jsQR is loaded
     if (!window.jsQRLoaded) {
-        console.log('⏳ Waiting for jsQR to load... Current attempts:', qrRetryAttempts);
+        console.log(' Waiting for jsQR to load... Current attempts:', qrRetryAttempts);
         if (statusDiv) {
-            statusDiv.innerHTML = '⏳ Cargando biblioteca QR, espera un momento...';
+            statusDiv.innerHTML = ' Cargando biblioteca QR, espera un momento...';
         }
         
         qrRetryAttempts++;
@@ -1405,7 +3256,6 @@ async function fetchDataFromGist(url) {
     }
 } 
 
-// MAIN PROCESS FUNCTION - THIS IS THE ONE THAT HANDLES GIST URLs
 async function processImportedData(scannedData) {
     console.log('🔍 Processing imported data:', scannedData.substring(0, 100) + '...');
     
@@ -1413,15 +3263,13 @@ async function processImportedData(scannedData) {
         let importData;
         let isGistUrl = false;
         
-        // Check if scanned data is a URL (raw gist URL or any URL)
+        // Check if scanned data is a URL
         if (scannedData.includes('http://') || scannedData.includes('https://')) {
             isGistUrl = true;
             const statusDiv = document.getElementById('qrStatus');
             if (statusDiv) statusDiv.innerHTML = '📥 Descargando datos...';
             
             console.log('🔗 Detected URL, fetching directly...');
-            
-            // Fetch the URL directly - no token needed!
             const response = await fetch(scannedData);
             
             if (!response.ok) {
@@ -1431,15 +3279,12 @@ async function processImportedData(scannedData) {
             const fileContent = await response.text();
             console.log('📥 Content received, parsing JSON...');
             importData = JSON.parse(fileContent);
-            
         } else {
-            // Original behavior: decode direct JSON from QR
             console.log('📄 Processing direct JSON data');
             let jsonStr = scannedData;
             try {
                 importData = JSON.parse(jsonStr);
             } catch (e) {
-                // Try to decode if it's URL encoded
                 importData = JSON.parse(decodeURIComponent(jsonStr));
             }
         }
@@ -1455,10 +3300,21 @@ async function processImportedData(scannedData) {
         if (statusDiv) statusDiv.innerHTML = '📊 Procesando datos...';
         
         // Find or create dama profile
-        let damaProfile = damaProfiles.find(d => d.id === importData.dama.id);
-        if (!damaProfile) {
-            damaProfile = damaProfiles.find(d => d.nombre && d.nombre.toLowerCase() === importData.dama.nombre?.toLowerCase());
+        // Helper to normalize names (removes accents, lowercases, trims)
+        function normalizeName(name) {
+            return name?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
         }
+
+        // Find or create dama profile
+        let damaProfile = damaProfiles.find(d => d.id === importData.dama.id);
+
+        if (!damaProfile) {
+            // Match by normalized name to avoid duplicates from accents/capitals
+            const importedNameNorm = normalizeName(importData.dama.nombre);
+            damaProfile = damaProfiles.find(d => normalizeName(d.nombre) === importedNameNorm);
+        }
+
+        // If still not found, create a new profile
         if (!damaProfile) {
             damaProfile = {
                 id: importData.dama.id || `profile_${Date.now()}`,
@@ -1474,33 +3330,113 @@ async function processImportedData(scannedData) {
             damaProfiles.push(damaProfile);
             saveProfiles();
             renderProfileSelector();
+        } else {
+            // Upgrade placeholder ID if the import provides it
+            if ((damaProfile.identidadSuffix === '000000' || !damaProfile.identidadSuffix) &&
+                importData.dama.identidadSuffix && importData.dama.identidadSuffix !== '000000') {
+                damaProfile.identidadSuffix = importData.dama.identidadSuffix;
+                damaProfile.isPlaceholder = false;
+                saveProfiles();
+                renderProfileSelector();
+            }
         }
-        
         let importedHours = 0;
         let importedCount = 0;
+        let consolidatedCount = 0;
         
         // Handle both data structures
         const actividades = importData.data?.actividades || importData.actividades || [];
         
-        console.log(`📋 Importing ${actividades.length} activities...`);
+        console.log(`📋 Processing ${actividades.length} activities...`);
         
         actividades.forEach(impAct => {
-            const exists = activities.some(act => 
+            // Look for EXISTING EVENT with same date AND same activity name (regardless of who created it)
+            const existingEvent = activities.find(act => 
                 act.date === impAct.date && 
-                act.name === impAct.name && 
-                act.createdBy === damaProfile.id
+                act.name === impAct.name
             );
             
-            if (!exists) {
-                // Handle links - could be string or array
-                let linksArray = [];
-                if (impAct.link) {
-                    if (typeof impAct.link === 'string') {
-                        linksArray = impAct.link.split(',').map(l => l.trim()).filter(l => l);
-                    } else if (Array.isArray(impAct.link)) {
-                        linksArray = impAct.link;
-                    }
+            // Process links from imported activity
+            let linksArray = [];
+            if (impAct.link) {
+                if (typeof impAct.link === 'string') {
+                    linksArray = impAct.link.split(',').map(l => l.trim()).filter(l => l);
+                } else if (Array.isArray(impAct.link)) {
+                    linksArray = impAct.link;
                 }
+            }
+            
+            if (existingEvent) {
+                // CONSOLIDATE: Update existing event with higher values
+                console.log(`🔄 Consolidating event: ${impAct.date} - ${impAct.name}`);
+                
+                // Horas: Take HIGHER
+                if ((impAct.horas || 0) > (existingEvent.horas || 0)) {
+                    existingEvent.horas = impAct.horas;
+                }
+                
+                // Voluntarias (other Damas): Take HIGHER
+                if ((impAct.voluntarias || 0) > (existingEvent.voluntarias || 0)) {
+                    existingEvent.voluntarias = impAct.voluntarias;
+                }
+                
+                // Beneficiadas Mujeres: Take HIGHER
+                if ((impAct.beneficiadas_mujeres || 0) > (existingEvent.beneficiadas_mujeres || 0)) {
+                    existingEvent.beneficiadas_mujeres = impAct.beneficiadas_mujeres;
+                }
+                
+                // Beneficiados Hombres: Take HIGHER
+                if ((impAct.beneficiados_hombres || 0) > (existingEvent.beneficiados_hombres || 0)) {
+                    existingEvent.beneficiados_hombres = impAct.beneficiados_hombres;
+                }
+                
+                // Colaboradores: MERGE, keep MAX per organization
+                const impColabs = impAct.colaboradores || [];
+                const existingColabs = existingEvent.colaboradores || [];
+                const colabMap = new Map();
+                
+                existingColabs.forEach(col => {
+                    colabMap.set(col.org, col.cant);
+                });
+                
+                impColabs.forEach(col => {
+                    const existingCount = colabMap.get(col.org) || 0;
+                    if (col.cant > existingCount) {
+                        colabMap.set(col.org, col.cant);
+                    }
+                });
+                
+                existingEvent.colaboradores = Array.from(colabMap.entries()).map(([org, cant]) => ({ org, cant }));
+                
+                // Links: APPEND all new links (preserve all evidence)
+                const existingLinks = existingEvent.links || [];
+                const newLinks = [...existingLinks];
+                linksArray.forEach(link => {
+                    if (!newLinks.includes(link)) {
+                        newLinks.push(link);
+                    }
+                });
+                existingEvent.links = newLinks;
+                
+                // GPS: Keep existing if present, otherwise use imported
+                if ((!existingEvent.lat || !existingEvent.lng) && (impAct.lat && impAct.lng)) {
+                    existingEvent.lat = impAct.lat;
+                    existingEvent.lng = impAct.lng;
+                }
+                
+                // Track which Damas contributed to this event
+                if (!existingEvent.contributingDamas) {
+                    existingEvent.contributingDamas = [];
+                }
+                if (!existingEvent.contributingDamas.includes(damaProfile.id)) {
+                    existingEvent.contributingDamas.push(damaProfile.id);
+                }
+                
+                consolidatedCount++;
+                
+            } else {
+                // NEW EVENT: Create fresh
+                console.log(`➕ New event: ${impAct.date} - ${impAct.name}`);
                 
                 const newAct = {
                     id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -1508,14 +3444,16 @@ async function processImportedData(scannedData) {
                     name: impAct.name,
                     actionType: impAct.actionType || 'campo',
                     horas: impAct.horas || 0,
+                    voluntarias: impAct.voluntarias || 0,
                     beneficiadas_mujeres: impAct.beneficiadas_mujeres || 0,
                     beneficiados_hombres: impAct.beneficiados_hombres || 0,
-                    voluntarias: impAct.voluntarias || 1,
+                    colaboradores: impAct.colaboradores || [],
                     links: linksArray,
                     lat: impAct.lat || '',
                     lng: impAct.lng || '',
                     createdBy: damaProfile.id,
                     createdByName: damaProfile.nombre,
+                    contributingDamas: [damaProfile.id],
                     importedFromQR: true
                 };
                 activities.push(newAct);
@@ -1524,7 +3462,8 @@ async function processImportedData(scannedData) {
             }
         });
         
-        // Update dama profile hours
+        // Update dama profile hours (only for NEW events they created, not for consolidated)
+        // For consolidated events, the hours were already counted from the first Dama
         damaProfile.totalHoras = (damaProfile.totalHoras || 0) + importedHours;
         damaProfile.actividadesCount = (damaProfile.actividadesCount || 0) + importedCount;
         
@@ -1538,7 +3477,13 @@ async function processImportedData(scannedData) {
         renderProfileSelector();
         
         const sourceType = isGistUrl ? 'URL / GitHub Gist' : 'QR directo';
-        alert(`✅ Importado desde ${sourceType}: ${damaProfile.nombre}\n📊 Horas agregadas: ${importedHours}\n📋 Actividades: ${importedCount}`);
+        let message = `✅ Importado desde ${sourceType}: ${damaProfile.nombre}\n`;
+        message += `📊 Eventos nuevos: ${importedCount}\n`;
+        if (consolidatedCount > 0) {
+            message += `🔄 Eventos consolidados: ${consolidatedCount}\n`;
+            message += `📸 Evidencia combinada correctamente`;
+        }
+        alert(message);
         
         closeQRImportModal();
         
@@ -1554,99 +3499,7 @@ async function processImportedData(scannedData) {
     }
 }
 
-function submitActivityForm(formId) {
-    console.log('Submitting form:', formId);
-    
-    const formElement = document.getElementById(`activityForm_${formId}`);
-    if (!formElement) return;
 
-    const date = document.getElementById(`newDate_${formId}`).value;
-    const name = document.getElementById(`newActName_${formId}`).value;
-    const actionType= document.getElementById(`newActionType_${formId}`).value; 
-    const voluntarias = parseInt(document.getElementById(`newVoluntarias_${formId}`).value) || 0;
-    const horas = parseFloat(document.getElementById(`newHoras_${formId}`).value) || 0;
-    const mujeres = parseInt(document.getElementById(`newBenMujeres_${formId}`).value) || 0;
-    const hombres = parseInt(document.getElementById(`newBenHombres_${formId}`).value) || 0;
-
-    if (!date || !name) {
-        alert('Selecciona fecha y actividad');
-        return;
-    }
-
-    if (horas === 0) {
-        alert('Ingresa las horas o usa el timer');
-        return;
-    }
-    if (currentUser) {
-    currentUser.totalHoras += horas;
-    currentUser.actividadesCount++;
-    saveProfiles();
-}
-    // Colaboradores
-    const colabRows = document.querySelectorAll(`#colabsContainer_${formId} .colaborador-row`);
-    const colaboradores = [];
-    colabRows.forEach(row => {
-        const org = row.querySelector(`.colab-org_${formId}`)?.value || '';
-        const cant = parseInt(row.querySelector(`.colab-cant_${formId}`)?.value) || 0;
-        if (org && cant) colaboradores.push({ org, cant });
-    });
-
-    // Links
-    const links = [];
-    const link1 = document.getElementById(`link1_${formId}`)?.value;
-    const link2 = document.getElementById(`link2_${formId}`).value;
-
-    if (link1 && link1.trim()) links.push(link1.trim());
-    if (link2 && link2.trim()) links.push(link2.trim());
-
-    const formattedLinks = links.map(link =>
-        (link.startsWith('http://') || link.startsWith('https://')) ? link : 'https://' + link
-    );
-
-    // ✅ CREATE ACTIVITY FIRST
-    const activityId = Date.now() + Math.random().toString(36).substr(2, 9);
-
-    const lat = document.getElementById(`lat_${formId}`)?.value || '';
-const lng = document.getElementById(`lng_${formId}`)?.value || '';
-
-const newActivity = {
-    id: activityId,
-    date,
-    name,
-    actionType: document.getElementById(`newActionType_${formId}`).value,
-    createdBy: currentUser ? currentUser.id : null,
-    createdByName: currentUser ? currentUser.nombre : 'Usuario', 
-    voluntarias,
-    horas,
-    beneficiadas_mujeres: mujeres,
-    beneficiados_hombres: hombres,
-    colaboradores,
-    links: formattedLinks,
-    lat: lat,
-    lng: lng
-};
-
-    // ✅ 🔥 REMOVE FORM BEFORE ANY RENDERING
-    formElement.remove();
-
-    // ✅ Stop timer cleanly
-    if (timers[formId]) {
-        clearInterval(timers[formId]);
-        delete timers[formId];
-        delete timers[`${formId}_startTime`];
-    }
-
-    // ✅ NOW update data + UI
-    activities.push(newActivity);
-    sortActivitiesByDate();
-    renderActivities();
-    saveAllToStorage();
-    updateCharts();
-    setTimeout(() => {
-    updateCharts();
-}, 100);
-    alert('✅ Actividad agregada');
-}
 
 function getQRCodeData(activity) {
     // ✅ Return ALL valid links as an array
@@ -1754,7 +3607,6 @@ function renderActivities() {
             linksHtml = '<span style="color:var(--text-light);">—</span>';
         }
 
-        // QR CELL
        // QR CELL - Handle multiple links
         let qrCellHtml = '';
         const qrDataArray = getQRCodeData(a);
@@ -1814,9 +3666,7 @@ function renderActivities() {
     document.getElementById('totalHombresBen').innerText = totalM;
     document.getElementById('totalActividades').innerText = activities.length;
     document.getElementById('footerDate').innerText = formatDateForDisplay(new Date(), true);
-    updateBeneficiariesPieChart();
-    updateHoursBarChart();
-    updateCollaboratorsBarChart();
+    updateCharts();
     // Generate QR codes for activities with links
     setTimeout(() => {
         if (typeof QRCode === 'undefined') {
@@ -1867,6 +3717,7 @@ function renderActivities() {
         });
     }, 500);
 }
+
 function deleteActivity(idx) {
     activities.splice(idx, 1);
     renderActivities();
@@ -1908,20 +3759,169 @@ function clearData() {
 // ==========================================
 // CHARTS (Simplified)
 // ==========================================
-function updateBeneficiariesPieChart() {
-    const ctx = document.getElementById('chartBeneficiados')?.getContext('2d');
+
+function updateCollaboratorsBarChart() {
+    const ctx = document.getElementById('chartActivityResources')?.getContext('2d');
     if (!ctx) return;
-    let women = 0, men = 0;
-    activities.forEach(a => { women += a.beneficiadas_mujeres || 0; men += a.beneficiados_hombres || 0; });
-    if (window.beneficiariesChart) window.beneficiariesChart.destroy();
-    window.beneficiariesChart = new Chart(ctx, {
-        type: 'doughnut',
+    
+    // Collect data per activity
+    const activityData = {};
+    
+    activities.forEach(activity => {
+        const activityName = activity.name;
+        
+        if (!activityData[activityName]) {
+            activityData[activityName] = {
+                damas: 0,
+                colaboradores: 0
+            };
+        }
+        
+        // Count Damas (voluntarias + 1 for main Dama)
+        let damasCount = (activity.voluntarias || 0);
+        if (activity.createdBy) damasCount += 1;
+        activityData[activityName].damas += damasCount;
+        
+        // Count Collaborators (sum of all colaboradores for this activity)
+        let colaboradoresCount = 0;
+        if (activity.colaboradores && activity.colaboradores.length > 0) {
+            activity.colaboradores.forEach(col => {
+                colaboradoresCount += (col.cant || 0);
+            });
+        }
+        activityData[activityName].colaboradores += colaboradoresCount;
+    });
+    
+    // Convert to arrays for chart, sort by total participants
+    const sortedActivities = Object.entries(activityData)
+        .map(([name, data]) => ({
+            name,
+            damas: data.damas,
+            colaboradores: data.colaboradores,
+            total: data.damas + data.colaboradores
+        }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 10); // Top 10 activities
+    
+    if (window.activityResourceChart) window.activityResourceChart.destroy();
+    
+    window.activityResourceChart = new Chart(ctx, {
+        type: 'bar',
         data: {
-            labels: ['Mujeres', 'Hombres'],
+            labels: sortedActivities.map(a => a.name),
+            datasets: [
+                {
+                    label: 'Damas Voluntarias (Mínimo Necesario)',
+                    data: sortedActivities.map(a => a.damas),
+                    backgroundColor: '#E34A2F',
+                    borderColor: '#c03d1f',
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: 'Colaboradores (Apoyo Recibido)',
+                    data: sortedActivities.map(a => a.colaboradores),
+                    backgroundColor: '#4F7CAC',
+                    borderColor: '#3a5c84',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            indexAxis: 'y', // Horizontal bars
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = context.raw;
+                            return `${label}: ${value} persona(s)`;
+                        }
+                    }
+                },
+                legend: {
+                    position: 'top',
+                    labels: { 
+                        font: { size: 11, weight: 'bold' },
+                        boxWidth: 15,
+                        padding: 10
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'Recursos por Actividad',
+                    font: { size: 14, weight: 'bold' },
+                    padding: { bottom: 15 }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Cantidad de Personas',
+                        font: { size: 10, weight: 'bold' }
+                    },
+                    stacked: false,
+                    ticks: {
+                        stepSize: 1,
+                        precision: 0,
+                        beginAtZero: true
+                    },
+                    grid: {
+                        drawOnChartArea: true
+                    }
+                },
+                y: {
+                    title: {
+                        display: false,
+                        text: 'Actividades',
+                        font: { size: 10, weight: 'bold' }
+                    },
+                    ticks: {
+                        font: { size: 10 }
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            },
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 10,
+                    top: 10,
+                    bottom: 10
+                }
+            }
+        }
+    });
+}
+
+function updateActiveDamasChart() {
+    const ctx = document.getElementById('chartActiveDamas')?.getContext('2d');
+    if (!ctx) return;
+    
+    const active = damaProfiles
+        .map(p => ({ 
+            nombre: p.nombre, 
+            horas: p.totalHoras || 0 
+        }))
+        .sort((a, b) => b.horas - a.horas)
+        .slice(0, 8);
+    
+    if (window.activeDamasChart) window.activeDamasChart.destroy();
+    
+    window.activeDamasChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: active.map(d => d.nombre),
             datasets: [{
-                data: [women, men],
-                backgroundColor: ['#E34A2F', '#1E3A5F'],
-                label: 'Beneficiarios'
+                data: active.map(d => d.horas),
+                backgroundColor: '#E34A2F',
+                label: 'Horas Totales'
             }]
         },
         options: {
@@ -1931,27 +3931,147 @@ function updateBeneficiariesPieChart() {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return `${context.label}: ${context.raw} personas`;
+                            return `Horas: ${context.raw}`;
                         }
                     }
+                }
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Horas'
+                    },
+                    beginAtZero: true
                 },
-                legend: {
-                    position: 'bottom',
-                    labels: { font: { size: 10 } }
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Damas'
+                    }
                 }
             }
         }
     });
 }
-
-function updateHoursBarChart() {
-    const ctx = document.getElementById('chartHoras')?.getContext('2d');
+function updateAtencionesPorGeneroChart() {
+    const ctx = document.getElementById('chartAtencionesGenero')?.getContext('2d');
     if (!ctx) return;
+    
+    // Consolidate atenciones per event first
+    const eventAtenciones = {};
+    
+    activities.forEach(activity => {
+        const eventKey = `${activity.date}_${activity.name}`;
+        
+        if (!eventAtenciones[eventKey]) {
+            eventAtenciones[eventKey] = {
+                masculino: 0,
+                femenino: 0
+            };
+        }
+        
+        // Take the higher count per gender for this event
+        const hombres = activity.beneficiados_hombres || 0;
+        const mujeres = activity.beneficiadas_mujeres || 0;
+        
+        if (hombres > eventAtenciones[eventKey].masculino) {
+            eventAtenciones[eventKey].masculino = hombres;
+        }
+        if (mujeres > eventAtenciones[eventKey].femenino) {
+            eventAtenciones[eventKey].femenino = mujeres;
+        }
+    });
+    
+    // Sum all unique events
+    let totalHombres = 0;
+    let totalMujeres = 0;
+    
+    Object.values(eventAtenciones).forEach(event => {
+        totalHombres += event.masculino;
+        totalMujeres += event.femenino;
+    });
+    
+    if (window.atencionesChart) window.atencionesChart.destroy();
+    
+    window.atencionesChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Masculino', 'Femenino'],
+            datasets: [{
+                data: [totalHombres, totalMujeres],
+                backgroundColor: ['#1E3A5F', '#E34A2F'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ${value} atenciones (${percentage}%)`;
+                        }
+                    }
+                },
+                legend: {
+                    position: 'bottom',
+                    labels: { 
+                        font: { size: 12 },
+                        padding: 15
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'Atenciones por Género',
+                    font: { size: 14, weight: 'bold' },
+                    padding: { bottom: 15 }
+                }
+            }
+        }
+    });
+}
+function updateTiempoRequeridoChart() {
+    const ctx = document.getElementById('chartTiempoRequerido')?.getContext('2d');
+    if (!ctx) return;
+    
+    // Consolidate hours per event first (take highest per event)
+    const eventHours = {};
+    
+    activities.forEach(activity => {
+        const eventKey = `${activity.date}_${activity.name}`;
+        
+        if (!eventHours[eventKey]) {
+            eventHours[eventKey] = {
+                name: activity.name,
+                horas: 0
+            };
+        }
+        
+        const horas = activity.horas || 0;
+        if (horas > eventHours[eventKey].horas) {
+            eventHours[eventKey].horas = horas;
+        }
+    });
+    
+    // Sum hours per activity name across unique events
     const totals = {};
-    activities.forEach(a => { if (a.horas) totals[a.name] = (totals[a.name] || 0) + a.horas; });
-    const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    if (window.hoursChart) window.hoursChart.destroy();
-    window.hoursChart = new Chart(ctx, {
+    Object.values(eventHours).forEach(event => {
+        totals[event.name] = (totals[event.name] || 0) + event.horas;
+    });
+    
+    const sorted = Object.entries(totals)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8);
+    
+    if (window.tiempoRequeridoChart) window.tiempoRequeridoChart.destroy();
+    
+    window.tiempoRequeridoChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: sorted.map(s => s[0]),
@@ -1976,6 +4096,12 @@ function updateHoursBarChart() {
                 legend: {
                     position: 'top',
                     labels: { font: { size: 10 } }
+                },
+                title: {
+                    display: true,
+                    text: 'Tiempo Requerido por Actividad',
+                    font: { size: 14, weight: 'bold' },
+                    padding: { bottom: 15 }
                 }
             },
             scales: {
@@ -1984,116 +4110,15 @@ function updateHoursBarChart() {
                         display: true,
                         text: 'Horas',
                         font: { size: 10, weight: 'bold' }
+                    },
+                    ticks: {
+                        beginAtZero: true
                     }
                 },
                 y: {
                     title: {
-                        display: true,
+                        display: false,
                         text: 'Actividades',
-                        font: { size: 10, weight: 'bold' }
-                    }
-                }
-            }
-        }
-    });
-}
-
-function updateCollaboratorsBarChart() {
-    const ctx = document.getElementById('chartDamas')?.getContext('2d');
-    if (!ctx) return;
-    const totals = {};
-    activities.forEach(a => { if (a.voluntarias) totals[a.name] = (totals[a.name] || 0) + a.voluntarias; });
-    if (window.collabChart) window.collabChart.destroy();
-    window.collabChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: Object.keys(totals),
-            datasets: [{
-                data: Object.values(totals),
-                backgroundColor: '#4F7CAC',
-                label: 'Damas Voluntarias Presentes'
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `Damas Voluntarias Presentes: ${context.raw}`;
-                        }
-                    }
-                },
-                legend: {
-                    position: 'top',
-                    labels: { font: { size: 10 } }
-                }
-            },
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Cantidad de Damas',
-                        font: { size: 10, weight: 'bold' }
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Actividades',
-                        font: { size: 10, weight: 'bold' }
-                    }
-                }
-            }
-        }
-    });
-}
-
-function updateActiveDamasChart() {
-    const ctx = document.getElementById('chartActiveDamas')?.getContext('2d');
-    if (!ctx) return;
-    const active = damaProfiles.map(p => ({ nombre: p.nombre, horas: p.totalHoras || 0 })).sort((a, b) => b.horas - a.horas).slice(0, 8);
-    if (window.activeDamasChart) window.activeDamasChart.destroy();
-    window.activeDamasChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: active.map(d => d.nombre),
-            datasets: [{
-                data: active.map(d => d.horas),
-                backgroundColor: '#E34A2F',
-                label: 'Horas'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `Horas: ${context.raw}`;
-                        }
-                    }
-                },
-                legend: {
-                    position: 'top',
-                    labels: { font: { size: 10 } }
-                }
-            },
-            scales: {
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Horas',
-                        font: { size: 10, weight: 'bold' }
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Damas',
                         font: { size: 10, weight: 'bold' }
                     }
                 }
@@ -2102,12 +4127,11 @@ function updateActiveDamasChart() {
     });
 }
 function updateCharts() {
-    updateBeneficiariesPieChart();
-    updateHoursBarChart();
-    updateCollaboratorsBarChart();
-    updateActiveDamasChart();
+    updateAtencionesPorGeneroChart();     // Atenciones by gender
+    updateTiempoRequeridoChart();         // Time required per activity
+    updateCollaboratorsBarChart();        // Damas + Collaborators per activity
+    updateActiveDamasChart();             // Individual damas hours
 }
-
 // ==========================================
 // OTHER FUNCTIONS
 // ==========================================
@@ -2171,21 +4195,24 @@ document.getElementById('impactText').addEventListener('input', function() {
     saveAllToStorage();
 });
 
+
 // Single DOMContentLoaded event - everything combined
 document.addEventListener('DOMContentLoaded', () => {
+    // --- jsQR check ---
     setTimeout(() => {
-    if (typeof jsQR !== 'undefined') {
-        console.log('🎉 jsQR is loaded and ready!');
-        window.jsQRLoaded = true;  // <-- add this
-    } else {
-        console.error('💥 jsQR failed to load! Check your internet connection.');
-        const statusDiv = document.getElementById('qrStatus');
-        if (statusDiv) {
-            statusDiv.innerHTML = '⚠️ Biblioteca QR no cargada. Verifica tu conexión a internet.';
+        if (typeof jsQR !== 'undefined') {
+            console.log('🎉 jsQR is loaded and ready!');
+            window.jsQRLoaded = true;  // <-- add this
+        } else {
+            console.error('💥 jsQR failed to load! Check your internet connection.');
+            const statusDiv = document.getElementById('qrStatus');
+            if (statusDiv) {
+                statusDiv.innerHTML = '⚠️ Biblioteca QR no cargada. Verifica tu conexión a internet.';
+            }
         }
-    }
-}, 3000);
-    // QR upload setup
+    }, 3000);
+
+    // --- QR upload setup ---
     const setupImageUpload = () => {
         const fileInput = document.getElementById('qrImageUpload');
         if (fileInput) {
@@ -2198,13 +4225,12 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(setupImageUpload, 100);
         }
     };
-    
     setupImageUpload();
-    
-    // Set current date
+
+    // --- Current date ---
     document.getElementById('currentDate').innerText = formatMonthYearForDisplay(new Date());
-    
-    // Populate roles dropdown
+
+    // --- Roles dropdown ---
     const roleSelect = document.getElementById('damasRoles');
     if (roleSelect) {
         roleSelect.innerHTML = '<option value="">Seleccionar rol</option>';
@@ -2215,16 +4241,27 @@ document.addEventListener('DOMContentLoaded', () => {
             roleSelect.appendChild(option);
         });
     }
-    
-    // Load data
+
+    // --- Load data ---
     loadCurrentMonthData();
+    updateCharts();
     updateCharCounts();
-    
-    // Set up auto-save
+
+    // --- Auto-save setup ---
     setInterval(saveAllToStorage, 30000);
     window.addEventListener('beforeunload', saveAllToStorage);
+
+    // --- Wizard reopen check (merged here) ---
+    const savedTimer = localStorage.getItem('wizardTimerState');
+    if (savedTimer) {
+        const timerState = JSON.parse(savedTimer);
+        if (timerState.elapsedMs > 0) {
+            openActivityWizard();
+        }
+    }
 });
-// Add this to your existing script section
+
+// --- State management ---
 const state = {
     save: () => {
         const data = {
@@ -2249,9 +4286,7 @@ document.addEventListener('input', state.save);
 // Load when opening
 window.addEventListener('load', state.load);
 
-
 // --- AUTO-SAVE PATCH ---
-// Ensures that every time you type in the textareas, it saves immediately
 document.querySelectorAll('textarea').forEach(textarea => {
     textarea.addEventListener('input', () => {
         saveAllToStorage(); // Uses your existing function
@@ -2280,20 +4315,7 @@ printStyle.innerHTML = `
 
 document.head.appendChild(printStyle);
 
-function exportToExcel() {
-    alert('📊 Exportando a Excel... Esta función se está mejorando');
-    // Simple CSV export as fallback
-    let csv = 'Fecha,Actividad,Damas,Horas,Mujeres,Hombres\n';
-    activities.forEach(a => {
-        csv += `${a.date},${a.name},${a.voluntarias || 0},${a.horas || 0},${a.beneficiadas_mujeres || 0},${a.beneficiados_hombres || 0}\n`;
-    });
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `informe_${getCurrentMonthKey()}.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
-}
+
 
 // ==========================================
 // SERVICE WORKER WITH UPDATE HANDLING
@@ -2367,8 +4389,247 @@ window.addEventListener('load', () => {
     updateOnlineStatus();
 });
 
+function exportToExcel(event) {
+    if (event) event.preventDefault();
 
-  
+    const now = new Date();
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const currentMonth = monthNames[now.getMonth()];
+    const currentYear = now.getFullYear();
+    const fileName = `reporte_mensual_${currentMonth.toLowerCase()}_${currentYear}.xlsx`;
+
+    // Get description texts
+    const scopeText = document.getElementById('scopeText')?.value || '';
+    const difficultiesText = document.getElementById('difficultiesText')?.value || '';
+    const recommendationsText = document.getElementById('recommendationsText')?.value || '';
+    const impactText = document.getElementById('impactText')?.value || '';
+
+    // Build data array with header structure
+    const data = [];
+    
+    // Logo and Title Section
+    data.push(["CRUZ ROJA HONDUREÑA"]);
+    data.push(["COMITÉ DE DAMAS CD-17"]);
+    data.push([]);
+    data.push(["INFORME TÉCNICO MENSUAL"]);
+    data.push([]);
+    
+    // Info Section
+    data.push(["Consejo:", "CD-17"]);
+    data.push(["Mes:", `${currentMonth} ${currentYear}`]);
+    data.push(["Organismo Auxiliar:", "Comité de Damas, Juventud, Socorrismo, Voluntariado"]);
+    data.push([]);
+    
+    // RESUMEN Section
+    data.push(["RESUMEN"]);
+    data.push(["Alcance / Scope:", scopeText || "No registrado"]);
+    data.push(["Dificultades:", difficultiesText || "No registrado"]);
+    data.push(["Recomendaciones:", recommendationsText || "No registrado"]);
+    data.push(["Impacto:", impactText || "No registrado"]);
+    data.push([]);
+    
+    // Activities Header
+    data.push(["ACTIVIDADES REALIZADAS (Según Plan de Trabajo)"]);
+    data.push([]);
+    data.push(["N°", "ACTIVIDADES", "BENEFICIARIOS", "", "VOLUNTARIOS", "", "HORAS DE SERVICIO"]);
+    data.push(["", "", "Hombres", "Mujeres", "Hombres", "Mujeres", ""]);
+
+    // Activities rows
+    activities.forEach((activity, index) => {
+        let vh = 0, vm = 0;
+        const damasCount = activity.voluntarias || 0;
+
+        if (activity.colaboradores) {
+            activity.colaboradores.forEach(col => {
+                if (['Voluntariado', 'Juventud', 'Socorismo'].includes(col.org)) {
+                    col.participants?.forEach(p => {
+                        if (p.gender === 'Masculino') vh++;
+                        if (p.gender === 'Femenino') vm++;
+                    });
+                }
+            });
+        }
+        
+        vm += damasCount;
+
+        data.push([
+            index + 1,
+            activity.name || '',
+            activity.beneficiados_hombres || 0,
+            activity.beneficiadas_mujeres || 0,
+            vh,
+            vm,
+            activity.horas || 0
+        ]);
+    });
+
+    // Totals
+    const totalBenH = activities.reduce((s, a) => s + (a.beneficiados_hombres || 0), 0);
+    const totalBenM = activities.reduce((s, a) => s + (a.beneficiadas_mujeres || 0), 0);
+    const totalDamas = activities.reduce((s, a) => s + (a.voluntarias || 0), 0);
+
+    let totalVolH = 0, totalVolM = 0, totalHoras = 0;
+
+    activities.forEach(a => {
+        totalHoras += a.horas || 0;
+        a.colaboradores?.forEach(col => {
+            if (['Voluntariado', 'Juventud', 'Socorismo'].includes(col.org)) {
+                col.participants?.forEach(p => {
+                    if (p.gender === 'Masculino') totalVolH++;
+                    if (p.gender === 'Femenino') totalVolM++;
+                });
+            }
+        });
+    });
+    
+    totalVolM += totalDamas;
+
+    data.push([
+        "",
+        "TOTALES",
+        totalBenH,
+        totalBenM,
+        totalVolH,
+        totalVolM,
+        totalHoras
+    ]);
+    
+     // ========== INSERT NEW SUMMARY SECTION HERE ==========
+    // Add empty row for spacing
+    data.push([]);
+    
+    // Summary Table Header - BENEFICIARIOS and VOLUNTARIOS span 2 columns each, HORAS DE SERVICIO spans 1
+    data.push(["", "BENEFICIARIOS ESTE MES", "", "VOLUNTARIOS ESTE MES", "", "HORAS DE SERVICIO", ""]);
+    
+    // Second row - subheaders with totals
+    data.push(["", "Hombres", "Mujeres", "Hombres", "Mujeres", "Total", ""]);
+    
+    // Third row - the actual totals
+    data.push(["", totalBenH, totalBenM, totalVolH, totalVolM, totalHoras, ""]);
+    // ========== END NEW SUMMARY SECTION ==========
+        // ========== COORDINACIÓN EXTERNA E INTERNA SECTION ==========
+    data.push([]);  // Spacer row
+    data.push(["COORDINACIÓN EXTERNA E INTERNA"]);  // Section title
+    data.push([]);  // Spacer row
+    
+    // Header row
+    data.push(["INSTITUCIÓN", "NOMBRE DEL REPRESENTANTE", "CARGO"]);
+    
+    // Get external collaborators (not Voluntariado, Juventud, Socorismo)
+    const internalTypes = ['Voluntariado', 'Juventud', 'Socorismo'];
+    const externalCollaborators = new Map(); // Use Map to avoid duplicates
+    
+    // Collect unique external collaborators from all activities
+    activities.forEach(activity => {
+        if (activity.colaboradores && activity.colaboradores.length > 0) {
+            activity.colaboradores.forEach(col => {
+                // Check if this is an external collaborator (not internal)
+                if (!internalTypes.includes(col.org) && col.org) {
+                    // Store unique collaborator with its details
+                    if (!externalCollaborators.has(col.org)) {
+                        externalCollaborators.set(col.org, {
+                            org: col.org,
+                            // Person in charge is global, not per collaborator
+                        });
+                    }
+                }
+            });
+        }
+    });
+    
+    // Get the global person in charge info from wizardData
+    const personInChargeName = wizardData.personInChargeName || '';
+    const personInChargeTitle = wizardData.personInChargeTitle || '';
+    
+    // Add rows for each external collaborator
+    if (externalCollaborators.size > 0) {
+        externalCollaborators.forEach((col, orgName) => {
+            data.push([
+                orgName,
+                personInChargeName,
+                personInChargeTitle
+            ]);
+        });
+    } else {
+        // If no external collaborators, show message
+        data.push(["No hay colaboradores externos registrados", "", ""]);
+    }
+    
+    data.push([]);  // Spacer row
+    // ========== END COORDINACIÓN EXTERNA E INTERNA SECTION ==========
+    data.push([]);
+    data.push(["_________________________________"]);
+    data.push(["Subdirectora Comité de Damas CD-17"]);
+    data.push([`Documento generado automáticamente el ${formatDateForDisplay(now, true)}`]);
+
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // Merge cells - using correct row indices
+        // Merge cells - using correct row indices
+    ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },  // CRUZ ROJA HONDUREÑA
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } },  // COMITÉ DE DAMAS CD-17
+        { s: { r: 3, c: 0 }, e: { r: 3, c: 6 } },  // INFORME TÉCNICO MENSUAL
+        { s: { r: 9, c: 0 }, e: { r: 9, c: 6 } },  // RESUMEN
+        { s: { r: 15, c: 0 }, e: { r: 15, c: 6 } }, // ACTIVIDADES REALIZADAS
+        { s: { r: 17, c: 2 }, e: { r: 17, c: 3 } }, // BENEFICIARIOS spans columns 2-3
+        { s: { r: 17, c: 4 }, e: { r: 17, c: 5 } },  // VOLUNTARIOS spans columns 4-5
+        // Summary section merges
+        { s: { r: data.length - 7, c: 1 }, e: { r: data.length - 7, c: 2 } }, // BENEFICIARIOS spans columns 1-2
+        { s: { r: data.length - 7, c: 3 }, e: { r: data.length - 7, c: 4 } }, // VOLUNTARIOS spans columns 3-4
+        { s: { r: data.length - 7, c: 5 }, e: { r: data.length - 7, c: 5 } }, // HORAS DE SERVICIO at column 5
+        // COORDINACIÓN EXTERNA E INTERNA section title merge
+        { s: { r: data.length - 3, c: 0 }, e: { r: data.length - 3, c: 6 } }  // Section title spans all columns
+    ];
+    // Set column widths
+    ws['!cols'] = [
+        { wch: 8 },   // N°
+        { wch: 45 },  // ACTIVIDADES
+        { wch: 12 },  // Hombres (Benef)
+        { wch: 12 },  // Mujeres (Benef)
+        { wch: 12 },  // Hombres (Vol)
+        { wch: 12 },  // Mujeres (Vol)
+        { wch: 15 }   // Horas
+    ];
+
+        // Style cells
+    for (let i = 0; i < data.length; i++) {
+        for (let j = 0; j <= 6; j++) {
+            const cell = ws[XLSX.utils.encode_cell({ r: i, c: j })];
+            if (cell) {
+                if (!cell.s) cell.s = {};
+                // Bold for header rows
+                if (i === 0 || i === 1 || i === 3 || i === 9 || i === 15 || i === 17 || 
+                    i === data.length - 7 || i === data.length - 3) {
+                    cell.s.font = { bold: true };
+                }
+                // Center alignment for title rows and summary headers
+                if (i === 0 || i === 1 || i === 3 || i === data.length - 7 || i === data.length - 3) {
+                    cell.s.alignment = { horizontal: 'center' };
+                }
+                // Center alignment for summary data row
+                if (i === data.length - 6) {
+                    cell.s.alignment = { horizontal: 'center' };
+                }
+                // Wrap text for description cells
+                if ((i === 11 && j === 1) || (i === 12 && j === 1) || (i === 13 && j === 1) || (i === 14 && j === 1)) {
+                    cell.s.alignment = { wrapText: true, vertical: 'top' };
+                }
+            }
+        }
+    }
+        // Store the index of the COORDINACIÓN EXTERNA E INTERNA title for merges
+    const coordinacionTitleRow = data.length - 3; // Adjust based on actual position
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Reporte Mensual");
+
+    // Download
+    XLSX.writeFile(wb, fileName);
+    
+    alert('✅ Reporte exportado exitosamente');
+}
 
 </script>
 
