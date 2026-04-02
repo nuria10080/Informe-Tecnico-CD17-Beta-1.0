@@ -204,7 +204,114 @@ body {
     display:flex;
     justify-content:space-between;
 }
+.dama-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--white);
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    transition: all 0.2s;
+}
 
+.dama-info {
+    flex: 1;
+    min-width: 0; /* Allows text truncation */
+}
+
+.dama-name-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.dama-nombre {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    word-break: break-word;
+}
+
+.badge-id {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.badge-id.verified {
+    background: #4caf50;
+    color: white;
+}
+
+.badge-id.temp {
+    background: #ff9800;
+    color: white;
+}
+
+.dama-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.7rem;
+    color: var(--text-medium);
+}
+
+.dama-role {
+    background: var(--neutral-light);
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.dama-hours {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.dama-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 12px;
+}
+
+.dama-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.edit-btn:hover {
+    background: rgba(79, 124, 172, 0.1);
+    transform: scale(1.05);
+}
+
+.delete-btn:hover {
+    background: rgba(237, 106, 94, 0.1);
+    transform: scale(1.05);
+}
+
+/* Duplicate notification */
+.duplicate-notification {
+    background: #fff3e0;
+    border-left: 4px solid var(--warning);
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
 .section-title {
     font-size:1.1rem;
     font-weight:600;
@@ -741,6 +848,42 @@ body {
     font-weight: 400;
 }
 
+.timer-mode-btn {
+    transition: all 0.2s ease;
+}
+
+.timer-mode-btn.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 2px 8px rgba(227, 74, 47, 0.3);
+}
+
+.timer-mode-btn:not(.active):hover {
+    background: rgba(227, 74, 47, 0.1);
+}
+
+#timeRangeTimerMode input[type="time"] {
+    font-family: monospace;
+    letter-spacing: 1px;
+}
+
+#timeRangeMinutes {
+    transition: all 0.2s ease;
+}
+
+.timer-glow {
+    margin-top: 20px;
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: monospace;
+}
+
 /* Scrollbar */
 .wizard-card::-webkit-scrollbar {
     width: 4px;
@@ -833,11 +976,49 @@ body {
         font-size: 0.7rem;
         margin-bottom: 10px;
     }
+     .dama-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .dama-actions {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .dama-details {
+        gap: 6px;
+    }
+    
+    .duplicate-notification {
+        flex-direction: column;
+        text-align: center;
+    }
 }
 /* MOBILE */
 @media (max-width:500px) {
     .charts-container {
         grid-template-columns:1fr;
+    }
+    .dama-name-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .badge-id {
+        align-self: flex-start;
+    }
+    
+    .dama-details {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .dama-role, .dama-hours, .dama-activities {
+        display: inline-block;
+        width: fit-content;
     }
 }
 
@@ -1198,7 +1379,7 @@ body {
         </div>
         <div style="display: flex; gap: 8px;">
             <button onclick="showAddDamaModal()" style="background: var(--accent); color: white; border: none; border-radius: 30px; padding: 6px 14px; font-size: 0.75rem; cursor: pointer;">➕ Nueva Dama</button>
-            <button onclick="showManageDamas()" style="background: var(--primary); color: white; border: none; border-radius: 30px; padding: 6px 14px; font-size: 0.75rem; cursor: pointer;">📋 Gestionar Damas</button>
+            <button onclick="showManageDamas()" style="background: var(--primary); color: white; border: none; border-radius: 30px; padding: 6px 14px; font-size: 0.75rem; cursor: pointer;">📋 Registro de Horas</button>
         </div>
     </div>
     <div id="currentUserInfo" style="margin-top: 8px; font-size: 0.7rem; color: var(--text-medium);">
@@ -1535,6 +1716,304 @@ function getGpsLocation(formId) {
 function sortActivitiesByDate() {
     activities.sort((a, b) => new Date(a.date) - new Date(b.date));
 }
+
+// ==========================================
+// ENHANCED TIMER SYSTEM WITH DUAL MODE
+// ==========================================
+
+let timerMode = 'manual'; // 'manual' or 'timeRange'
+let timerStartTime = null;
+let timerEndTime = null;
+let timerInterval = null;
+
+// Mode switching function
+function switchTimerMode(mode) {
+    timerMode = mode;
+    const manualModeDiv = document.getElementById('manualTimerMode');
+    const timeRangeModeDiv = document.getElementById('timeRangeTimerMode');
+    const modeButtons = document.querySelectorAll('.timer-mode-btn');
+    
+    if (mode === 'manual') {
+        manualModeDiv.style.display = 'block';
+        timeRangeModeDiv.style.display = 'none';
+        modeButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === 'manual');
+        });
+    } else {
+        manualModeDiv.style.display = 'none';
+        timeRangeModeDiv.style.display = 'block';
+        modeButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === 'timeRange');
+        });
+        // Reset time range inputs when switching
+        document.getElementById('startTimeInput').value = '';
+        document.getElementById('endTimeInput').value = '';
+        document.getElementById('timeRangeMinutes').innerText = '0 minutos';
+    }
+}
+
+// Calculate minutes between start and end time
+function calculateTimeRange() {
+    const startTimeStr = document.getElementById('startTimeInput').value;
+    const endTimeStr = document.getElementById('endTimeInput').value;
+    
+    if (!startTimeStr || !endTimeStr) {
+        document.getElementById('timeRangeMinutes').innerText = '0 minutos';
+        return 0;
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    const startDateTime = new Date(`${today}T${startTimeStr}`);
+    const endDateTime = new Date(`${today}T${endTimeStr}`);
+    
+    // Handle overnight activities (end time after midnight)
+    let diffMs = endDateTime - startDateTime;
+    if (diffMs < 0) {
+        // If end time is earlier than start time, assume it's next day
+        const nextDay = new Date(`${today}T${endTimeStr}`);
+        nextDay.setDate(nextDay.getDate() + 1);
+        diffMs = nextDay - startDateTime;
+    }
+    
+    const minutes = Math.round(diffMs / 60000);
+    const hoursDecimal = minutes / 60;
+    
+    document.getElementById('timeRangeMinutes').innerHTML = `
+        <strong style="color: #E34A2F;">${minutes} minutos</strong>
+        <span style="font-size: 0.7rem;">(${hoursDecimal.toFixed(2)} horas)</span>
+    `;
+    
+    return minutes;
+}
+
+// Apply time range to wizard
+function applyTimeRange() {
+    const minutes = calculateTimeRange();
+    const startTime = document.getElementById('startTimeInput').value;
+    const endTime = document.getElementById('endTimeInput').value;
+    
+    if (!startTime || !endTime) {
+        alert('❌ Por favor selecciona hora de inicio y fin');
+        return false;
+    }
+    
+    if (minutes <= 0) {
+        alert('❌ La hora de fin debe ser posterior a la hora de inicio');
+        return false;
+    }
+    
+    // Apply to wizard data
+    wizardData.horas = minutes / 60;
+    wizardData.startTime = startTime;
+    wizardData.endTime = endTime;
+    
+    // Update display
+    updateHoursInputDisplay(minutes);
+    updateMinutesHelper(minutes);
+    
+    // Update timer display
+    const timerDisplay = document.getElementById('globalTimerDisplay');
+    if (timerDisplay) {
+        timerDisplay.innerText = formatTimeFromMinutes(minutes);
+    }
+    
+    wizardTimerElapsedMs = minutes * 60000;
+    
+    // Show success notification
+    showRoundingNotification(
+        `${startTime} - ${endTime}`,
+        `${minutes} minutos (${(minutes/60).toFixed(2)} horas)`
+    );
+    
+    saveWizardState();
+    saveTimerState(false);
+    
+    return true;
+}
+
+// Enhanced timer stop function with time range saving
+function enhancedStopWizardTimer() {
+    if (wizardTimerInterval && wizardTimerStart) {  // ✅ Changed timerInterval to wizardTimerInterval
+        clearInterval(wizardTimerInterval);
+        wizardTimerInterval = null;
+        
+        const elapsedMs = Date.now() - wizardTimerStart;
+        wizardTimerElapsedMs = elapsedMs;
+        const elapsedMinutes = elapsedMs / 60000;
+        
+        let roundedMinutes = roundTimeMinutes(elapsedMinutes);
+        let roundedHoursDecimal = roundedMinutes / 60;
+        
+        wizardData.horas = roundedHoursDecimal;
+        
+        // Auto-fill time range based on actual timer duration
+        if (timerMode === 'timeRange') {
+            const endTime = new Date();
+            const startTime = new Date(Date.now() - elapsedMs);
+            
+            const startTimeStr = startTime.toLocaleTimeString('es-HN', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            });
+            const endTimeStr = endTime.toLocaleTimeString('es-HN', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            });
+            
+            document.getElementById('startTimeInput').value = startTimeStr;
+            document.getElementById('endTimeInput').value = endTimeStr;
+            calculateTimeRange();
+            
+            wizardData.startTime = startTimeStr;
+            wizardData.endTime = endTimeStr;
+        }
+        
+        updateHoursInputDisplay(roundedMinutes);
+        updateMinutesHelper(roundedMinutes);
+        
+        const originalMinutes = Math.floor(elapsedMinutes);
+        const originalSeconds = Math.floor((elapsedMinutes % 1) * 60);
+        const originalTime = `${originalMinutes}:${originalSeconds.toString().padStart(2,'0')}`;
+        const roundedTime = `${roundedMinutes} minutos`;
+        
+        if (originalMinutes !== roundedMinutes) {
+            showRoundingNotification(originalTime, roundedTime);
+        }
+        
+        saveTimerState(false);
+        saveWizardState();
+    }
+}
+
+// Enhanced wizard step 2 rendering with dual mode
+function renderEnhancedTimerStep() {
+    const currentMinutes = Math.round((wizardData.horas || 0) * 60);
+    const startTime = wizardData.startTime || '';
+    const endTime = wizardData.endTime || '';
+    
+    return `
+        <div class="dynamic-question">
+            <div class="question-label">⏱ Duración de la actividad</div>
+            
+            <!-- Mode Selector -->
+            <div style="display: flex; gap: 8px; margin-bottom: 20px; background: var(--neutral-light); padding: 6px; border-radius: 60px;">
+                <button type="button" class="timer-mode-btn ${timerMode === 'manual' ? 'active' : ''}" 
+                        data-mode="manual" onclick="switchTimerMode('manual')"
+                        style="flex:1; padding: 10px; border: none; border-radius: 40px; cursor: pointer; 
+                               background: ${timerMode === 'manual' ? 'var(--accent)' : 'transparent'};
+                               color: ${timerMode === 'manual' ? 'white' : 'var(--text-medium)'};
+                               font-weight: 600; transition: all 0.2s;">
+                    📝 Manual
+                </button>
+                <button type="button" class="timer-mode-btn ${timerMode === 'timeRange' ? 'active' : ''}" 
+                        data-mode="timeRange" onclick="switchTimerMode('timeRange')"
+                        style="flex:1; padding: 10px; border: none; border-radius: 40px; cursor: pointer;
+                               background: ${timerMode === 'timeRange' ? 'var(--accent)' : 'transparent'};
+                               color: ${timerMode === 'timeRange' ? 'white' : 'var(--text-medium)'};
+                               font-weight: 600; transition: all 0.2s;">
+                    ⏰ Hora Inicio/Fin
+                </button>
+            </div>
+            
+            <!-- Manual Mode -->
+            <div id="manualTimerMode" style="display: ${timerMode === 'manual' ? 'block' : 'none'};">
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
+                    <input type="text" id="hoursInput" class="wizard-input" 
+                           placeholder="Ej: 30 minutos" 
+                           value="${currentMinutes === 0 ? '' : (currentMinutes === 1 ? '1 minuto' : `${currentMinutes} minutos`)}" 
+                           style="flex:2">
+                    <div id="minutesHelper" style="flex:1; background: #f0f2f5; border-radius: 60px; padding: 12px 16px; text-align: center; font-weight: 600; color: #E34A2F;">
+                        ${currentMinutes === 0 ? '0 minutos' : (currentMinutes === 1 ? '1 minuto' : `${currentMinutes} minutos`)}
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; margin: 16px 0;">
+                    <button class="wiz-btn wiz-btn-secondary" style="flex:1" onclick="startWizardTimerGlobal()">▶ Iniciar Timer</button>
+                    <button class="wiz-btn wiz-btn-secondary" style="flex:1" onclick="enhancedStopWizardTimer()">⏹ Detener Timer</button>
+                </div>
+            </div>
+            
+            <!-- Time Range Mode -->
+            <div id="timeRangeTimerMode" style="display: ${timerMode === 'timeRange' ? 'block' : 'none'};">
+                <div style="background: var(--neutral-light); padding: 16px; border-radius: 16px; margin-bottom: 16px;">
+                    <div style="display: grid; gap: 12px;">
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-medium); display: block; margin-bottom: 4px;">🕐 Hora de Inicio</label>
+                            <input type="time" id="startTimeInput" class="wizard-input" 
+                                   value="${startTime}"
+                                   onchange="calculateTimeRange()"
+                                   style="font-size: 1.1rem; font-weight: 600;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-medium); display: block; margin-bottom: 4px;">🕒 Hora de Fin</label>
+                            <input type="time" id="endTimeInput" class="wizard-input" 
+                                   value="${endTime}"
+                                   onchange="calculateTimeRange()"
+                                   style="font-size: 1.1rem; font-weight: 600;">
+                        </div>
+                    </div>
+                    <div id="timeRangeMinutes" style="margin-top: 16px; padding: 12px; background: white; border-radius: 12px; text-align: center; font-size: 1rem;">
+                        ${currentMinutes > 0 ? `${currentMinutes} minutos` : '0 minutos'}
+                    </div>
+                    <button class="wiz-btn wiz-btn-primary" style="width:100%; margin-top: 16px;" 
+                            onclick="applyTimeRange()">
+                        ✅ Aplicar duración
+                    </button>
+                </div>
+                <p style="font-size:0.7rem; text-align:center; color: var(--text-medium);">
+                    💡 Registra la hora exacta de inicio y fin de tu actividad
+                </p>
+            </div>
+            
+            <div class="timer-glow" id="globalTimerDisplay">${formatTimeFromMinutes(currentMinutes)}</div>
+            <p style="font-size:0.7rem; text-align:center; margin-top:8px;">
+                ⚡ El tiempo se redondea automáticamente para facilitar el registro
+            </p>
+        </div>
+    `;
+}
+
+// Update the wizard step rendering to use enhanced timer
+function updateWizardStep2() {
+    const body = document.getElementById('wizardDynamicBody');
+    if (body && wizardStep === 2) {
+        body.innerHTML = renderEnhancedTimerStep();
+        setTimeout(() => attachHoursInputListener(), 50);
+        
+        // Re-attach time range change handlers
+        const startInput = document.getElementById('startTimeInput');
+        const endInput = document.getElementById('endTimeInput');
+        if (startInput) startInput.addEventListener('change', calculateTimeRange);
+        if (endInput) endInput.addEventListener('change', calculateTimeRange);
+    }
+}
+
+// Save time range data in wizard data persistence
+function saveTimeRangeData() {
+    if (timerMode === 'timeRange') {
+        const startTime = document.getElementById('startTimeInput')?.value;
+        const endTime = document.getElementById('endTimeInput')?.value;
+        if (startTime && endTime) {
+            wizardData.startTime = startTime;
+            wizardData.endTime = endTime;
+            saveWizardState();
+        }
+    }
+}
+
+// Load saved time range data when resuming wizard
+function loadTimeRangeData() {
+    if (wizardData.startTime && wizardData.endTime) {
+        timerMode = 'timeRange';
+        const startInput = document.getElementById('startTimeInput');
+        const endInput = document.getElementById('endTimeInput');
+        if (startInput) startInput.value = wizardData.startTime;
+        if (endInput) endInput.value = wizardData.endTime;
+        calculateTimeRange();
+    }
+}
+
 function updateFooterDates() {
     const now = new Date();
     
@@ -1684,11 +2163,12 @@ function showAddDamaModal() {
 }
 
 function showManageDamas() {
-    let list = '=== LISTA DE DAMAS ===\n\n';
-    damaProfiles.forEach((p, i) => {
-        list += `${i + 1}. ${p.nombre}\n   Rol: ${p.rolNombre}\n   Horas: ${p.totalHoras}\n   Actividades: ${p.actividadesCount}\n   ID: ${p.identidadSuffix || 'N/A'}\n\n`;
-    });
-    alert(list);
+    if (!currentUser) {
+        alert('❌ No hay un usuario seleccionado');
+        return;
+    }
+    
+    exportUserReport(currentUser);
 }
 
 function actualizarListaDamas() {
@@ -1699,20 +2179,80 @@ function actualizarListaDamas() {
     if (!lista) return;
     lista.innerHTML = '';
     
-    damaProfiles.forEach(dama => {
+    // Sort damas by hours (highest first)
+    const sortedDamas = [...damaProfiles].sort((a, b) => (b.totalHoras || 0) - (a.totalHoras || 0));
+    
+    sortedDamas.forEach(dama => {
         const div = document.createElement('div');
+        div.className = 'dama-card';
+        
         const idBadge = (dama.identidadSuffix && dama.identidadSuffix !== '000000' && dama.identidadSuffix !== '') ? 
-            `<span style="background:#4caf50; color:white; font-size:0.6rem; padding:2px 8px; border-radius:12px;">✓ ID:${dama.identidadSuffix}</span>` : 
-            `<span style="background:#ff9800; color:white; font-size:0.6rem; padding:2px 8px; border-radius:12px;">⚡ temporal</span>`;
+            `<span class="badge-id verified">✓ ID:${dama.identidadSuffix}</span>` : 
+            `<span class="badge-id temp">⚡ temporal</span>`;
+        
         div.innerHTML = `
-            <div style="display:flex; flex-direction:column; align-items:flex-start; gap:4px;">
-                <div><strong>${escapeHtml(dama.nombre)}</strong> ${idBadge}</div>
-                <small>${dama.rolNombre} | ${dama.totalHoras} hrs | ${dama.actividadesCount} act.</small>
+            <div class="dama-info">
+                <div class="dama-name-row">
+                    <strong class="dama-nombre">${escapeHtml(dama.nombre)}</strong>
+                    ${idBadge}
+                </div>
+                <div class="dama-details">
+                    <span class="dama-role">${escapeHtml(dama.rolNombre)}</span>
+                    <span class="dama-hours">${dama.totalHoras || 0} hrs</span>
+                    <span class="dama-activities">${dama.actividadesCount || 0} act.</span>
+                </div>
             </div>
-            <button onclick="eliminarDama('${dama.id}')" style="background:var(--warning); border:none; border-radius:30px; padding:6px 12px; color:white;">🗑️</button>
+            <div class="dama-actions">
+                <button onclick="editDamaProfile('${dama.id}')" class="dama-btn edit-btn" title="Editar">✏️</button>
+                <button onclick="eliminarDama('${dama.id}')" class="dama-btn delete-btn" title="Eliminar">🗑️</button>
+            </div>
         `;
         lista.appendChild(div);
     });
+    
+    // Check for duplicates after rendering
+    checkForDuplicateProfiles();
+}
+
+// Auto-detect and suggest merge for duplicate profiles
+function checkForDuplicateProfiles() {
+    const normalized = new Map();
+    const duplicates = [];
+    
+    damaProfiles.forEach(profile => {
+        // Normalize name (remove accents, lowercase)
+        const normalizedName = profile.nombre
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+        
+        if (normalized.has(normalizedName)) {
+            const existing = normalized.get(normalizedName);
+            if (!duplicates.includes(existing)) duplicates.push(existing);
+            if (!duplicates.includes(profile)) duplicates.push(profile);
+        } else {
+            normalized.set(normalizedName, profile);
+        }
+    });
+    
+    if (duplicates.length >= 2) {
+        // Show subtle notification
+        const notification = document.createElement('div');
+        notification.className = 'duplicate-notification';
+        notification.innerHTML = `
+            ⚠️ Se detectaron perfiles duplicados. 
+            <button onclick="showMergeDialog(${JSON.stringify(duplicates.map(d => d.id))})" 
+                    style="background:var(--warning); border:none; padding:4px 12px; border-radius:20px; margin-left:10px;">
+                Fusionar Ahora
+            </button>
+        `;
+        
+        const container = document.getElementById('rolesActivosContainer');
+        if (container && !document.querySelector('.duplicate-notification')) {
+            container.insertBefore(notification, container.firstChild);
+        }
+    }
 }
 
 function agregarDama() {
@@ -1769,6 +2309,91 @@ function eliminarDama(id) {
         renderProfileSelector();
         actualizarListaDamas();
         updateActiveDamasChart();
+    }
+}
+// Edit existing dama profile
+function editDamaProfile(id) {
+    const dama = damaProfiles.find(d => d.id === id);
+    if (!dama) return;
+    
+    const newNombre = prompt('Editar nombre completo:', dama.nombre);
+    if (!newNombre || newNombre.trim() === dama.nombre) return;
+    
+    const newRol = prompt('Editar rol:', dama.rolNombre);
+    if (!newRol) return;
+    
+    const newIdentidad = prompt('Editar últimos 6 dígitos de identidad:', dama.identidadSuffix || '');
+    
+    // Update profile
+    dama.nombre = newNombre.trim();
+    dama.rolNombre = newRol.trim();
+    dama.identidadSuffix = newIdentidad || '000000';
+    dama.isPlaceholder = (!newIdentidad || newIdentidad === '000000');
+    
+    saveProfiles();
+    renderProfileSelector();
+    actualizarListaDamas();
+    updateActiveDamasChart();
+    alert(`✅ Dama actualizada: ${dama.nombre}`);
+}
+
+// Merge duplicate dama profiles
+function mergeDamaProfiles(sourceId, targetId) {
+    const source = damaProfiles.find(d => d.id === sourceId);
+    const target = damaProfiles.find(d => d.id === targetId);
+    
+    if (!source || !target || source.id === target.id) return;
+    
+    const confirmMsg = `¿Fusionar "${source.nombre}" en "${target.nombre}"?\n\n` +
+                       `• ${source.totalHoras} hrs + ${target.totalHoras} hrs = ${source.totalHoras + target.totalHoras} hrs\n` +
+                       `• ${source.actividadesCount} + ${target.actividadesCount} actividades\n\n` +
+                       `Esta acción NO se puede deshacer.`;
+    
+    if (!confirm(confirmMsg)) return;
+    
+    // Merge hours and activity count
+    target.totalHoras = (target.totalHoras || 0) + (source.totalHoras || 0);
+    target.actividadesCount = (target.actividadesCount || 0) + (source.actividadesCount || 0);
+    
+    // Track merged profiles
+    if (!target.mergedFrom) target.mergedFrom = [];
+    target.mergedFrom.push(source.id, ...(source.mergedFrom || []));
+    
+    // Remove source profile
+    damaProfiles = damaProfiles.filter(d => d.id !== sourceId);
+    
+    // If current user was the source, switch to target
+    if (currentUser && currentUser.id === sourceId) {
+        currentUser = target;
+    }
+    
+    saveProfiles();
+    renderProfileSelector();
+    actualizarListaDamas();
+    updateActiveDamasChart();
+    alert(`✅ Perfiles fusionados correctamente\n📊 Total horas en ${target.nombre}: ${target.totalHoras} hrs`);
+}
+
+// Show merge dialog (called when duplicate detected)
+function showMergeDialog(duplicateProfiles) {
+    if (duplicateProfiles.length < 2) return;
+    
+    let message = '⚠️ Se detectaron perfiles similares:\n\n';
+    duplicateProfiles.forEach((p, i) => {
+        message += `${i+1}. ${p.nombre} (${p.rolNombre}) - ${p.totalHoras} hrs\n`;
+    });
+    message += '\n¿Cuál quieres mantener como principal?\n(El otro se fusionará automáticamente)';
+    
+    const choice = prompt(message, '1');
+    const targetIndex = parseInt(choice) - 1;
+    
+    if (targetIndex >= 0 && targetIndex < duplicateProfiles.length) {
+        const target = duplicateProfiles[targetIndex];
+        const sources = duplicateProfiles.filter((_, i) => i !== targetIndex);
+        
+        sources.forEach(source => {
+            mergeDamaProfiles(source.id, target.id);
+        });
     }
 }
 
@@ -2243,27 +2868,9 @@ function renderWizardStep() {
             `;
             break;
             
-        case 2:
-            const displayMinutes = currentMinutes === 1 ? '1 minuto' : (currentMinutes > 0 ? `${currentMinutes} minutos` : '');
-            html = `
-                <div class="dynamic-question">
-                    <div class="question-label">⏱ Duración de la actividad</div>
-                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
-                        <input type="text" id="hoursInput" class="wizard-input" placeholder="Ej: 30 minutos" value="${displayMinutes}" style="flex:2">
-                        <div id="minutesHelper" style="flex:1; background: #f0f2f5; border-radius: 60px; padding: 12px 16px; text-align: center; font-weight: 600; color: #E34A2F;">
-                            ${currentMinutes === 1 ? '1 minuto' : (currentMinutes > 0 ? `${currentMinutes} minutos` : '0 minutos')}
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 12px; margin: 16px 0;">
-                        <button class="wiz-btn wiz-btn-secondary" style="flex:1" onclick="startWizardTimerGlobal()">▶ Iniciar Timer</button>
-                        <button class="wiz-btn wiz-btn-secondary" style="flex:1" onclick="stopWizardTimerGlobal()">⏹ Detener Timer</button>
-                    </div>
-                    <div class="timer-glow" id="globalTimerDisplay">${formatTimeFromMinutes(currentMinutes)}</div>
-                    <p style="font-size:0.7rem; text-align:center; margin-top:8px;"> Al detener el timer, se redondea automáticamente.<br>• Menos de 1 min → 1 min • Menos de 5 min → siguiente min • 5-60 min → múltiplo de 5</p>
-                </div>
-            `;
+            case 2:
+                 html = renderEnhancedTimerStep();
             break;
-            
        case 3:
         const damasCount = wizardData.voluntarias || 0;
         const damasParticipants = wizardData.damasParticipants || [];
@@ -3043,6 +3650,8 @@ function finalizeWizardActivity() {
         name: finalName,
         actionType: wizardData.actionType || 'filial',
         horas: formattedHours,
+        startTime: wizardData.startTime || '',  // ← ADD THIS LINE
+        endTime: wizardData.endTime || '',
         voluntarias: wizardData.voluntarias || 0,
         beneficiadas_mujeres: wizardData.beneficiadas_mujeres || 0,
         beneficiados_hombres: wizardData.beneficiados_hombres || 0,
@@ -3456,21 +4065,64 @@ async function processImportedData(scannedData) {
         const statusDiv = document.getElementById('qrStatus');
         if (statusDiv) statusDiv.innerHTML = '📊 Procesando datos...';
         
-        // Find or create dama profile
         // Helper to normalize names (removes accents, lowercases, trims)
         function normalizeName(name) {
             return name?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
         }
-
+        
         // Find or create dama profile
         let damaProfile = damaProfiles.find(d => d.id === importData.dama.id);
-
+        
         if (!damaProfile) {
-            // Match by normalized name to avoid duplicates from accents/capitals
+            // Try to find by normalized name OR identity suffix
             const importedNameNorm = normalizeName(importData.dama.nombre);
-            damaProfile = damaProfiles.find(d => normalizeName(d.nombre) === importedNameNorm);
+            const matches = damaProfiles.filter(d => {
+                const nameMatch = normalizeName(d.nombre) === importedNameNorm;
+                const idMatch = importData.dama.identidadSuffix && 
+                               d.identidadSuffix === importData.dama.identidadSuffix && 
+                               importData.dama.identidadSuffix !== '000000';
+                return nameMatch || idMatch;
+            });
+            
+            if (matches.length === 1) {
+                // Found exactly one match - use it
+                damaProfile = matches[0];
+                
+                // Show merge notification (non-intrusive)
+                setTimeout(() => {
+                    const notification = document.createElement('div');
+                    notification.style.cssText = `
+                        position: fixed;
+                        bottom: 20px;
+                        right: 20px;
+                        background: #ff9800;
+                        color: white;
+                        padding: 12px 20px;
+                        border-radius: 12px;
+                        font-size: 0.8rem;
+                        z-index: 10000;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                        animation: fadeOutUp 3s ease forwards;
+                    `;
+                    notification.innerHTML = `🔗 Datos importados vinculados a perfil existente: ${damaProfile.nombre}`;
+                    document.body.appendChild(notification);
+                    setTimeout(() => notification.remove(), 3000);
+                }, 100);
+                
+            } else if (matches.length > 1) {
+                // Multiple matches found - ask user to choose
+                const options = matches.map((m, i) => `${i+1}. ${m.nombre} (${m.rolNombre}) - ${m.totalHoras} hrs`).join('\n');
+                const choice = prompt(`⚠️ Se encontraron ${matches.length} perfiles similares:\n\n${options}\n\n¿A cuál quieres vincular estos datos?\n(0 para crear nuevo perfil)`);
+                
+                if (choice && parseInt(choice) > 0 && parseInt(choice) <= matches.length) {
+                    damaProfile = matches[parseInt(choice) - 1];
+                } else {
+                    // Create new profile
+                    damaProfile = null;
+                }
+            }
         }
-
+        
         // If still not found, create a new profile
         if (!damaProfile) {
             damaProfile = {
@@ -3488,7 +4140,7 @@ async function processImportedData(scannedData) {
             saveProfiles();
             renderProfileSelector();
         } else {
-            // Upgrade placeholder ID if the import provides it
+            // Profile exists - upgrade placeholder info if needed
             if ((damaProfile.identidadSuffix === '000000' || !damaProfile.identidadSuffix) &&
                 importData.dama.identidadSuffix && importData.dama.identidadSuffix !== '000000') {
                 damaProfile.identidadSuffix = importData.dama.identidadSuffix;
@@ -3496,7 +4148,24 @@ async function processImportedData(scannedData) {
                 saveProfiles();
                 renderProfileSelector();
             }
+            
+            // Optional: Check if name has a typo and suggest correction
+            const currentNorm = normalizeName(damaProfile.nombre);
+            const importedNorm = normalizeName(importData.dama.nombre);
+            if (currentNorm !== importedNorm && damaProfile.nombre !== importData.dama.nombre) {
+                // Name mismatch - offer to update if the user wants
+                setTimeout(() => {
+                    const shouldUpdate = confirm(`⚠️ El nombre importado (${importData.dama.nombre}) es diferente al perfil existente (${damaProfile.nombre}).\n\n¿Quieres actualizar el nombre del perfil a "${importData.dama.nombre}"?`);
+                    if (shouldUpdate) {
+                        damaProfile.nombre = importData.dama.nombre;
+                        saveProfiles();
+                        renderProfileSelector();
+                        actualizarListaDamas();
+                    }
+                }, 500);
+            }
         }
+        
         let importedHours = 0;
         let importedCount = 0;
         let consolidatedCount = 0;
@@ -3601,6 +4270,8 @@ async function processImportedData(scannedData) {
                     name: impAct.name,
                     actionType: impAct.actionType || 'campo',
                     horas: impAct.horas || 0,
+                    startTime: impAct.startTime || '',    
+                    endTime: impAct.endTime || '',
                     voluntarias: impAct.voluntarias || 0,
                     beneficiadas_mujeres: impAct.beneficiadas_mujeres || 0,
                     beneficiados_hombres: impAct.beneficiados_hombres || 0,
@@ -3655,7 +4326,6 @@ async function processImportedData(scannedData) {
         if (statusDiv) statusDiv.innerHTML = '❌ Error al procesar el código';
     }
 }
-
 
 
 function getQRCodeData(activity) {
@@ -5002,6 +5672,174 @@ data.push([]);
     XLSX.writeFile(wb, fileName);
     
     alert('✅ Reporte exportado exitosamente');
+}
+
+//Time sheet for Usuario Actual
+function exportUserReport(user) {
+    // Get all activities where this user participated
+    const userActivities = activities.filter(activity => {
+        // Check if user is the creator
+        if (activity.createdBy === user.id) return true;
+        
+        // Check if user is in damasParticipants list
+        if (activity.damasParticipants && activity.damasParticipants.length > 0) {
+            return activity.damasParticipants.some(p => 
+                p.name && p.name.toLowerCase() === user.nombre.toLowerCase()
+            );
+        }
+        
+        // Check if it's the default "Usuario Principal" with no participants but voluntarias=1
+        if (user.isPlaceholder && activity.voluntarias === 1 && !activity.damasParticipants?.length) {
+            return true;
+        }
+        
+        return false;
+    });
+    
+    if (userActivities.length === 0) {
+        alert(`⚠️ ${user.nombre} no tiene actividades registradas en este mes`);
+        return;
+    }
+    
+    // Prepare data for Excel
+    const data = [];
+    const now = new Date();
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const currentMonth = monthNames[now.getMonth()];
+    const currentYear = now.getFullYear();
+    
+    // Header section
+    data.push(["CRUZ ROJA HONDUREÑA"]);
+    data.push(["COMITÉ DE DAMAS CD-17"]);
+    data.push([]);
+    data.push(["INFORME INDIVIDUAL DE VOLUNTARIA"]);
+    data.push([]);
+    data.push([`Período: ${currentMonth} ${currentYear}`]);
+    data.push([]);
+    data.push(["DATOS DE LA VOLUNTARIA"]);
+    data.push(["Nombre:", user.nombre]);
+    data.push(["Rol:", user.rolNombre]);
+    data.push(["Total Horas:", `${(user.totalHoras || 0).toFixed(2)} horas`]);
+    data.push(["Total Actividades:", user.actividadesCount || 0]);
+    data.push([]);
+    
+    // Activities detail header
+    data.push(["DETALLE DE ACTIVIDADES"]);
+    data.push([]);
+    data.push(["N°", "FECHA", "ACTIVIDAD", "HORA INICIO", "HORA FIN", "DURACIÓN (min)", "DURACIÓN (hrs)", "BENEFICIARIAS (M)", "BENEFICIARIOS (H)"]);
+    
+    // Sort activities by date
+    const sortedActivities = [...userActivities].sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    let totalMinutes = 0;
+    
+    sortedActivities.forEach((activity, index) => {
+        const durationMinutes = Math.round((activity.horas || 0) * 60);
+        totalMinutes += durationMinutes;
+        
+        data.push([
+            index + 1,
+            formatDateForDisplay(activity.date),
+            activity.name || '',
+            activity.startTime || '—',
+            activity.endTime || '—',
+            durationMinutes,
+            (activity.horas || 0).toFixed(2),
+            activity.beneficiadas_mujeres || 0,
+            activity.beneficiados_hombres || 0
+        ]);
+    });
+    
+    // Add totals
+    const totalHoursDecimal = (totalMinutes / 60).toFixed(2);
+    data.push([]);
+    data.push(["RESUMEN TOTAL"]);
+    data.push(["Total Actividades:", userActivities.length]);
+    data.push(["Total Horas:", `${totalMinutes} minutos (${totalHoursDecimal} horas)`]);
+    data.push([]);
+    
+    // Signature section
+    const isDirectora = user.rolNombre === 'Directora' || user.rolId === 'directora';
+    data.push(["_________________________________"]);
+    data.push([`Presentado por: ${user.nombre} (${user.rolNombre})`]);
+    
+    if (!isDirectora) {
+        data.push([]);
+        data.push(["_________________________"]);
+        data.push(["Pendiente Visto Bueno de la Directora, Comité de Damas"]);
+    }
+    
+    data.push([]);
+    data.push([`Documento generado el ${formatDateForDisplay(now, true)}`]);
+    
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    
+    // Set column widths
+    ws['!cols'] = [
+        { wch: 6 },   // N°
+        { wch: 12 },  // FECHA
+        { wch: 40 },  // ACTIVIDAD
+        { wch: 12 },  // HORA INICIO
+        { wch: 12 },  // HORA FIN
+        { wch: 14 },  // DURACIÓN (min)
+        { wch: 14 },  // DURACIÓN (hrs)
+        { wch: 18 },  // BENEFICIARIAS (M)
+        { wch: 18 }   // BENEFICIARIOS (H)
+    ];
+    
+    // Find row indices for merges
+    const detalleRow = data.findIndex(row => row[0] === "DETALLE DE ACTIVIDADES");
+    const resumenRow = data.findIndex(row => row[0] === "RESUMEN TOTAL");
+    const signatureRow = data.findIndex(row => row[0] === "_________________________________");
+    
+    // Merge cells for titles
+    ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } },  // CRUZ ROJA HONDUREÑA
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } },  // COMITÉ DE DAMAS CD-17
+        { s: { r: 3, c: 0 }, e: { r: 3, c: 8 } },  // INFORME INDIVIDUAL
+        { s: { r: 7, c: 0 }, e: { r: 7, c: 8 } },  // DATOS 
+        { s: { r: detalleRow, c: 0 }, e: { r: detalleRow, c: 8 } },  // DETALLE DE ACTIVIDADES
+        { s: { r: resumenRow, c: 0 }, e: { r: resumenRow, c: 1 } },  // RESUMEN TOTAL
+        { s: { r: signatureRow, c: 0 }, e: { r: signatureRow, c: 8 } }  // Signature line
+    ];
+    
+    // Style cells
+    for (let i = 0; i < data.length; i++) {
+        for (let j = 0; j <= 8; j++) {
+            const cell = ws[XLSX.utils.encode_cell({ r: i, c: j })];
+            if (cell) {
+                if (!cell.s) cell.s = {};
+                // Bold for titles and labels
+                if (i === 0 || i === 1 || i === 3 || i === 7 || i === detalleRow || 
+                    (data[i] && data[i][0] === "RESUMEN TOTAL") ||
+                    (data[i] && data[i][0] === "DATOS DE LA VOLUNTARIA") ||
+                    (data[i] && data[i][0] === "Nombre:") ||
+                    (data[i] && data[i][0] === "Rol:") ||
+                    (data[i] && data[i][0] === "Total Horas:") ||
+                    (data[i] && data[i][0] === "Total Actividades:")) {
+                    cell.s.font = { bold: true };
+                }
+                // Center alignment for headers row
+                if (i === detalleRow + 2) {
+                    cell.s.alignment = { horizontal: 'center' };
+                    cell.s.font = { bold: true };
+                }
+                // Wrap text for activity names
+                if (j === 2 && i > detalleRow + 2 && i < resumenRow) {
+                    cell.s.alignment = { wrapText: true, vertical: 'top' };
+                }
+            }
+        }
+    }
+    
+    // Create workbook and download
+    const wb = XLSX.utils.book_new();
+    const fileName = `reporte_${user.nombre.replace(/\s/g, '_')}_${currentYear}-${String(now.getMonth() + 1).padStart(2, '0')}.xlsx`;
+    XLSX.utils.book_append_sheet(wb, ws, `Reporte ${user.nombre}`);
+    XLSX.writeFile(wb, fileName);
+    
+    alert(`✅ Reporte exportado para ${user.nombre}\n📊 ${userActivities.length} actividades\n⏱️ Total: ${totalMinutes} minutos (${totalHoursDecimal} horas)`);
 }
 
 </script>
