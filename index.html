@@ -1260,7 +1260,7 @@ body {
 
 <!-- footer -->
 
-<div class="footer-info"><span>Cruz Roja Hondureña CD-17 · Comité de Damas</span><span id="footerDate"></span></div>
+<div class="footer-info"><span>Cruz Roja Hondureña CD-17 · Comité de Damas   </span><span id="footerDate"></span></div>
 <div class="action-buttons">
     <button class="action-button" onclick="showImportQRModal()" style="background:var(--info);">📷 Importar QR</button>
     <button class="action-button" onclick="exportToExcel(event)" style="background:var(--success);">📊 Exportar Excel</button>
@@ -1771,6 +1771,67 @@ function eliminarDama(id) {
         updateActiveDamasChart();
     }
 }
+
+function renderDamasDetailedFields(participants) {
+    if (!participants || participants.length === 0) return '';
+    
+    return `
+        <div class="detailed-participants" style="padding: 12px; background: var(--neutral-light); border-radius: 16px;">
+            <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">📋 Datos de las Damas Participantes (${participants.length} damas)</div>
+            <div id="damasParticipantsList" class="participants-list">
+                ${participants.map((p, pIdx) => `
+                    <div class="participant-row" style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
+                        <input type="text" placeholder="Nombre completo" class="wizard-input dama-name" style="flex:2; margin:0;" value="${escapeHtml(p.name || '')}" data-index="${pIdx}" onchange="updateDamaParticipant(${pIdx}, 'name', this.value)">
+                        <select class="wizard-input dama-gender" style="flex:1; margin:0;" data-index="${pIdx}" onchange="updateDamaParticipant(${pIdx}, 'gender', this.value)">
+                            <option value="Femenino" ${p.gender === 'Femenino' ? 'selected' : ''}>Femenino</option>
+                            <option value="Masculino" ${p.gender === 'Masculino' ? 'selected' : ''}>Masculino</option>
+                        </select>
+                    </div>
+                `).join('')}
+            </div>
+            <p style="font-size:0.65rem; color:var(--text-medium); margin-top: 6px;">Registra el nombre de cada Dama que participó en esta actividad.</p>
+        </div>
+    `;
+}
+
+function updateDamasCount(value) {
+    const newCount = parseInt(value) || 0;
+    wizardData.voluntarias = newCount;
+    
+    // Update participants array
+    if (!wizardData.damasParticipants) wizardData.damasParticipants = [];
+    
+    while (wizardData.damasParticipants.length < newCount) {
+        wizardData.damasParticipants.push({ name: '', gender: 'Femenino' });
+    }
+    while (wizardData.damasParticipants.length > newCount) {
+        wizardData.damasParticipants.pop();
+    }
+    
+    saveWizardState();
+    
+    // Update the details section without full re-render
+    const damasDetailsContainer = document.getElementById('damasDetailsContainer');
+    if (damasDetailsContainer) {
+        if (newCount > 1) {
+            damasDetailsContainer.innerHTML = renderDamasDetailedFields(wizardData.damasParticipants);
+        } else if (newCount === 1) {
+            damasDetailsContainer.innerHTML = '<p style="font-size:0.7rem; color:var(--text-medium); margin-top:8px;">La Dama que reporta es la participante principal.</p>';
+        } else {
+            damasDetailsContainer.innerHTML = '';
+        }
+    }
+}
+
+function updateDamaParticipant(participantIndex, field, value) {
+    if (!wizardData.damasParticipants) wizardData.damasParticipants = [];
+    if (!wizardData.damasParticipants[participantIndex]) {
+        wizardData.damasParticipants[participantIndex] = { name: '', gender: 'Femenino' };
+    }
+    
+    wizardData.damasParticipants[participantIndex][field] = value;
+    saveWizardState();
+}
 // ==========================================
 // COMPLETE WIZARD SYSTEM - PERSISTENT, MINUTE DISPLAY, RESUME CAPABLE
 // ==========================================
@@ -2203,13 +2264,39 @@ function renderWizardStep() {
             `;
             break;
             
-        case 3:
+       case 3:
+        const damasCount = wizardData.voluntarias || 0;
+        const damasParticipants = wizardData.damasParticipants || [];
+        
+        // Adjust participants array to match count
+        if (damasParticipants.length !== damasCount && damasCount > 0) {
+            while (damasParticipants.length < damasCount) {
+                damasParticipants.push({ name: '', gender: 'Femenino' });
+            }
+            while (damasParticipants.length > damasCount) {
+                damasParticipants.pop();
+            }
+            wizardData.damasParticipants = damasParticipants;
+            saveWizardState();
+        }
+        
+            // Render damas details only if count > 1
+            let damasDetailsHtml = '';
+            if (damasCount > 1) {
+                damasDetailsHtml = renderDamasDetailedFields(damasParticipants);
+            } else if (damasCount === 1) {
+                damasDetailsHtml = '<p style="font-size:0.7rem; color:var(--text-medium); margin-top:8px;">La Dama que reporta es la participante principal.</p>';
+            }
+            
             html = `
                 <div class="dynamic-question">
                     <div class="question-label"> Participación y Beneficiarios</div>
-                    <input type="number" id="voluntariasInput" class="wizard-input" placeholder=" Número de Damas Voluntarias" min="0" value="${wizardData.voluntarias || ''}">
-                    <input type="number" id="mujeresInput" class="wizard-input" placeholder=" Beneficiarias Mujeres" min="0" value="${wizardData.beneficiadas_mujeres || ''}">
-                    <input type="number" id="hombresInput" class="wizard-input" placeholder=" Beneficiarios Hombres" min="0" value="${wizardData.beneficiados_hombres || ''}">
+                    <input type="number" id="voluntariasInput" class="wizard-input" placeholder=" Número de Damas Voluntarias" min="0" value="${damasCount === 0 ? '' : damasCount}" oninput="updateDamasCount(this.value)">
+                    <div id="damasDetailsContainer" style="margin-top: 16px;">
+                        ${damasDetailsHtml}
+                    </div>
+                    <input type="number" id="mujeresInput" class="wizard-input" placeholder=" Beneficiarias Mujeres" min="0" value="${wizardData.beneficiadas_mujeres === 0 ? '' : (wizardData.beneficiadas_mujeres || '')}">
+                    <input type="number" id="hombresInput" class="wizard-input" placeholder=" Beneficiarios Hombres" min="0" value="${wizardData.beneficiados_hombres === 0 ? '' : (wizardData.beneficiados_hombres || '')}">
                 </div>
             `;
             break;
@@ -2303,7 +2390,7 @@ function generateActivityOptions(selectedVal) {
         "Mantenimiento y Adecuación", "Jornada de Salud", "Encuesta y Capacitación",
         "Encuesta y Localización", "Trabajo Comunitario", "Jornadas Integración",
         "Atención a Beneficiarios", "Logística y Distribución", "Planificación",
-        "Visita y Planificación", "Visita y Seguimiento", "Gestión y Coordinación",
+        "Visita y Planificación", "Visita y Seguimiento", "Gestión y Coordinación", "Informes",
         "Gestión y Recuperación", "Gestión de Acuerdos", "Recaudación Fondos",
         "Capacitación", "Capacitación Interna", "Estrategias Digitales",
         "Reunión por Video Llamada/Whatsapp", "Junta Directiva", "Promoción y Difusión"
@@ -2337,14 +2424,7 @@ function renderColaboratorsDynamic() {
     if (colabs.length > 0 && !wizardShowingNewColabForm) {
         // Show the most recently added collaborator
         const currentColab = colabs[colabs.length - 1];
-        const needsDetails = ['Voluntariado', 'Juventud', 'Socorismo'].includes(currentColab.org);
         const index = colabs.length - 1;
-        
-        // Check if there are external collaborators (for person in charge section)
-        const hasExternal = colabs.some(col => {
-            const isInternal = ['Voluntariado', 'Juventud', 'Socorismo'].includes(col.org);
-            return !isInternal && col.cant > 0;
-        });
         
         return `
             <div class="colab-wrapper" style="margin-bottom: 16px;">
@@ -2354,6 +2434,7 @@ function renderColaboratorsDynamic() {
                         <option value="Voluntariado" ${currentColab.org === 'Voluntariado' ? 'selected' : ''}>Voluntariado</option>
                         <option value="Juventud" ${currentColab.org === 'Juventud' ? 'selected' : ''}>Juventud</option>
                         <option value="Socorismo" ${currentColab.org === 'Socorismo' ? 'selected' : ''}>Socorismo</option>
+                        <option value="Seguridad" ${currentColab.org === 'Seguridad' ? 'selected' : ''}>Seguridad</option>
                         <option value="Junta Directiva CD-17" ${currentColab.org === 'Junta Directiva CD-17' ? 'selected' : ''}>Junta Directiva CD-17</option>
                         <option value="Bomberos" ${currentColab.org === 'Bomberos' ? 'selected' : ''}>Bomberos</option>
                         <option value="Alcaldía Local" ${currentColab.org === 'Alcaldía Local' ? 'selected' : ''}>Alcaldía Local</option>
@@ -2365,14 +2446,8 @@ function renderColaboratorsDynamic() {
                     <button class="remove-colab" onclick="removeColabRow(this)">✖</button>
                 </div>
                 <div id="colabDetails_${index}" class="colab-details-container">
-                    ${needsDetails ? renderDetailedFields(currentColab, index) : ''}
+                    ${renderDetailedFields(currentColab, index)}
                 </div>
-            </div>
-            <div id="personInChargeContainer" style="margin-top: 20px; border-top: 1px solid var(--neutral-border); padding-top: 16px; ${hasExternal ? '' : 'display: none;'}">
-                <div class="question-label">👤 Persona a cargo de colaboradores externos</div>
-                <input type="text" id="personInChargeName" class="wizard-input" placeholder="Nombre de la persona responsable" value="${wizardData.personInChargeName || ''}">
-                <input type="text" id="personInChargeTitle" class="wizard-input" placeholder="Cargo / Título" value="${wizardData.personInChargeTitle || ''}">
-                <p style="font-size:0.7rem; color:var(--text-medium); margin-top:4px;">💡 Persona de contacto principal entre los colaboradores externos (Bomberos, Alcaldía, ONG, etc.)</p>
             </div>
             <button class="wiz-btn wiz-btn-secondary" style="width:100%; margin-top:16px;" onclick="addColaboratorRow()">+ Agregar otro colaborador</button>
         `;
@@ -2381,7 +2456,7 @@ function renderColaboratorsDynamic() {
     // Reset flag and show blank form for new collaborator
     wizardShowingNewColabForm = false;
     
-    // Show blank form for first collaborator (NO "Agregar otro" button here)
+    // Show blank form for first collaborator
     return `
         <div class="colab-row-modern" style="margin-bottom: 16px;">
             <select class="wizard-input colab-select" style="margin:0" data-index="0" onchange="updateColabType(this, 0)">
@@ -2389,6 +2464,7 @@ function renderColaboratorsDynamic() {
                 <option value="Voluntariado">Voluntariado</option>
                 <option value="Juventud">Juventud</option>
                 <option value="Socorismo">Socorismo</option>
+                <option value="Seguridad">Seguridad</option>
                 <option value="Junta Directiva CD-17">Junta Directiva CD-17</option>
                 <option value="Bomberos">Bomberos</option>
                 <option value="Alcaldía Local">Alcaldía Local</option>
@@ -2400,20 +2476,31 @@ function renderColaboratorsDynamic() {
             <button class="remove-colab" onclick="removeColabRow(this)">✖</button>
         </div>
         <div id="colabDetails_0" class="colab-details-container"></div>
-        <div id="personInChargeContainer" style="margin-top: 20px; border-top: 1px solid var(--neutral-border); padding-top: 16px; display: none;">
-            <div class="question-label">👤 Persona a cargo de colaboradores externos</div>
-            <input type="text" id="personInChargeName" class="wizard-input" placeholder="Nombre de la persona responsable" value="${wizardData.personInChargeName || ''}">
-            <input type="text" id="personInChargeTitle" class="wizard-input" placeholder="Cargo / Título" value="${wizardData.personInChargeTitle || ''}">
-            <p style="font-size:0.7rem; color:var(--text-medium); margin-top:4px;">💡 Persona de contacto principal entre los colaboradores externos (Bomberos, Alcaldía, ONG, etc.)</p>
-        </div>
     `;
 }
 
 function renderDetailedFields(col, index) {
     const participants = col.participants || [];
     const expectedCount = col.cant || 0;
+    const isInternal = ['Voluntariado', 'Juventud', 'Socorismo'].includes(col.org);
     
-    // If no participants array exists yet, create it with empty entries matching the count
+    // For external collaborators
+    if (!isInternal && col.org !== '' && expectedCount > 0) {
+        const personInCharge = col.personInCharge || { name: '', title: '' };
+        return `
+            <div class="detailed-participants" style="margin-left: 20px; margin-bottom: 12px; padding: 12px; background: var(--neutral-light); border-radius: 16px;">
+                <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">👤 Persona a cargo de ${col.org}</div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <input type="text" id="externalPersonName_${index}" class="wizard-input" style="flex:2; margin:0;" placeholder="Nombre completo" value="${escapeHtml(personInCharge.name || '')}" onchange="updateExternalPersonInCharge(${index}, 'name', this.value)">
+                    <input type="text" id="externalPersonTitle_${index}" class="wizard-input" style="flex:1; margin:0;" placeholder="Cargo / Título" value="${escapeHtml(personInCharge.title || '')}" onchange="updateExternalPersonInCharge(${index}, 'title', this.value)">
+                </div>
+                <p style="font-size:0.65rem; color:var(--text-medium); margin-top: 6px;">Registra la persona de contacto de ${col.org}.</p>
+            </div>
+        `;
+    }
+    
+    // For internal collaborators (Voluntariado, Juventud, Socorismo)
+    // Adjust participants array to match count
     if (participants.length !== expectedCount && expectedCount > 0) {
         while (participants.length < expectedCount) {
             participants.push({ name: '', gender: '' });
@@ -2451,7 +2538,6 @@ function renderDetailedFields(col, index) {
             </div>
             <p style="font-size:0.65rem; color:var(--text-medium); margin-top: 6px;">Registra el nombre y género de cada persona de ${col.org} que participó.</p>
         </div>
-        
     `;
 }
 
@@ -2488,20 +2574,27 @@ function updateColabType(select, index) {
         nextBtn.style.cursor = 'not-allowed';
     }
     
-    // Update person in charge visibility
-    updatePersonInChargeVisibility();
 }
 
-function updatePersonInChargeVisibility() {
-    const colabs = wizardData.colaboradores || [];
-    const hasExternal = colabs.some(col => {
-        const isInternal = ['Voluntariado', 'Juventud', 'Socorismo'].includes(col.org);
-        return !isInternal && col.cant > 0;
-    });
+function updateExternalPersonInCharge(index, field, value) {
+    if (!wizardData.colaboradores) wizardData.colaboradores = [];
+    if (!wizardData.colaboradores[index]) {
+        wizardData.colaboradores[index] = { org: '', cant: 0, participants: [] };
+    }
+    if (!wizardData.colaboradores[index].personInCharge) {
+        wizardData.colaboradores[index].personInCharge = { name: '', title: '' };
+    }
+    wizardData.colaboradores[index].personInCharge[field] = value;
+    saveWizardState();
     
-    const personInChargeContainer = document.getElementById('personInChargeContainer');
-    if (personInChargeContainer) {
-        personInChargeContainer.style.display = hasExternal ? 'block' : 'none';
+    // Update button state when name is filled
+    if (field === 'name' && value.trim() !== '') {
+        const nextBtn = document.getElementById('wizardNextBtn');
+        if (nextBtn) {
+            nextBtn.disabled = false;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+        }
     }
 }
 
@@ -2524,78 +2617,44 @@ function updateColabDetails(input, index) {
         wizardShowingNewColabForm = false;
     }
     
-    const needsDetails = ['Voluntariado', 'Juventud', 'Socorismo'].includes(org);
-    
     // Find the details container
     const detailsContainer = document.getElementById(`colabDetails_${index}`);
     
-    if (needsDetails && newCant > 0) {
-        // Create fresh participants array
-        const participants = [];
-        for (let i = 0; i < newCant; i++) {
-            participants.push({ name: '', gender: '' });
-        }
-        wizardData.colaboradores[index].participants = participants;
-        
-        // Update only the details section, not the whole page
-        if (detailsContainer) {
-            detailsContainer.innerHTML = renderDetailedFields(wizardData.colaboradores[index], index);
-        }
-    } else {
-        wizardData.colaboradores[index].participants = [];
-        if (detailsContainer) {
-            detailsContainer.innerHTML = '';
-        }
+    // Always use renderDetailedFields - it handles both internal and external collaborators
+    if (detailsContainer && newCant > 0) {
+        detailsContainer.innerHTML = renderDetailedFields(wizardData.colaboradores[index], index);
+    } else if (detailsContainer) {
+        detailsContainer.innerHTML = '';
     }
     
     saveWizardState();
     
-    // Update button state without re-rendering
+    // Update button state
     const nextBtn = document.getElementById('wizardNextBtn');
     if (nextBtn) {
         if (!org || newCant <= 0) {
             nextBtn.disabled = true;
             nextBtn.style.opacity = '0.5';
             nextBtn.style.cursor = 'not-allowed';
-        } else if (!needsDetails && newCant > 0) {
-            nextBtn.disabled = false;
-            nextBtn.style.opacity = '1';
-            nextBtn.style.cursor = 'pointer';
-        } else if (needsDetails && newCant > 0) {
-            nextBtn.disabled = true;
-            nextBtn.style.opacity = '0.5';
-            nextBtn.style.cursor = 'not-allowed';
-        }
-    }
-    
-    // Update person in charge container visibility
-    updatePersonInChargeVisibility();
-    
-    // ADD THIS - manually update the button visibility in the DOM
-    const colabs = wizardData.colaboradores || [];
-    if (colabs.length > 0 && !wizardShowingNewColabForm) {
-        // Check if the "Agregar otro" button already exists
-        let addButton = document.querySelector('.add-another-btn');
-        if (!addButton) {
-            // Find the container and append the button
-            const container = document.querySelector('#colabsDynamicContainer');
-            if (container) {
-                const buttonHtml = '<button class="wiz-btn wiz-btn-secondary" style="width:100%; margin-top:16px;" onclick="addColaboratorRow()">+ Agregar otro colaborador</button>';
-                // Check if it's not already there
-                if (!container.innerHTML.includes('Agregar otro colaborador')) {
-                    // Insert before the personInChargeContainer or at the end
-                    const personInCharge = document.getElementById('personInChargeContainer');
-                    if (personInCharge) {
-                        personInCharge.insertAdjacentHTML('beforebegin', buttonHtml);
-                    } else {
-                        container.insertAdjacentHTML('beforeend', buttonHtml);
-                    }
-                }
+        } else {
+            const needsDetails = ['Voluntariado', 'Juventud', 'Socorismo'].includes(org);
+            if (!needsDetails && newCant > 0) {
+                // For external, check if person in charge is filled
+                const hasPersonInCharge = wizardData.colaboradores[index].personInCharge?.name && wizardData.colaboradores[index].personInCharge.name.trim() !== '';
+                nextBtn.disabled = !hasPersonInCharge;
+                nextBtn.style.opacity = hasPersonInCharge ? '1' : '0.5';
+                nextBtn.style.cursor = hasPersonInCharge ? 'pointer' : 'not-allowed';
+            } else if (needsDetails && newCant > 0) {
+                // For internal, check if all participants are filled
+                const allFilled = wizardData.colaboradores[index].participants?.every(p => p.name && p.name.trim() !== '') || false;
+                nextBtn.disabled = !allFilled;
+                nextBtn.style.opacity = allFilled ? '1' : '0.5';
+                nextBtn.style.cursor = allFilled ? 'pointer' : 'not-allowed';
             }
         }
     }
+    
 }
-
 function updateParticipant(colabIndex, participantIndex, field, value) {
     if (wizardData.colaboradores && wizardData.colaboradores[colabIndex] && 
         wizardData.colaboradores[colabIndex].participants && 
@@ -2614,6 +2673,15 @@ function addColaboratorRow() {
         const cantInput = document.querySelector('.colab-cant');
         if (select && select.value) wizardData.colaboradores[index].org = select.value;
         if (cantInput) wizardData.colaboradores[index].cant = parseInt(cantInput.value) || 0;
+        
+        // Save external person in charge if exists
+        const externalPersonName = document.getElementById(`externalPersonName_${index}`);
+        const externalPersonTitle = document.getElementById(`externalPersonTitle_${index}`);
+        if (externalPersonName && externalPersonName.value) {
+            if (!wizardData.colaboradores[index].personInCharge) wizardData.colaboradores[index].personInCharge = {};
+            wizardData.colaboradores[index].personInCharge.name = externalPersonName.value;
+            wizardData.colaboradores[index].personInCharge.title = externalPersonTitle ? externalPersonTitle.value : '';
+        }
         saveWizardState();
     }
     
@@ -2802,17 +2870,26 @@ function saveCurrentStepData() {
             if (link2) wizardData.link2 = link2.value;
             break;
         case 5:
-            // Save current collaborator data from the visible form before proceeding
-            const colabRows = document.querySelectorAll('.colab-row-modern');
-            if (colabRows.length > 0 && wizardData.colaboradores && wizardData.colaboradores.length > 0) {
-                const index = wizardData.colaboradores.length - 1;
-                const select = document.querySelector('.colab-select');
-                const cantInput = document.querySelector('.colab-cant');
-                if (select && select.value) wizardData.colaboradores[index].org = select.value;
-                if (cantInput) wizardData.colaboradores[index].cant = parseInt(cantInput.value) || 0;
+        // Save current collaborator data from the visible form before proceeding
+        const colabRows = document.querySelectorAll('.colab-row-modern');
+        if (colabRows.length > 0 && wizardData.colaboradores && wizardData.colaboradores.length > 0) {
+            const index = wizardData.colaboradores.length - 1;
+            const select = document.querySelector('.colab-select');
+            const cantInput = document.querySelector('.colab-cant');
+            if (select && select.value) wizardData.colaboradores[index].org = select.value;
+            if (cantInput) wizardData.colaboradores[index].cant = parseInt(cantInput.value) || 0;
+            
+            // Save external person in charge if exists
+            const externalPersonName = document.getElementById(`externalPersonName_${index}`);
+            const externalPersonTitle = document.getElementById(`externalPersonTitle_${index}`);
+            if (externalPersonName) {
+                if (!wizardData.colaboradores[index].personInCharge) wizardData.colaboradores[index].personInCharge = {};
+                wizardData.colaboradores[index].personInCharge.name = externalPersonName.value;
+                wizardData.colaboradores[index].personInCharge.title = externalPersonTitle ? externalPersonTitle.value : '';
             }
-            updateColaboratorData();
-            break;
+        }
+        updateColaboratorData();
+        break;
         case 6:
             const lat = document.getElementById('wizardLat');
             const lng = document.getElementById('wizardLng');
@@ -2872,7 +2949,7 @@ function finalizeWizardActivity() {
     if (wizardData.detail && wizardData.detail !== '') {
         finalName = `${wizardData.activityName} - ${wizardData.detail}`;
     }
-    
+     
     // Collect links
     const links = [];
     if (wizardData.link1 && wizardData.link1.trim()) links.push(wizardData.link1.trim());
@@ -2880,6 +2957,85 @@ function finalizeWizardActivity() {
     
     // Format hours to 2 decimal places
     const formattedHours = Math.round((wizardData.horas || 0) * 100) / 100;
+    function normalizeName(name) {
+        return name?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    }
+    
+    // ========== ADD DAMA PARTICIPANTS TO PROFILE SYSTEM ==========
+    const damasParticipants = wizardData.damasParticipants || [];
+    const damasCount = wizardData.voluntarias || 0;
+    
+    // Track which damas were added to avoid double-counting the reporting user
+    let reportingUserAdded = false;
+    
+    // Add each Dama participant to the profile system
+    if (damasParticipants.length > 0) {
+        damasParticipants.forEach(dama => {
+            if (dama.name && dama.name.trim() !== '') {
+                // Check if profile already exists
+                const existingProfile = damaProfiles.find(p => 
+                    normalizeName(p.nombre) === normalizeName(dama.name)
+                );
+                
+                if (!existingProfile) {
+                    // Create new profile for this Dama
+                    const newProfile = {
+                        id: `profile_${Date.now()}_${Math.random()}`,
+                        nombre: dama.name.trim(),
+                        identidadSuffix: '',
+                        rolNombre: 'Voluntaria',
+                        totalHoras: formattedHours,
+                        actividadesCount: 1,
+                        isPlaceholder: true,
+                        mergedFrom: []
+                    };
+                    damaProfiles.push(newProfile);
+                    
+                    // Check if this is the reporting user
+                    if (currentUser && normalizeName(currentUser.nombre) === normalizeName(dama.name)) {
+                        reportingUserAdded = true;
+                    }
+                } else {
+                    // Update existing profile hours
+                    existingProfile.totalHoras = (existingProfile.totalHoras || 0) + formattedHours;
+                    existingProfile.actividadesCount = (existingProfile.actividadesCount || 0) + 1;
+                    
+                    // Check if this is the reporting user
+                    if (currentUser && normalizeName(currentUser.nombre) === normalizeName(dama.name)) {
+                        reportingUserAdded = true;
+                    }
+                }
+            }
+        });
+    }
+    // Handle the reporting user (currentUser) if not already counted in participants
+    if (typeof currentUser !== 'undefined' && currentUser && !reportingUserAdded) {
+        // If there's only 1 Dama (the reporting user) and no detailed participants
+        if (damasCount === 1 && damasParticipants.length === 0) {
+            currentUser.totalHoras = (currentUser.totalHoras || 0) + formattedHours;
+            currentUser.actividadesCount = (currentUser.actividadesCount || 0) + 1;
+        }
+        // If there are detailed participants but reporting user not in list, add them
+        else if (damasParticipants.length > 0 && !reportingUserAdded) {
+            currentUser.totalHoras = (currentUser.totalHoras || 0) + formattedHours;
+            currentUser.actividadesCount = (currentUser.actividadesCount || 0) + 1;
+        }
+    }
+    // Handle case when currentUser doesn't exist but we have damas participants
+    else if (damasParticipants.length > 0 && (!currentUser || !currentUser.id)) {
+        // The first Dama in the list becomes the default if no currentUser
+        const firstDama = damasParticipants[0];
+        if (firstDama && firstDama.name && !currentUser) {
+            // This would need to be handled differently - for now, we just save profiles
+            console.log('Damas participants saved but no current user to update');
+        }
+    }
+    
+    // Save profiles if any changes were made
+    if (typeof saveProfiles === 'function') saveProfiles();
+    if (typeof renderProfileSelector === 'function') renderProfileSelector();
+    if (typeof actualizarListaDamas === 'function') actualizarListaDamas();
+    // ========== END DAMA PARTICIPANTS ADDITION ==========
     
     const newActivity = {
         id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -2898,6 +3054,7 @@ function finalizeWizardActivity() {
             name: wizardData.personInChargeName || '',
             title: wizardData.personInChargeTitle || ''
         },
+        damasParticipants: wizardData.damasParticipants || [], 
         createdBy: typeof currentUser !== 'undefined' && currentUser ? currentUser.id : null,
         createdByName: typeof currentUser !== 'undefined' && currentUser ? currentUser.nombre : 'Usuario'
     };
@@ -2934,7 +3091,7 @@ function finalizeWizardActivity() {
     // Store success message info before resetting
     const finalMinutes = Math.round(formattedHours * 60);
     const finalHoursDisplay = formattedHours.toFixed(2);
-    const locationMsg = (wizardData.lat && wizardData.lng) ? `\n📍 Ubicación registrada` : `\n📍 Sin ubicación (opcional)`;
+    const locationMsg = (wizardData.lat && wizardData.lng) ? `\n Ubicación registrada` : `\n Sin ubicación (opcional)`;
     const voluntariasCount = wizardData.voluntarias || 0;
     
     // Reset wizard data for next use
@@ -4397,6 +4554,7 @@ function exportToExcel(event) {
     const currentMonth = monthNames[now.getMonth()];
     const currentYear = now.getFullYear();
     const fileName = `reporte_mensual_${currentMonth.toLowerCase()}_${currentYear}.xlsx`;
+    
 
     // Get description texts
     const scopeText = document.getElementById('scopeText')?.value || '';
@@ -4494,79 +4652,293 @@ function exportToExcel(event) {
         totalHoras
     ]);
     
-     // ========== INSERT NEW SUMMARY SECTION HERE ==========
-    // Add empty row for spacing
+    // ========== SUMMARY SECTION ==========
     data.push([]);
-    
-    // Summary Table Header - BENEFICIARIOS and VOLUNTARIOS span 2 columns each, HORAS DE SERVICIO spans 1
     data.push(["", "BENEFICIARIOS ESTE MES", "", "VOLUNTARIOS ESTE MES", "", "HORAS DE SERVICIO", ""]);
-    
-    // Second row - subheaders with totals
     data.push(["", "Hombres", "Mujeres", "Hombres", "Mujeres", "Total", ""]);
-    
-    // Third row - the actual totals
     data.push(["", totalBenH, totalBenM, totalVolH, totalVolM, totalHoras, ""]);
-    // ========== END NEW SUMMARY SECTION ==========
-        // ========== COORDINACIÓN EXTERNA E INTERNA SECTION ==========
-    data.push([]);  // Spacer row
-    data.push(["COORDINACIÓN EXTERNA E INTERNA"]);  // Section title
-    data.push([]);  // Spacer row
+    // ========== END SUMMARY SECTION ==========
+       // ========== COORDINACIÓN EXTERNA E INTERNA SECTION ==========
+    data.push([]);
+    data.push(["COORDINACIÓN EXTERNA E INTERNA"]);
+    data.push([]);
+    data.push(["ACTIVIDAD", "INSTITUCIÓN", "NOMBRE DEL REPRESENTANTE", "CARGO"]);
     
-    // Header row
-    data.push(["INSTITUCIÓN", "NOMBRE DEL REPRESENTANTE", "CARGO"]);
+    const internalTypes = ['Voluntariado', 'Juventud', 'Socorismo', 'Seguridad'];
+    let hasExternal = false;
     
-    // Get external collaborators (not Voluntariado, Juventud, Socorismo)
-    const internalTypes = ['Voluntariado', 'Juventud', 'Socorismo'];
-    const externalCollaborators = new Map(); // Use Map to avoid duplicates
-    
-    // Collect unique external collaborators from all activities
     activities.forEach(activity => {
         if (activity.colaboradores && activity.colaboradores.length > 0) {
             activity.colaboradores.forEach(col => {
-                // Check if this is an external collaborator (not internal)
                 if (!internalTypes.includes(col.org) && col.org) {
-                    // Store unique collaborator with its details
-                    if (!externalCollaborators.has(col.org)) {
-                        externalCollaborators.set(col.org, {
-                            org: col.org,
-                            // Person in charge is global, not per collaborator
-                        });
-                    }
+                    hasExternal = true;
+                    const personName = col.personInCharge?.name || '';
+                    const personTitle = col.personInCharge?.title || '';
+                    data.push([
+                        activity.name || 'Sin nombre',
+                        col.org,
+                        personName || 'No registrado',
+                        personTitle || 'No registrado'
+                    ]);
                 }
             });
         }
     });
     
-    // Get the global person in charge info from wizardData
-    const personInChargeName = wizardData.personInChargeName || '';
-    const personInChargeTitle = wizardData.personInChargeTitle || '';
+    if (!hasExternal) {
+        data.push(["No hay colaboradores externos registrados", "", "", ""]);
+    }
+    data.push([]);
+    // ========== END COORDINACIÓN EXTERNA E INTERNA SECTION ========== 
+   // ========== PERSONAL VOLUNTARIO (DETALLADO) SECTION ==========
+data.push([]);
+data.push(["PERSONAL VOLUNTARIO (DETALLADO)"]);
+data.push([]);
+data.push(["Nº", "NOMBRE DEL VOLUNTARIO", "D", "J", "S", "JD", "Prof.", "Com.", "TOTAL HORAS"]);
     
-    // Add rows for each external collaborator
-    if (externalCollaborators.size > 0) {
-        externalCollaborators.forEach((col, orgName) => {
-            data.push([
-                orgName,
-                personInChargeName,
-                personInChargeTitle
-            ]);
+// Initialize map to store volunteer data with all categories
+const volunteerMap = new Map();
+    
+activities.forEach(activity => {
+    // Handle Damas participants
+    if (activity.damasParticipants && activity.damasParticipants.length > 0) {
+        activity.damasParticipants.forEach(dama => {
+            if (dama.name && dama.name.trim() !== '') {
+                const existing = volunteerMap.get(dama.name.trim());
+                if (existing) {
+                    existing.D += activity.horas || 0;
+                } else {
+                    volunteerMap.set(dama.name.trim(), { 
+                        name: dama.name.trim(),
+                        D: activity.horas || 0,
+                        J: 0,
+                        S: 0,
+                        JD: 0,
+                        Prof: 0,
+                        Com: 0
+                    });
+                }
+            }
         });
-    } else {
-        // If no external collaborators, show message
-        data.push(["No hay colaboradores externos registrados", "", ""]);
+    } else if (activity.voluntarias === 1 && !activity.damasParticipants) {
+        const reporterName = activity.createdByName || 'Usuario Principal';
+        const existing = volunteerMap.get(reporterName);
+        if (existing) {
+            existing.D += activity.horas || 0;
+        } else {
+            volunteerMap.set(reporterName, { 
+                name: reporterName,
+                D: activity.horas || 0,
+                J: 0,
+                S: 0,
+                JD: 0,
+                Prof: 0,
+                Com: 0
+            });
+        }
     }
     
-    data.push([]);  // Spacer row
-    // ========== END COORDINACIÓN EXTERNA E INTERNA SECTION ==========
+    // Handle colaboradores
+    if (activity.colaboradores && activity.colaboradores.length > 0) {
+        activity.colaboradores.forEach(col => {
+            let category = '';
+            if (col.org === 'Juventud') category = 'J';
+            else if (col.org === 'Socorismo') category = 'S';
+            else if (col.org === 'Voluntariado') category = 'Com';
+            else if (col.org === 'Junta Directiva CD-17') category = 'JD';
+            else return;
+            
+            if (col.participants && col.participants.length > 0) {
+                col.participants.forEach(p => {
+                    if (p.name && p.name.trim() !== '') {
+                        const existing = volunteerMap.get(p.name.trim());
+                        if (existing) {
+                            if (category === 'J') existing.J += activity.horas || 0;
+                            else if (category === 'S') existing.S += activity.horas || 0;
+                            else if (category === 'Com') existing.Com += activity.horas || 0;
+                            else if (category === 'JD') existing.JD += activity.horas || 0;
+                        } else {
+                            const newVolunteer = {
+                                name: p.name.trim(),
+                                D: 0,
+                                J: 0,
+                                S: 0,
+                                JD: 0,
+                                Prof: 0,
+                                Com: 0
+                            };
+                            if (category === 'J') newVolunteer.J = activity.horas || 0;
+                            else if (category === 'S') newVolunteer.S = activity.horas || 0;
+                            else if (category === 'Com') newVolunteer.Com = activity.horas || 0;
+                            else if (category === 'JD') newVolunteer.JD = activity.horas || 0;
+                            volunteerMap.set(p.name.trim(), newVolunteer);
+                        }
+                    }
+                });
+            } else if (col.cant > 0) {
+                for (let i = 1; i <= col.cant; i++) {
+                    const genericName = `${col.org} ${i}`;
+                    const existing = volunteerMap.get(genericName);
+                    if (existing) {
+                        if (category === 'J') existing.J += activity.horas || 0;
+                        else if (category === 'S') existing.S += activity.horas || 0;
+                        else if (category === 'Com') existing.Com += activity.horas || 0;
+                        else if (category === 'JD') existing.JD += activity.horas || 0;
+                    } else {
+                        const newVolunteer = {
+                            name: genericName,
+                            D: 0,
+                            J: 0,
+                            S: 0,
+                            JD: 0,
+                            Prof: 0,
+                            Com: 0
+                        };
+                        if (category === 'J') newVolunteer.J = activity.horas || 0;
+                        else if (category === 'S') newVolunteer.S = activity.horas || 0;
+                        else if (category === 'Com') newVolunteer.Com = activity.horas || 0;
+                        else if (category === 'JD') newVolunteer.JD = activity.horas || 0;
+                        volunteerMap.set(genericName, newVolunteer);
+                    }
+                }
+            }
+        });
+    }
+});
+    
+// Add damaProfiles data
+if (typeof damaProfiles !== 'undefined' && damaProfiles.length > 0) {
+    damaProfiles.forEach(profile => {
+        if (profile.totalHoras > 0 && profile.nombre && profile.nombre !== 'Usuario Principal') {
+            const existing = volunteerMap.get(profile.nombre);
+            if (!existing) {
+                volunteerMap.set(profile.nombre, {
+                    name: profile.nombre,
+                    D: profile.totalHoras || 0,
+                    J: 0,
+                    S: 0,
+                    JD: 0,
+                    Prof: 0,
+                    Com: 0
+                });
+            }
+        }
+    });
+}
+    
+// Convert map to array and sort by name
+const volunteers = Array.from(volunteerMap.values())
+    .sort((a, b) => a.name.localeCompare(b.name));
+    
+let volunteerNumber = 1;
+let totalD = 0, totalJ = 0, totalS = 0, totalJD = 0, totalProf = 0, totalCom = 0, totalGeneral = 0;
+    
+volunteers.forEach(vol => {
+    const totalHoras = vol.D + vol.J + vol.S + vol.JD + vol.Prof + vol.Com;
+    data.push([
+        volunteerNumber++, 
+        vol.name, 
+        vol.D > 0 ? vol.D.toFixed(2) : 0,
+        vol.J > 0 ? vol.J.toFixed(2) : 0,
+        vol.S > 0 ? vol.S.toFixed(2) : 0,
+        vol.JD > 0 ? vol.JD.toFixed(2) : 0,
+        vol.Prof > 0 ? vol.Prof.toFixed(2) : 0,
+        vol.Com > 0 ? vol.Com.toFixed(2) : 0,
+        totalHoras.toFixed(2)
+    ]);
+    
+    totalD += vol.D;
+    totalJ += vol.J;
+    totalS += vol.S;
+    totalJD += vol.JD;
+    totalProf += vol.Prof;
+    totalCom += vol.Com;
+    totalGeneral += totalHoras;
+});
+    
+// Add totals row
+data.push([
+    "", 
+    "TOTALES", 
+    totalD > 0 ? totalD.toFixed(2) : 0,
+    totalJ > 0 ? totalJ.toFixed(2) : 0,
+    totalS > 0 ? totalS.toFixed(2) : 0,
+    totalJD > 0 ? totalJD.toFixed(2) : 0,
+    totalProf > 0 ? totalProf.toFixed(2) : 0,
+    totalCom > 0 ? totalCom.toFixed(2) : 0,
+    totalGeneral.toFixed(2)
+]);
+data.push([]);
+// ========== END PERSONAL VOLUNTARIO SECTION ==========
+    
+    // ========== PROCESOS FORMATIVOS SECTION ==========
+    data.push([]);
+    data.push(["PROCESOS FORMATIVOS"]);
+    data.push([]);
+    data.push(["Nº", "Formación", "Participantes", "", "Impartido por", ""]);
+    data.push(["", "", "H", "M", "CRH", "Otros"]);
+    data.push(["1", "", "", "", "", ""]);
+    data.push(["2", "", "", "", "", ""]);
+    data.push(["3", "", "", "", "", ""]);
+    data.push(["Totales", "", "0", "0", "0", "0"]);
+    data.push([]);
+    // ========== END PROCESOS FORMATIVOS SECTION ==========
+    
+    // ========== ACTIVIDADES IMPROVISTOS SECTION ==========
+    data.push([`ACTIVIDADES IMPROVISTOS (0) - Todo se caben dentro del plan del mes de ${currentMonth}`]);
+    data.push([]);
+    // ========== END ACTIVIDADES IMPROVISTOS SECTION ==========
+    
+    // ========== ESTRUCTURA ORGANIZACIONAL SECTION ==========
+    data.push(["ESTRUCTURA ORGANIZACIONAL"]);
+    data.push([]);
+    data.push(["Nº", "Nombre Completo", "Junta Directiva", "Cargo", "Tel. celular", "Profesión/oficio"]);
+    data.push(["1", "Lilian", "Directora", "Tecnico Auxiliar", "--", "Jubilado-Profesora"]);
+    data.push(["2", "N.R. Diop de Galeas", "Sub-Directora", "Estrategias y Capacitaciones", "--", "enfermera profesional-docente preuniversitaria"]);
+    data.push(["3", "Florecita Milla", "Tesorera", "Encuestas & Localizaciones", "--", "Técnico Laboratorio Profesional"]);
+    data.push(["4", "Sarai Elzokm", "Secretaria", "Excursiones y Ferias", "--", "Muralista Profesional"]);
+    data.push(["5", "Vocal", "Vacante", "", "--", ""]);
+    data.push([]);
+    // ========== END ESTRUCTURA ORGANIZACIONAL SECTION ==========
+    
+    // ========== ANEXOS SECTION ==========
+    data.push([`ANEXOS: INFORME TECNICO CD-17 ${currentMonth.toUpperCase()} ${currentYear}`]);
+    data.push([]);
+    // ========== END ANEXOS SECTION ==========
+    
+    // ========== SIGNATURE SECTION ==========
+    const currentUserName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.nombre : 'Subdirectora Comité de Damas CD-17';
+    const currentUserRoleId = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.rolId : 'subdirectora';
+    const currentUserRoleName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.rolNombre : 'Subdirectora';
+    
     data.push([]);
     data.push(["_________________________________"]);
-    data.push(["Subdirectora Comité de Damas CD-17"]);
+    
+    const isDirectora = currentUserRoleId === 'directora';
+    
+    if (isDirectora) {
+        data.push([`Presentado por: ${currentUserName} (${currentUserRoleName})`]);
+    } else {
+        data.push([`Presentado por: ${currentUserName} (${currentUserRoleName})`]);
+        data.push([]);
+        data.push(["_________________________"]);
+        data.push(["Pendiente Visto Bueno de la Directora, Comite de Damas y/o Presidenta/VicePresidente CD-17"]);
+    }
+    
     data.push([`Documento generado automáticamente el ${formatDateForDisplay(now, true)}`]);
+    // ========== END SIGNATURE SECTION ==========
 
     // Create worksheet
     const ws = XLSX.utils.aoa_to_sheet(data);
 
-    // Merge cells - using correct row indices
-        // Merge cells - using correct row indices
+    // Merge cells - dynamically calculate positions
+    const summaryRow = data.findIndex(row => row[0] === "" && row[1] === "BENEFICIARIOS ESTE MES");
+    const coordinacionRow = data.findIndex(row => row[0] === "COORDINACIÓN EXTERNA E INTERNA");
+    const personalRow = data.findIndex(row => row[0] === "PERSONAL VOLUNTARIO (DETALLADO)");
+    const procesosRow = data.findIndex(row => row[0] === "PROCESOS FORMATIVOS");
+    const estructuraRow = data.findIndex(row => row[0] === "ESTRUCTURA ORGANIZACIONAL");
+    const signatureRow = data.findIndex(row => row[0] === "_________________________________");
+    
     ws['!merges'] = [
         { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },  // CRUZ ROJA HONDUREÑA
         { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } },  // COMITÉ DE DAMAS CD-17
@@ -4574,14 +4946,17 @@ function exportToExcel(event) {
         { s: { r: 9, c: 0 }, e: { r: 9, c: 6 } },  // RESUMEN
         { s: { r: 15, c: 0 }, e: { r: 15, c: 6 } }, // ACTIVIDADES REALIZADAS
         { s: { r: 17, c: 2 }, e: { r: 17, c: 3 } }, // BENEFICIARIOS spans columns 2-3
-        { s: { r: 17, c: 4 }, e: { r: 17, c: 5 } },  // VOLUNTARIOS spans columns 4-5
+        { s: { r: 17, c: 4 }, e: { r: 17, c: 5 } }, // VOLUNTARIOS spans columns 4-5
         // Summary section merges
-        { s: { r: data.length - 7, c: 1 }, e: { r: data.length - 7, c: 2 } }, // BENEFICIARIOS spans columns 1-2
-        { s: { r: data.length - 7, c: 3 }, e: { r: data.length - 7, c: 4 } }, // VOLUNTARIOS spans columns 3-4
-        { s: { r: data.length - 7, c: 5 }, e: { r: data.length - 7, c: 5 } }, // HORAS DE SERVICIO at column 5
-        // COORDINACIÓN EXTERNA E INTERNA section title merge
-        { s: { r: data.length - 3, c: 0 }, e: { r: data.length - 3, c: 6 } }  // Section title spans all columns
+        { s: { r: summaryRow, c: 1 }, e: { r: summaryRow, c: 2 } }, // BENEFICIARIOS ESTE MES spans columns 1-2
+        { s: { r: summaryRow, c: 3 }, e: { r: summaryRow, c: 4 } }, // VOLUNTARIOS ESTE MES spans columns 3-4
+        // Section title merges
+        { s: { r: coordinacionRow, c: 0 }, e: { r: coordinacionRow, c: 2 } }, // COORDINACIÓN EXTERNA E INTERNA
+        { s: { r: personalRow, c: 0 }, e: { r: personalRow, c: 4 } }, // PERSONAL VOLUNTARIO (DETALLADO)
+        { s: { r: procesosRow, c: 0 }, e: { r: procesosRow, c: 5 } }, // PROCESOS FORMATIVOS
+        { s: { r: estructuraRow, c: 0 }, e: { r: estructuraRow, c: 5 } }  // ESTRUCTURA ORGANIZACIONAL
     ];
+
     // Set column widths
     ws['!cols'] = [
         { wch: 8 },   // N°
@@ -4593,23 +4968,24 @@ function exportToExcel(event) {
         { wch: 15 }   // Horas
     ];
 
-        // Style cells
+    // Style cells
     for (let i = 0; i < data.length; i++) {
         for (let j = 0; j <= 6; j++) {
             const cell = ws[XLSX.utils.encode_cell({ r: i, c: j })];
             if (cell) {
                 if (!cell.s) cell.s = {};
-                // Bold for header rows
+                // Bold for all section titles and headers
                 if (i === 0 || i === 1 || i === 3 || i === 9 || i === 15 || i === 17 || 
-                    i === data.length - 7 || i === data.length - 3) {
+                    i === summaryRow || i === coordinacionRow || i === personalRow || 
+                    i === procesosRow || i === estructuraRow) {
                     cell.s.font = { bold: true };
                 }
-                // Center alignment for title rows and summary headers
-                if (i === 0 || i === 1 || i === 3 || i === data.length - 7 || i === data.length - 3) {
+                // Center alignment for main titles
+                if (i === 0 || i === 1 || i === 3) {
                     cell.s.alignment = { horizontal: 'center' };
                 }
-                // Center alignment for summary data row
-                if (i === data.length - 6) {
+                // Center alignment for summary header
+                if (i === summaryRow) {
                     cell.s.alignment = { horizontal: 'center' };
                 }
                 // Wrap text for description cells
@@ -4619,13 +4995,10 @@ function exportToExcel(event) {
             }
         }
     }
-        // Store the index of the COORDINACIÓN EXTERNA E INTERNA title for merges
-    const coordinacionTitleRow = data.length - 3; // Adjust based on actual position
-    // Create workbook
+
+    // Create workbook and download
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Reporte Mensual");
-
-    // Download
     XLSX.writeFile(wb, fileName);
     
     alert('✅ Reporte exportado exitosamente');
