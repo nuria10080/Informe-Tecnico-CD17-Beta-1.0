@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#E34A2F">
-<title>Informe Técnico · CD-17 </title>
+<title>Informe Técnico · IV-08 </title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
@@ -168,10 +168,10 @@ body {
 .gender-f { color:var(--gender-f); }
 .gender-m { color:var(--gender-m); }
 
-/* DAMAS */
-#damasActivasContainer { position:relative; padding-bottom:20px; }
+/* voluntarios */
+#voluntariosActivasContainer { position:relative; padding-bottom:20px; }
 
-.damas-dropdown {
+.voluntarios-dropdown {
     position:absolute;
     top:100%;
     left:0;
@@ -183,9 +183,11 @@ body {
     opacity:0;
     visibility:hidden;
     transition:0.2s;
+    width: 50vw;
+    z-index: 1000;
 }
 
-#damasActivasContainer:hover .damas-dropdown {
+#voluntariosActivasContainer:hover .voluntarios-dropdown {
     opacity:1;
     visibility:visible;
 }
@@ -198,13 +200,13 @@ body {
 
 #rolesActivosList div {
     background:var(--neutral-light);
-    border-radius:16px;
+  
     padding:10px;
-    border:1px solid var(--neutral-border);
+   
     display:flex;
     justify-content:space-between;
 }
-.dama-card {
+.Voluntario-card {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -216,12 +218,12 @@ body {
     transition: all 0.2s;
 }
 
-.dama-info {
+.Voluntario-info {
     flex: 1;
     min-width: 0; /* Allows text truncation */
 }
 
-.dama-name-row {
+.Voluntario-name-row {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
@@ -229,7 +231,7 @@ body {
     margin-bottom: 6px;
 }
 
-.dama-nombre {
+.Voluntario-nombre {
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--text-dark);
@@ -253,7 +255,7 @@ body {
     color: white;
 }
 
-.dama-details {
+.Voluntario-details {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -261,24 +263,25 @@ body {
     color: var(--text-medium);
 }
 
-.dama-role {
+.Voluntario-role {
     background: var(--neutral-light);
     padding: 2px 8px;
     border-radius: 12px;
 }
 
-.dama-hours {
+.Voluntario-hours {
     font-weight: 600;
     color: var(--accent);
 }
 
-.dama-actions {
+.Voluntario-actions {
     display: flex;
     gap: 8px;
     margin-left: 12px;
+    
 }
 
-.dama-btn {
+.Voluntario-btn {
     background: none;
     border: none;
     font-size: 1.2rem;
@@ -287,15 +290,27 @@ body {
     border-radius: 8px;
     transition: all 0.2s;
 }
-
-.edit-btn:hover {
-    background: rgba(79, 124, 172, 0.1);
+.edit-btn {
+   
     transform: scale(1.05);
+    width: 10px;
+}
+
+.delete-btn {
+ 
+    transform: scale(1.05);
+    width: 10px;
+}
+.edit-btn:hover {
+   
+    transform: scale(1.05);
+    width: 20px;
 }
 
 .delete-btn:hover {
-    background: rgba(237, 106, 94, 0.1);
+ 
     transform: scale(1.05);
+    width: 20px;
 }
 
 /* Duplicate notification */
@@ -898,6 +913,29 @@ body {
     background: #C17B5C;
     border-radius: 4px;
 }
+ .logo-area{
+        margin-left:0px;
+        display:block !important;
+    }
+    .report-header{
+        display:flex;
+        flex-direction: row;
+        margin-bottom: 5px;
+    }
+    .logo-section img{
+        width:80px;
+        height: 80px;
+        margin-left:5px !important;
+        margin-bottom: 0px;
+        
+    }
+    .report-header .badge{
+        margin-bottom:0px !important;
+    }
+
+
+
+
 
 /* Responsive Adjustments */
 @media (max-width: 600px) {
@@ -976,21 +1014,23 @@ body {
         font-size: 0.7rem;
         margin-bottom: 10px;
     }
-     .dama-card {
+      
+    .question-label {
+        font-size: 0.7rem;
+        margin-bottom: 10px;
+    }
+     .Voluntario-card {
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
     }
     
-    .dama-actions {
+    .Voluntario-actions {
         margin-left: 0;
         width: 100%;
         justify-content: flex-end;
     }
     
-    .dama-details {
-        gap: 6px;
-    }
     
     .duplicate-notification {
         flex-direction: column;
@@ -1003,13 +1043,26 @@ body {
         grid-template-columns: repeat(2, 1fr);
         
     }
+    .voluntarios-dropdown{
+        display: flex;
+        flex-direction:column;
+        width:80vw;
+    } 
+    .Voluntario-info, .Voluntario-details{
+        display: flex;
+        width:100%;
+        gap: 6px;
+        flex-direction: column;
+        text-align:center;
+    }
 }
-/* MOBILE */
-@media (max-width:500px) {
-    .charts-container {
+
+@media (max-width: 500px)
+ { .charts-container { grid-template-columns: 1fr; }
+ .charts-container {
         grid-template-columns:1fr;
     }
-    .dama-name-row {
+    .Voluntario-name-row {
         flex-direction: column;
         align-items: flex-start;
     }
@@ -1018,148 +1071,16 @@ body {
         align-self: flex-start;
     }
     
-    .dama-details {
+    .Voluntario-details {
         flex-direction: column;
         gap: 4px;
     }
     
-    .dama-role, .dama-hours, .dama-activities {
+    .Voluntario-role, .Voluntario-hours, .Voluntario-activities {
         display: inline-block;
         width: fit-content;
     }
-}
-
-/* PRINT (kept as-is from your final cleaned version) */
-@media print {
-    .desc-item textarea,
-    .desc-item,
-    .add-activity-row,
-    .damas-dropdown,
-    .action-buttons,
-    button:not(.activity-link-btn) {
-        display:none !important;
-    }
-
-    .report-header,
-    .kpi-grid,
-    .activities-section,
-    .activities-table,
-    .footer-info,
-    .charts-container,
-    .chart-box,
-    .desc-item {
-        display:block !important;
-    }
-
-    .activities-table {
-        width:100% !important;
-        font-size:8pt !important;
-    }
-
-    .activities-table td,
-    .activities-table th {
-        border-bottom:1px solid #ccc !important;
-    }
-
-    .desc-item .print-text {
-        display:block !important;
-        font:12pt 'Times New Roman', serif !important;
-    }
-
-    @page { size:A4; margin:0.8cm; }
-}
-
-
-/* Responsive Adjustments */
-@media (max-width: 600px) {
-    .wizard-card {
-        width: 95%;
-        max-height: 90vh;
-        border-radius: 24px;
-    }
-    
-    .wizard-header {
-        padding: 16px 20px 12px;
-    }
-    
-    .wizard-header h2 {
-        font-size: 1.2rem;
-    }
-    
-    .wizard-body {
-        padding: 16px 20px;
-        min-height: 300px;
-    }
-    
-    .wizard-steps-modern {
-        padding: 12px 16px 0;
-        gap: 4px;
-    }
-    
-    .step-pill {
-        font-size: 0.55rem;
-        padding: 6px 2px;
-    }
-    
-    .modern-radio {
-        padding: 8px 12px;
-        font-size: 0.75rem;
-    }
-    
-    .wizard-input {
-        padding: 10px 14px;
-        font-size: 0.85rem;
-        margin-bottom: 12px;
-    }
-    
-    .timer-glow {
-        font-size: 1.2rem;
-        padding: 10px;
-    }
-    
-    .wiz-btn {
-        padding: 10px 14px;
-        font-size: 0.8rem;
-    }
-    
-    .wizard-actions {
-        padding: 12px 20px 20px;
-    }
-    
-    .colab-row-modern {
-        grid-template-columns: 1fr 70px 28px;
-        gap: 8px;
-    }
-    
-    .colab-row-modern select,
-    .colab-row-modern input {
-        padding: 8px 10px;
-        font-size: 0.75rem;
-    }
-    
-    .remove-colab {
-        width: 28px;
-        height: 28px;
-        font-size: 0.9rem;
-    }
-    
-    .question-label {
-        font-size: 0.7rem;
-        margin-bottom: 10px;
-    }
-    .damas-dropdown{
-        display: flex;
-        flex-direction:column;
-        width:80vw;
-    } 
-    .dama-info, .dama-details{
-        display: flex;
-        width:100%;
-        flex-direction: column;
-        text-align:center;
-    }
-}
-
+};
 /* Extra small devices */
 @media (max-width: 480px) {
     .wizard-steps-modern {
@@ -1181,7 +1102,9 @@ body {
         gap: 4px;
     }
 }
-@media (max-width: 500px) { .charts-container { grid-template-columns: 1fr; } }
+ 
+
+
 
 /* ===== PRINT STYLES ===== */
 @media print {
@@ -1189,7 +1112,7 @@ body {
     /* Hide interactive elements */
     .desc-item textarea,
     .desc-item,
-    .add-activity-row, .damas-dropdown, .add-colab-btn, .action-buttons,
+    .add-activity-row, .voluntarios-dropdown, .add-colab-btn, .action-buttons,
     .compact-input-row, .links-mini-grid, .colaboradores-section,
     .qr-ampliada-modal, button:not(.activity-link-btn) {
         display: none !important;
@@ -1333,40 +1256,59 @@ body {
         box-shadow: none !important;
         padding: 15px 12px !important;
     }
+    .logo-area{
+        margin-left:0px;
+        display:block !important;
+    }
+    .report-header{
+        display:flex;
+        flex-direction: row;
+        margin-bottom: 5px;
+    }
+    .logo-section img{
+        width:80px;
+        height: 80px;
+        margin-left:5px !important;
+        margin-bottom: 5px;
+        
+    }
 }
 </style>
 </head>
 <body>
 <div class="dashboard-card">
-<div class="report-header">
-    <div class="logo-area">
-        <!-- HONDURAN RED CROSS LOGO -->
-        <img src="https://iconape.com/wp-content/files/mi/258264/png/cruz_roja_hondure__a-logo.png" 
-             alt="Cruz Roja Hondureña" 
-             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Crect width=\'100\' height=\'100\' fill=\'%23E34A2F\'/%3E%3Cpath d=\'M50 20 L50 80 M20 50 L80 50\' stroke=\'white\' stroke-width=\'15\'/%3E%3C/svg%3E'">
+ <div class="report-header">
         
-        <div class="title-section">
-            <h1>INFORME TÉCNICO <span>CD-17</span></h1>
-            <div class="subhead">Comité de Damas · Registro de Actividades</div>
+            
+        <div class="logo-section"> 
+            <img src="https://mcusercontent.com/4934324bb1de39bfbf2900691/images/5fe7225b-2342-0c2a-b8ca-2ed7441a0ef9.png" alt="Comité Tecno-Cívico">
+            
         </div>
-    </div>
-    <div class="badge">
-        <span>Intibucá | </span>
-        <span id="currentDateDisplay"></span> 
+        <div class="title-section" style="margin-bottom: -35px">
+            <h1>INFORME TÉCNICO <span>IV-08</span></h1>
+            <div class="subhead">Comité Tecno-Cívico · Iniciativa de 
+Voluntariado</div>
+            
+        </div>
+            
+        <div class="badge" style="width: 180px; text-align:center; margin-right:5px; margin-bottom:0px;">
+            <span>INTIBUCA | </span>
+            <span id="currentDateDisplay" style=" font-size: 0.65rem;"></span>
+        </div>
+        
         
     </div>
-</div>
 
 <div class="kpi-grid">
-    <div class="kpi-item" id="damasActivasContainer">
-            <div class="kpi-label">⚡ Damas Activas</div>
-            <div class="kpi-value" id="totalDamasActivas">0</div>
-            <div class="damas-dropdown">
+    <div class="kpi-item" id="voluntariosActivasContainer">
+            <div class="kpi-label">⚡ Voluntarios Activos</div>
+            <div class="kpi-value" id="totalvoluntariosActivas">0</div>
+            <div class="voluntarios-dropdown">
                 <div style="display:flex; flex-direction:column; gap:6px;">
-                    <select id="damasRoles"><option value="">Seleccionar rol</option></select>
-                    <input type="text" id="nuevaDamaNombre" placeholder="Nombre completo">
-                    <input type="text" id="identidadDama" placeholder="Últimos 6 dígitos (opcional)" maxlength="6">
-                    <button onclick="agregarDama()" style="background:var(--accent); color:white; border:none; border-radius:30px; padding:8px; font-weight:bold;">➕ Agregar Dama</button>
+                    <select id="voluntariosRoles"><option value="">Seleccionar rol</option></select>
+                    <input type="text" id="nuevaVoluntarioNombre" placeholder="Nombre completo">
+                    <input type="text" id="identidadVoluntario" placeholder="Últimos 6 dígitos (opcional)" maxlength="6">
+                    <button onclick="agregarVoluntario()" style="background:var(--accent); color:white; border:none; border-radius:30px; padding:8px; font-weight:bold;">➕ Agregar Voluntario</button>
                 </div>
                 <div id="rolesActivosList"></div>
             </div>
@@ -1375,7 +1317,7 @@ body {
     <div class="kpi-item"><div class="kpi-label">⏱️ Total Horas</div><div class="kpi-value" id="totalHoras">0</div>
     <div style="display: flex; gap: 15px; margin-top: 5px; font-size: 0.9rem; align-items: center; justify-content: center;">
         <div>
-            <span style="color: var(--text-medium);">🏢 Filial:</span>
+            <span style="color: var(--text-medium);">🏢 Domicilio:</span>
             <span id="totalHorasFilial" style="font-weight: 600; color: var(--primary-dark);">0</span>
         </div>
         <div>
@@ -1399,8 +1341,8 @@ body {
             </select>
         </div>
         <div style="display: flex; gap: 8px;">
-            <button onclick="showAddDamaModal()" style="background: var(--accent); color: white; border: none; border-radius: 30px; padding: 6px 14px; font-size: 0.75rem; cursor: pointer;">➕ Nueva Dama</button>
-            <button onclick="showManageDamas()" style="background: var(--primary); color: white; border: none; border-radius: 30px; padding: 6px 14px; font-size: 0.75rem; cursor: pointer;">📋 Registro de Horas</button>
+            <button onclick="showAddVoluntarioModal()" style="background: var(--accent); color: white; border: none; border-radius: 30px; padding: 6px 14px; font-size: 0.75rem; cursor: pointer;">➕ Nuevo Voluntario</button>
+            <button onclick="showManagevoluntarios()" style="background: var(--primary); color: white; border: none; border-radius: 30px; padding: 6px 14px; font-size: 0.75rem; cursor: pointer;">📋 Registro de Horas</button>
         </div>
     </div>
     <div id="currentUserInfo" style="margin-top: 8px; font-size: 0.7rem; color: var(--text-medium);">
@@ -1409,16 +1351,16 @@ body {
 </div>
 <!-- charts -->
 <div class="charts-container">
-    <div class="chart-box"><canvas id="chartActivityResources"></canvas><div class="chart-title">Damas por Actividad</div></div>
+    <div class="chart-box"><canvas id="chartActivityResources"></canvas><div class="chart-title">Voluntarios por Actividad</div></div>
     <div class="chart-box"><canvas id="chartAtencionesGenero"></canvas><div class="chart-title">Atenciones por Genero</div></div>
     <div class="chart-box"><canvas id="chartTiempoRequerido"
     ></canvas><div class="chart-title">Duración Actividades</div></div>
-    <div class="chart-box"><canvas id="chartActiveDamas"></canvas><div class="chart-title">Damas Más Activas</div></div>
+    <div class="chart-box"><canvas id="chartActivevoluntarios"></canvas><div class="chart-title">Voluntarios Más Activas</div></div>
 </div>
 
 <div class="activities-section">
 <table class="activities-table">
-<thead><tr><th>Fecha</th><th>Actividad</th><th>Damas</th><th>Horas</th><th>F</th><th>M</th><th>Beneficiarios</th><th>Colaboradores</th><th>Ubicación</th><th>QR</th><th></th></tr></thead>
+<thead><tr><th>Fecha</th><th>Actividad</th><th>Voluntarios</th><th>Horas</th><th>F</th><th>M</th><th>Beneficiarios</th><th>Colaboradores</th><th>Ubicación</th><th>QR</th><th></th></tr></thead>
 <tbody id="activitiesBody"></tbody>
 </table>
 </div>
@@ -1462,7 +1404,7 @@ body {
 
 <!-- footer -->
 
-<div class="footer-info"><span>Cruz Roja Hondureña CD-17 · Comité de Damas   </span><span id="footerDate"></span></div>
+<div class="footer-info"><span>Comité Tecno-Cívico · IV-08  </span>Honduras<span id="footerDate"></span></div>
 <div class="action-buttons">
     <button class="action-button" onclick="showImportQRModal()" style="background:var(--info);">📷 Importar QR</button>
     <button class="action-button" onclick="exportToExcel(event)" style="background:var(--success);">📊 Exportar Excel</button>
@@ -1511,13 +1453,13 @@ body {
 // GLOBAL STATE
 // ==========================================
 let activities = [];
-let damasActivas = [];
+let voluntariosActivos = [];
 let activityFormCount = 0;
 let timers = {};
 let wizardShowingNewColabForm = false;
 const identidad = null;
 const identidadSuffix = identidad
-  ? `dama-${Date.now()}-${identidad}`
+  ? `Voluntario-${Date.now()}-${identidad}`
   : null;
 
 
@@ -1527,9 +1469,8 @@ const rolesDisponibles = [
     { id:'coord_fondos', nombre:'Coordinadora Recaudación' },
     { id:'coord_encuestas_local', nombre:'Coordinadora Encuestas y Localizaciones' },
     { id:'coord_encuestas_capacitacion', nombre:'Coordinadora Encuestas y Capacitaciones' },
-    { id:'coord_gestion_damas', nombre:'Gestión y Recuperacion Damas' },
+    { id:'coord_gestion_voluntarios', nombre:'Gestión y Recuperacion Voluntarios' },{ id:'coord_eventos', nombre:'Ferias & Excursiones' },
     { id:'coord_comunicacion', nombre:'Técnico Comunicación' },
-    { id:'coord_eventos', nombre:'Ferias & Excursiones' },
     { id:'coord_observacion', nombre:'Técnico Auxiliar' }
 ];
 function normalizeName(str) {
@@ -1545,7 +1486,7 @@ function normalizeName(str) {
 function updateGlobalKPIs() {
     if (typeof activities === 'undefined' || !activities.length) {
         document.getElementById('totalHoras').innerText = '0';
-        document.getElementById('totalHorasFilial').innerText = '0';
+        document.getElementById('totalHorasDomicilio').innerText = '0';
         document.getElementById('totalHorasCampo').innerText = '0';
         document.getElementById('totalActividades').innerText = '0';
         document.getElementById('totalBeneficiados').innerText = '0';
@@ -1576,7 +1517,7 @@ function updateGlobalKPIs() {
     const totalBeneficiados = totalMujeres + totalHombres;
     
     document.getElementById('totalHoras').innerText = totalHoras.toFixed(2);
-    document.getElementById('totalHorasFilial').innerText = totalHorasFilial.toFixed(2);
+    document.getElementById('totalHorasDomicilio').innerText = totalHorasDomicilio.toFixed(2);
     document.getElementById('totalHorasCampo').innerText = totalHorasCampo.toFixed(2);
     document.getElementById('totalActividades').innerText = totalActividades;
     document.getElementById('totalBeneficiados').innerText = totalBeneficiados;
@@ -1729,69 +1670,6 @@ function formatMonthYearForDisplay(d) {
     return `${spanishMonths[month]} ${year}`;
 }
 
-
-// GPS Location Function
-function getGpsLocation(formId) {
-    const statusEl = document.getElementById(`gpsStatus_${formId}`);
-    const latInput = document.getElementById(`lat_${formId}`);
-    const lngInput = document.getElementById(`lng_${formId}`);
-    
-    if (!statusEl || !latInput || !lngInput) {
-        console.warn("GPS elements not found for formId:", formId);
-        return;
-    }
-    
-    if (!navigator.geolocation) {
-        statusEl.innerText = "⚠️ Geolocalización no soportada";
-        return;
-    }
-    
-    statusEl.innerText = "📍 Buscando ubicación...";
-    
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const lat = position.coords.latitude.toFixed(6);
-            const lng = position.coords.longitude.toFixed(6);
-            const accuracy = Math.round(position.coords.accuracy);
-            
-            latInput.value = lat;
-            lngInput.value = lng;
-            
-            if (accuracy < 50) {
-                statusEl.innerText = `✅ GPS precisa (${accuracy}m): ${lat}, ${lng}`;
-            } else if (accuracy < 200) {
-                statusEl.innerText = `📍 Ubicación (${accuracy}m): ${lat}, ${lng}`;
-            } else {
-                statusEl.innerText = `⚠️ Ubicación aproximada (${accuracy}m): ${lat}, ${lng}`;
-            }
-            
-            setTimeout(() => {
-                statusEl.innerText = "📍 Ubicación registrada ✓";
-            }, 3000);
-        },
-        (error) => {
-            console.error('GPS error:', error);
-            let errorMsg = "❌ Error al obtener ubicación";
-            
-            if (error.code === 1) {
-                errorMsg = "❌ Permiso denegado. Activa ubicación en ajustes.";
-            } else if (error.code === 2) {
-                errorMsg = "❌ Ubicación no disponible. ¿Estás en exteriores?";
-            } else if (error.code === 3) {
-                errorMsg = "❌ Tiempo agotado. Reintenta en un lugar más abierto.";
-            }
-            statusEl.innerText = errorMsg;
-        },
-        { 
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 0
-        }
-    );
-}
-function sortActivitiesByDate() {
-    activities.sort((a, b) => new Date(a.date) - new Date(b.date));
-}
 
 // ==========================================
 // ENHANCED TIMER SYSTEM WITH DUAL MODE
@@ -1974,7 +1852,7 @@ function renderEnhancedTimerStep() {
             <div class="question-label">⏱ Duración de la actividad</div>
             
             <!-- Mode Selector -->
-            <div style="display: flex; gap: 8px; margin-bottom: 20px; background: var(--neutral-light); padding: 6px; border-radius: 60px;">
+            <div style="display: flex; gap: 8px; margin-bottom: 20px; background: var(--neutral-light); padding: 26px; border-radius: 60px;">
                 <button type="button" class="timer-mode-btn ${timerMode === 'manual' ? 'active' : ''}" 
                         data-mode="manual" onclick="switchTimerMode('manual')"
                         style="flex:1; padding: 10px; border: none; border-radius: 40px; cursor: pointer; 
@@ -2032,7 +1910,7 @@ function renderEnhancedTimerStep() {
                     <div id="timeRangeMinutes" style="margin-top: 16px; padding: 12px; background: white; border-radius: 12px; text-align: center; font-size: 1rem;">
                         ${currentMinutes > 0 ? `${currentMinutes} minutos` : '0 minutos'}
                     </div>
-                    <button class="wiz-btn wiz-btn-primary" style="width:100%; margin-top: 16px;" 
+                    <button class="wiz-btn wiz-btn-primary" style="width:90%; margin-top: 16px;" 
                             onclick="applyTimeRange()">
                         ✅ Aplicar duración
                     </button>
@@ -2117,7 +1995,7 @@ function updateFooterDates() {
 function saveAllToStorage() {
     const monthKey = getCurrentMonthKey();
     localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
-    localStorage.setItem(`damas_${monthKey}`, JSON.stringify(damasActivas));
+    localStorage.setItem(`voluntarios_${monthKey}`, JSON.stringify(voluntariosActivas));
     const desc = {
         scope: document.getElementById('scopeText')?.value || '',
         difficulties: document.getElementById('difficultiesText')?.value || '',
@@ -2134,8 +2012,8 @@ function loadCurrentMonthData() {
         activities = JSON.parse(savedActivities);
         sortActivitiesByDate();
     }
-    const savedDamas = localStorage.getItem(`damas_${monthKey}`);
-    if (savedDamas) damasActivas = JSON.parse(savedDamas);
+    const savedvoluntarios = localStorage.getItem(`voluntarios_${monthKey}`);
+    if (savedvoluntarios) voluntariosActivas = JSON.parse(savedvoluntarios);
     const savedDesc = localStorage.getItem(`desc_${monthKey}`);
     if (savedDesc) {
         const d = JSON.parse(savedDesc);
@@ -2145,7 +2023,7 @@ function loadCurrentMonthData() {
         if(document.getElementById('impactText')) document.getElementById('impactText').value = d.impact || '';
     }
     initProfileSystem(); // Add this line
-    actualizarListaDamas();
+    actualizarListavoluntarios();
     renderActivities();
     updateCharts();
     updateFooterDates();
@@ -2463,53 +2341,69 @@ function stopAutoSave() {
     }
 }
 
+
 // ==========================================
-// DAMAS MANAGEMENT
+// PROFILE SYSTEM (Complete replacement for voluntariosActivas)
 // ==========================================
-// ==========================================
-// PROFILE SYSTEM (Complete replacement for damasActivas)
-// ==========================================
-let damaProfiles = []; // This replaces damasActivas
+let VoluntarioProfiles = []; // This replaces voluntariosActivas
 let currentUser = null;
+
 
 function initProfileSystem() {
     const monthKey = getCurrentMonthKey();
-    const savedProfiles = localStorage.getItem(`damaProfiles_${monthKey}`);
-    if (savedProfiles) {
-        damaProfiles = JSON.parse(savedProfiles);
+    const savedProfiles = localStorage.getItem(`VoluntarioProfiles_${monthKey}`);
+    
+    if (savedProfiles && JSON.parse(savedProfiles).length > 0) {
+        VoluntarioProfiles = JSON.parse(savedProfiles);
     } else {
-        // Create default Subdirector profile
-        
-        const defaultProfile = {
-            id: `dama-${Date.now()}-${identidadSuffix}`,
-            name: 'Usuario Principal',
-            identidadSuffix: '',
+        // Create Subdirector as the only profile
+        const subdirectorId = `Voluntario-${Date.now()}-subdirector`;
+        VoluntarioProfiles = [{
+            id: subdirectorId,
+            identidadSuffix: 'subdirector',
+            name: 'Subdirector',
             rolNombre: 'Subdirectora',
             totalHoras: 0,
             actividadesCount: 0,
-            isPlaceholder: true,
+            isPlaceholder: false,
             mergedFrom: []
-        };
-        damaProfiles = [defaultProfile];
+        }];
     }
     
-    currentUser = damaProfiles.find(p => p.rolNombre === 'Subdirectora') || damaProfiles[0];
+    // Recalculate hours from activities
+    if (typeof activities !== 'undefined' && activities.length > 0) {
+        VoluntarioProfiles.forEach(profile => {
+            if (typeof calculateProfileHoursFromActivities === 'function') {
+                profile.totalHoras = calculateProfileHoursFromActivities(profile);
+                profile.actividadesCount = calculateProfileActivityCount(profile);
+            }
+        });
+    }
+    
+    // Set currentUser to Subdirector
+    currentUser = VoluntarioProfiles.find(p => p.rolNombre === 'Subdirectora') || VoluntarioProfiles[0];
+    
     saveProfiles();
     renderProfileSelector();
+    actualizarListavoluntarios();
+    updateActivevoluntariosChart();
 }
+
+
 
 function saveProfiles() {
     const monthKey = getCurrentMonthKey();
-    localStorage.setItem(`damaProfiles_${monthKey}`, JSON.stringify(damaProfiles));
+    localStorage.setItem(`VoluntarioProfiles_${monthKey}`, JSON.stringify(VoluntarioProfiles));
 }
+
 
 function renderProfileSelector() {
     const profileSelect = document.getElementById('currentUserSelect');
     if (!profileSelect) return;
     
-    // First, recalculate hours for ALL profiles from activities
+    // Recalculate hours for ALL profiles from activities
     if (typeof activities !== 'undefined' && activities.length > 0) {
-        damaProfiles.forEach(profile => {
+        VoluntarioProfiles.forEach(profile => {
             const calculatedHours = calculateProfileHoursFromActivities(profile);
             const calculatedCount = calculateProfileActivityCount(profile);
             profile.totalHoras = calculatedHours;
@@ -2519,11 +2413,13 @@ function renderProfileSelector() {
     }
     
     profileSelect.innerHTML = '<option value="">-- Seleccionar Usuario --</option>';
-    damaProfiles.forEach(profile => {
+    VoluntarioProfiles.forEach(profile => {
         const option = document.createElement('option');
         option.value = profile.id;
         const hoursDisplay = (profile.totalHoras || 0).toFixed(2);
         option.textContent = `${profile.name} (${profile.rolNombre}) - ${hoursDisplay} hrs`;
+        
+        // Set selected based on currentUser
         if (currentUser && currentUser.id === profile.id) {
             option.selected = true;
         }
@@ -2532,14 +2428,30 @@ function renderProfileSelector() {
     
     profileSelect.onchange = (e) => {
         if (e.target.value) {
-            currentUser = damaProfiles.find(p => p.id === e.target.value);
+            currentUser = VoluntarioProfiles.find(p => p.id === e.target.value);
             saveProfiles();
             renderProfileSelector();
-            updateActiveDamasChart();
-            // Don't update global KPIs here - they stay global
+            
+            if (typeof updateActivevoluntariosChart === 'function') {
+                updateActivevoluntariosChart();
+            }
+            
+            // Dispatch event when user changes
+            window.dispatchEvent(new CustomEvent('currentUserChanged', { detail: { currentUser } }));
         }
     };
 }
+
+// Helper function to get rol ID by nombre
+function getRolIdByNombre(rolNombre) {
+    if (typeof rolesDisponibles !== 'undefined') {
+        const rol = rolesDisponibles.find(r => r.nombre === rolNombre);
+        return rol ? rol.id : null;
+    }
+    return null;
+}
+
+
 
 function calculateProfileHoursFromActivities(profile) {
     if (typeof activities === 'undefined' || !activities.length) return 0;
@@ -2550,15 +2462,15 @@ function calculateProfileHoursFromActivities(profile) {
         if (activity.createdBy === profile.id) {
             total += activity.horas || 0;
         }
-        // Check if profile is in damasParticipants
-        else if (activity.damasParticipants && activity.damasParticipants.length > 0) {
-            const matched = activity.damasParticipants.some(p => 
+        // Check if profile is in voluntariosParticipants
+        else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
+            const matched = activity.voluntariosParticipants.some(p => 
                 p.name && normalizeName(p.name) === normalizeName(profile.name)
             );
             if (matched) total += activity.horas || 0;
         }
         // Check for solo activity with placeholder
-        else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.damasParticipants?.length) {
+        else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.voluntariosParticipants?.length) {
             total += activity.horas || 0;
         }
     });
@@ -2576,26 +2488,26 @@ function calculateProfileActivityCount(profile) {
         if (activity.createdBy === profile.id) {
             count++;
         }
-        else if (activity.damasParticipants && activity.damasParticipants.length > 0) {
-            const matched = activity.damasParticipants.some(p => 
+        else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
+            const matched = activity.voluntariosParticipants.some(p => 
                 p.name && normalizeName(p.name) === normalizeName(profile.name)
             );
             if (matched) count++;
         }
-        else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.damasParticipants?.length) {
+        else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.voluntariosParticipants?.length) {
             count++;
         }
     });
     return count;
 }
 
-function showAddDamaModal() {
-    const name = prompt('Nombre completo de la Dama:');
+function showAddVoluntarioModal() {
+    const name = prompt('Nombre completo de la Voluntario:');
     if (!name) return;
     const rol = prompt('Rol (Directora, Subdirectora, Voluntaria, etc.):', 'Voluntaria');
     const identidad = prompt('Últimos 6 dígitos de identidad (requirido):', '');
     const newProfile = {
-        id: `dama-${Date.now()}-${identidad}`,
+        id: `Voluntario-${Date.now()}-${identidad}`,
         name: name.trim(),
         identidadSuffix: identidad || '000000',
         rolNombre: rol || 'Voluntaria',
@@ -2604,15 +2516,15 @@ function showAddDamaModal() {
         isPlaceholder: identidad === '000000',
         mergedFrom: []
     };
-    damaProfiles.push(newProfile);
+    VoluntarioProfiles.push(newProfile);
     saveProfiles();
     renderProfileSelector();
-    actualizarListaDamas();
-    updateActiveDamasChart();
-    alert(`✅ Dama ${name} agregada`);
+    actualizarListavoluntarios();
+    updateActivevoluntariosChart();
+    alert(`✅ Voluntario ${name} agregada`);
 }
 
-function showManageDamas() {
+function showManagevoluntarios() {
     if (!currentUser) {
         alert('❌ No hay un usuario seleccionado');
         return;
@@ -2622,13 +2534,13 @@ function showManageDamas() {
 }
 
 // ==========================================
-// CORRECTED: actualizarListaDamas()
+// CORRECTED: actualizarListavoluntarios()
 // Calculates hours from activities array for accuracy
 // ==========================================
 
-function actualizarListaDamas() {
-    const totalEl = document.getElementById('totalDamasActivas');
-    if (totalEl) totalEl.innerText = damaProfiles.length;
+function actualizarListavoluntarios() {
+    const totalEl = document.getElementById('totalvoluntariosActivas');
+    if (totalEl) totalEl.innerText = VoluntarioProfiles.length;
     
     const lista = document.getElementById('rolesActivosList');
     if (!lista) return;
@@ -2643,13 +2555,13 @@ function actualizarListaDamas() {
             if (activity.createdBy === profile.id) {
                 total += activity.horas || 0;
             }
-            else if (activity.damasParticipants && activity.damasParticipants.length > 0) {
-                const matched = activity.damasParticipants.some(p => 
+            else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
+                const matched = activity.voluntariosParticipants.some(p => 
                     p.name && normalizeName(p.name) === normalizeName(profile.name)
                 );
                 if (matched) total += activity.horas || 0;
             }
-            else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.damasParticipants?.length) {
+            else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.voluntariosParticipants?.length) {
                 total += activity.horas || 0;
             }
         });
@@ -2664,13 +2576,13 @@ function actualizarListaDamas() {
             if (activity.createdBy === profile.id) {
                 count++;
             }
-            else if (activity.damasParticipants && activity.damasParticipants.length > 0) {
-                const matched = activity.damasParticipants.some(p => 
+            else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
+                const matched = activity.voluntariosParticipants.some(p => 
                     p.name && normalizeName(p.name) === normalizeName(profile.name)
                 );
                 if (matched) count++;
             }
-            else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.damasParticipants?.length) {
+            else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.voluntariosParticipants?.length) {
                 count++;
             }
         });
@@ -2678,7 +2590,7 @@ function actualizarListaDamas() {
     }
     
     // Update each profile with calculated values
-    const updatedDamas = damaProfiles.map(profile => {
+    const updatedvoluntarios = VoluntarioProfiles.map(profile => {
         const realHours = calculateRealHours(profile);
         const realCount = calculateRealActivityCount(profile);
         return {
@@ -2689,40 +2601,40 @@ function actualizarListaDamas() {
     });
     
     // Sort by calculated hours
-    const sortedDamas = [...updatedDamas].sort((a, b) => (b.totalHoras || 0) - (a.totalHoras || 0));
+    const sortedvoluntarios = [...updatedvoluntarios].sort((a, b) => (b.totalHoras || 0) - (a.totalHoras || 0));
     
-    sortedDamas.forEach(dama => {
+    sortedvoluntarios.forEach(Voluntario => {
         const div = document.createElement('div');
-        div.className = 'dama-card';
+        div.className = 'Voluntario-card';
         
-        const idBadge = (dama.identidadSuffix && dama.identidadSuffix !== '000000' && dama.identidadSuffix !== '') ? 
-            `<span class="badge-id verified">✓ ID:${dama.identidadSuffix}</span>` : 
+        const idBadge = (Voluntario.identidadSuffix && Voluntario.identidadSuffix !== '000000' && Voluntario.identidadSuffix !== '') ? 
+            `<span class="badge-id verified">✓ ID:${Voluntario.identidadSuffix}</span>` : 
             `<span class="badge-id temp">⚡ temporal</span>`;
         
         div.innerHTML = `
-            <div class="dama-info">
-                <div class="dama-name-row">
-                    <strong class="dama-nombre">${escapeHtml(dama.name)}</strong>
+            <div class="Voluntario-info">
+                <div class="Voluntario-name-row">
+                    <strong class="Voluntario-nombre">${escapeHtml(Voluntario.name)}</strong>
                     ${idBadge}
                 </div>
-                <div class="dama-details">
-                    <span class="dama-role">${escapeHtml(dama.rolNombre)}</span>
-                    <span class="dama-hours">${(dama.totalHoras || 0).toFixed(2)} hrs</span>
-                    <span class="dama-activities">${dama.actividadesCount || 0} act.</span>
+                <div class="Voluntario-details">
+                    <span class="Voluntario-role">${escapeHtml(Voluntario.rolNombre)}</span>
+                    <span class="Voluntario-hours">${(Voluntario.totalHoras || 0).toFixed(2)} hrs</span>
+                    <span class="Voluntario-activities">${Voluntario.actividadesCount || 0} act.</span>
                 </div>
             </div>
-            <div class="dama-actions">
-                <button onclick="editDamaProfile('${dama.id}')" class="dama-btn edit-btn" title="Editar">✏️</button>
-                <button onclick="eliminarDama('${dama.id}')" class="dama-btn delete-btn" title="Eliminar">🗑️</button>
+            <div class="Voluntario-actions">
+                <button onclick="editVoluntarioProfile('${Voluntario.id}')" class="Voluntario-btn edit-btn" title="Editar">✏️</button>
+                <button onclick="eliminarVoluntario('${Voluntario.id}')" class="Voluntario-btn delete-btn" title="Eliminar">🗑️</button>
             </div>
         `;
         lista.appendChild(div);
     });
     
     // Save the corrected values back to storage
-    updatedDamas.forEach((updated, idx) => {
-        damaProfiles[idx].totalHoras = updated.totalHoras;
-        damaProfiles[idx].actividadesCount = updated.actividadesCount;
+    updatedvoluntarios.forEach((updated, idx) => {
+        VoluntarioProfiles[idx].totalHoras = updated.totalHoras;
+        VoluntarioProfiles[idx].actividadesCount = updated.actividadesCount;
     });
     if (typeof saveProfiles === 'function') saveProfiles();
     
@@ -2738,7 +2650,7 @@ function checkForDuplicateProfiles() {
     const normalized = new Map();
     const duplicates = [];
     
-    damaProfiles.forEach(profile => {
+    VoluntarioProfiles.forEach(profile => {
         // Use the GLOBAL function
         const normalizedName = normalizeName(profile.name);
         
@@ -2769,10 +2681,11 @@ function checkForDuplicateProfiles() {
     }
 }
 
-function agregarDama() {
-    const rolSelect = document.getElementById('damasRoles');
-    const nameInput = document.getElementById('nuevaDamaNombre');
-    const identidadInput = document.getElementById('identidadDama');
+
+function agregarVoluntario() {
+    const rolSelect = document.getElementById('voluntariosRoles');
+    const nameInput = document.getElementById('nuevaVoluntarioNombre');
+    const identidadInput = document.getElementById('identidadVoluntario');
     
     if (!rolSelect?.value || !nameInput?.value.trim()) {
         alert('Selecciona un rol y escribe un nombre');
@@ -2784,18 +2697,18 @@ function agregarDama() {
     
     // Check if profile already exists
     const inputNormalized = normalizeString(nameInput.value);
-
-    const existing = damaProfiles.find(
+    const existing = VoluntarioProfiles.find(
         p => normalizeString(p.name) === inputNormalized
     );
+    
     if (existing) {
-        alert('Esta dama ya existe en el sistema');
+        alert('Esta Voluntario ya existe en el sistema');
         return;
     }
     
-    const tempId = `dama-${Date.now()}-${identidadSuffix}`;
+    const tempId = `Voluntario-${Date.now()}-${identidadSuffix}`;
     
-    damaProfiles.push({
+    VoluntarioProfiles.push({
         id: tempId,
         identidadSuffix: identidadSuffix,
         name: nameInput.value.trim(),
@@ -2811,55 +2724,55 @@ function agregarDama() {
     if (identidadInput) identidadInput.value = '';
     saveProfiles();
     renderProfileSelector();
-    actualizarListaDamas();
-    updateActiveDamasChart();
+    actualizarListavoluntarios();
+    updateActivevoluntariosChart();
 }
 
-function eliminarDama(id) {
-    const damaToDelete = damaProfiles.find(d => d.id === id);
-    if (!damaToDelete) return;
-    if (confirm(`¿Eliminar a ${damaToDelete.name}? Esto eliminará ${damaToDelete.totalHoras} horas registradas.`)) {
-        damaProfiles = damaProfiles.filter(d => d.id !== id);
+function eliminarVoluntario(id) {
+    const VoluntarioToDelete = VoluntarioProfiles.find(d => d.id === id);
+    if (!VoluntarioToDelete) return;
+    if (confirm(`¿Eliminar a ${VoluntarioToDelete.name}? Esto eliminará ${VoluntarioToDelete.totalHoras} horas registradas.`)) {
+        VoluntarioProfiles = VoluntarioProfiles.filter(d => d.id !== id);
         if (currentUser && currentUser.id === id) {
-            currentUser = damaProfiles[0] || null;
+            currentUser = VoluntarioProfiles[0] || null;
         }
         saveProfiles();
         renderProfileSelector();
-        actualizarListaDamas();
-        updateActiveDamasChart();
+        actualizarListavoluntarios();
+        updateActivevoluntariosChart();
     }
 }
 
-// Edit existing dama profile
-function editDamaProfile(id) {
-    const dama = damaProfiles.find(d => d.id === id);
-    if (!dama) return;
+// Edit existing Voluntario profile
+function editVoluntarioProfile(id) {
+    const Voluntario = VoluntarioProfiles.find(d => d.id === id);
+    if (!Voluntario) return;
     
-    const newName = prompt('Editar nombre completo:', dama.name);
-    if (!newName || newName.trim() === dama.name) return;
+    const newName = prompt('Editar nombre completo:', Voluntario.name);
+    if (!newName || newName.trim() === Voluntario.name) return;
     
-    const newRol = prompt('Editar rol:', dama.rolNombre);
+    const newRol = prompt('Editar rol:', Voluntario.rolNombre);
     if (!newRol) return;
     
-    const newIdentidad = prompt('Editar últimos 6 dígitos de identidad:', dama.identidadSuffix || '');
+    const newIdentidad = prompt('Editar últimos 6 dígitos de identidad:', Voluntario.identidadSuffix || '');
     
     // Update profile
-    dama.name = newName.trim();
-    dama.rolNombre = newRol.trim();
-    dama.identidadSuffix = newIdentidad || '000000';
-    dama.isPlaceholder = (!newIdentidad || newIdentidad === '000000');
+    Voluntario.name = newName.trim();
+    Voluntario.rolNombre = newRol.trim();
+    Voluntario.identidadSuffix = newIdentidad || '000000';
+    Voluntario.isPlaceholder = (!newIdentidad || newIdentidad === '000000');
     
     saveProfiles();
     renderProfileSelector();
-    actualizarListaDamas();
-    updateActiveDamasChart();
-    alert(`✅ Dama actualizada: ${dama.name}`);
+    actualizarListavoluntarios();
+    updateActivevoluntariosChart();
+    alert(`✅ Voluntario actualizada: ${Voluntario.name}`);
 }
 
-// Merge duplicate dama profiles
-function mergeDamaProfiles(sourceId, targetId) {
-    const source = damaProfiles.find(d => d.id === sourceId);
-    const target = damaProfiles.find(d => d.id === targetId);
+// Merge duplicate Voluntario profiles
+function mergeVoluntarioProfiles(sourceId, targetId) {
+    const source = VoluntarioProfiles.find(d => d.id === sourceId);
+    const target = VoluntarioProfiles.find(d => d.id === targetId);
     
     if (!source || !target || source.id === target.id) return;
     
@@ -2879,7 +2792,7 @@ function mergeDamaProfiles(sourceId, targetId) {
     target.mergedFrom.push(source.id, ...(source.mergedFrom || []));
     
     // Remove source profile
-    damaProfiles = damaProfiles.filter(d => d.id !== sourceId);
+    VoluntarioProfiles = VoluntarioProfiles.filter(d => d.id !== sourceId);
     
     // If current user was the source, switch to target
     if (currentUser && currentUser.id === sourceId) {
@@ -2888,15 +2801,15 @@ function mergeDamaProfiles(sourceId, targetId) {
     
     saveProfiles();
     renderProfileSelector();
-    actualizarListaDamas();
-    updateActiveDamasChart();
+    actualizarListavoluntarios();
+    updateActivevoluntariosChart();
     alert(`✅ Perfiles fusionados correctamente\n📊 Total horas en ${target.name}: ${target.totalHoras} hrs`);
 }
 
 // Show merge dialog (called when duplicate detected)
 function showMergeDialog(duplicateProfileIds) {
     // Get the actual profile objects from the IDs
-    const duplicateProfiles = duplicateProfileIds.map(id => damaProfiles.find(p => p.id === id)).filter(p => p);
+    const duplicateProfiles = duplicateProfileIds.map(id => VoluntarioProfiles.find(p => p.id === id)).filter(p => p);
     
     if (duplicateProfiles.length < 2) return;
     
@@ -2914,37 +2827,37 @@ function showMergeDialog(duplicateProfileIds) {
         const sources = duplicateProfiles.filter((_, i) => i !== targetIndex);
         
         sources.forEach(source => {
-            mergeDamaProfiles(source.id, target.id);
+            mergeVoluntarioProfiles(source.id, target.id);
         });
     }
 }
 
-function renderDamasDetailedFields(participants) {
+function rendervoluntariosDetailedFields(participants) {
     if (!participants || participants.length === 0) return '';
     
     return `
         <div class="detailed-participants" style="padding: 12px; background: var(--neutral-light); border-radius: 16px;">
-            <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">📋 Datos de las Damas Participantes (${participants.length} damas)</div>
-            <div id="damasParticipantsList" class="participants-list">
+            <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">📋 Datos de las voluntarios Participantes (${participants.length} voluntarios)</div>
+            <div id="voluntariosParticipantsList" class="participants-list">
                 ${participants.map((p, pIdx) => `
                     <div class="participant-row" style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
-                        <input type="text" placeholder="Nombre completo" class="wizard-input dama-name" style="flex:2; margin:0;" value="${escapeHtml(p.name || '')}" data-index="${pIdx}" onchange="updateDamaParticipant(${pIdx}, 'name', this.value)">
-                        <select class="wizard-input dama-gender" style="flex:1; margin:0;" data-index="${pIdx}" onchange="updateDamaParticipant(${pIdx}, 'gender', this.value)">
+                        <input type="text" placeholder="Nombre completo" class="wizard-input Voluntario-name" style="flex:2; margin:0;" value="${escapeHtml(p.name || '')}" data-index="${pIdx}" onchange="updateVoluntarioParticipant(${pIdx}, 'name', this.value)">
+                        <select class="wizard-input Voluntario-gender" style="flex:1; margin:0;" data-index="${pIdx}" onchange="updateVoluntarioParticipant(${pIdx}, 'gender', this.value)">
                             <option value="Femenino" ${p.gender === 'Femenino' ? 'selected' : ''}>Femenino</option>
                             <option value="Masculino" ${p.gender === 'Masculino' ? 'selected' : ''}>Masculino</option>
                         </select>
                     </div>
                 `).join('')}
             </div>
-            <p style="font-size:0.65rem; color:var(--text-medium); margin-top: 6px;">Registra el nombre de cada Dama que participó en esta actividad.</p>
+            <p style="font-size:0.65rem; color:var(--text-medium); margin-top: 6px;">Registra el nombre de cada Voluntario que participó en esta actividad.</p>
         </div>
     `;
 }
 
 // ==========================================
-// HELPER: Update damas count with corrected logic
+// HELPER: Update voluntarios count with corrected logic
 // ==========================================
-function updateDamasCount(value) {
+function updatevoluntariosCount(value) {
     let count = parseInt(value) || 0;
     if (count < 1) count = 1; // Minimum 1 (the reporting user)
     
@@ -2952,30 +2865,30 @@ function updateDamasCount(value) {
     
     // Additional participants = count - 1
     const additionalCount = count - 1;
-    let damasParticipants = wizardData.damasParticipants || [];
+    let voluntariosParticipants = wizardData.voluntariosParticipants || [];
     
     // Resize participants array to match additional count
-    if (damasParticipants.length !== additionalCount) {
-        while (damasParticipants.length < additionalCount) {
-            damasParticipants.push({ name: '', gender: 'Femenino' });
+    if (voluntariosParticipants.length !== additionalCount) {
+        while (voluntariosParticipants.length < additionalCount) {
+            voluntariosParticipants.push({ name: '', gender: 'Femenino' });
         }
-        while (damasParticipants.length > additionalCount) {
-            damasParticipants.pop();
+        while (voluntariosParticipants.length > additionalCount) {
+            voluntariosParticipants.pop();
         }
-        wizardData.damasParticipants = damasParticipants;
+        wizardData.voluntariosParticipants = voluntariosParticipants;
     }
     
     saveWizardState();
     renderWizardStep(); // Re-render to show/hide details section
 }
 
-function updateDamaParticipant(participantIndex, field, value) {
-    if (!wizardData.damasParticipants) wizardData.damasParticipants = [];
-    if (!wizardData.damasParticipants[participantIndex]) {
-        wizardData.damasParticipants[participantIndex] = { name: '', gender: 'Femenino' };
+function updateVoluntarioParticipant(participantIndex, field, value) {
+    if (!wizardData.voluntariosParticipants) wizardData.voluntariosParticipants = [];
+    if (!wizardData.voluntariosParticipants[participantIndex]) {
+        wizardData.voluntariosParticipants[participantIndex] = { name: '', gender: 'Femenino' };
     }
     
-    wizardData.damasParticipants[participantIndex][field] = value;
+    wizardData.voluntariosParticipants[participantIndex][field] = value;
     saveWizardState();
 }
 // ==========================================
@@ -3082,48 +2995,48 @@ function renderWizardStep() {
             break;
                    
         case 3:
-            const damasCount = wizardData.voluntarias || 0;
-            const damasParticipants = wizardData.damasParticipants || [];
+            const voluntariosCount = wizardData.voluntarias || 0;
+            const voluntariosParticipants = wizardData.voluntariosParticipants || [];
             
             // Adjust participants array to match count
             // Note: count INCLUDES the reporting user automatically
-            // So additional participants = damasCount - 1
-            const additionalCount = Math.max(0, damasCount - 1);
+            // So additional participants = voluntariosCount - 1
+            const additionalCount = Math.max(0, voluntariosCount - 1);
             
-            if (damasParticipants.length !== additionalCount && additionalCount > 0) {
-                while (damasParticipants.length < additionalCount) {
-                    damasParticipants.push({ name: '', gender: 'Femenino' });
+            if (voluntariosParticipants.length !== additionalCount && additionalCount > 0) {
+                while (voluntariosParticipants.length < additionalCount) {
+                    voluntariosParticipants.push({ name: '', gender: 'Femenino' });
                 }
-                while (damasParticipants.length > additionalCount) {
-                    damasParticipants.pop();
+                while (voluntariosParticipants.length > additionalCount) {
+                    voluntariosParticipants.pop();
                 }
-                wizardData.damasParticipants = damasParticipants;
+                wizardData.voluntariosParticipants = voluntariosParticipants;
                 saveWizardState();
             }
             
-            // Render damas details for additional participants only
-            let damasDetailsHtml = '';
+            // Render voluntarios details for additional participants only
+            let voluntariosDetailsHtml = '';
             if (additionalCount > 0) {
-                damasDetailsHtml = `
+                voluntariosDetailsHtml = `
                     <div style="background: var(--neutral-light); border-radius: 16px; padding: 12px; margin-top: 8px;">
-                        <div class="question-label" style="font-size: 0.75rem;">👥 Otras Damas Participantes (${additionalCount})</div>
-                        <p style="font-size:0.65rem; color:var(--text-medium); margin-bottom: 12px;">Registra las damas adicionales que participaron (tú ya estás incluido automáticamente)</p>
-                        ${renderDamasDetailedFields(damasParticipants)}
+                        <div class="question-label" style="font-size: 0.75rem;">👥 Otras voluntarios Participantes (${additionalCount})</div>
+                        <p style="font-size:0.65rem; color:var(--text-medium); margin-bottom: 12px;">Registra las voluntarios adicionales que participaron (tú ya estás incluido automáticamente)</p>
+                        ${rendervoluntariosDetailedFields(voluntariosParticipants)}
                     </div>
                 `;
-            } else if (damasCount === 1) {
-                damasDetailsHtml = '<p style="font-size:0.7rem; color:var(--text-medium); margin-top:8px;">✅ Tú eres la única participante. Tus horas se registrarán automáticamente.</p>';
+            } else if (voluntariosCount === 1) {
+                voluntariosDetailsHtml = '<p style="font-size:0.7rem; color:var(--text-medium); margin-top:8px;">✅ Tú eres la única participante. Tus horas se registrarán automáticamente.</p>';
             }
             
             html = `
                 <div class="dynamic-question">
                     <div class="question-label">👩 Participación y Beneficiarios</div>
                     <div style="background: var(--primary-light); border-radius: 16px; padding: 12px; margin-bottom: 16px;">
-                        <p style="font-size:0.75rem; margin:0;"><strong>📌 Importante:</strong> Tú, como usuaria que reporta, ya estás incluida automáticamente. El número abajo incluye todas las damas (tú + otras).</p>
+                        <p style="font-size:0.75rem; margin:0;"><strong>📌 Importante:</strong> Tú, como usuaria que reporta, ya estás incluida automáticamente. El número abajo incluye todas las voluntarios (tú + otras).</p>
                     </div>
-                    <input type="number" id="voluntariasInput" class="wizard-input" placeholder="Número TOTAL de Damas (incluyéndote)" min="1" value="${damasCount === 0 ? '1' : damasCount}" oninput="updateDamasCount(this.value)">
-                    <div id="damasDetailsContainer" style="margin-top: 16px;">
-                        ${damasDetailsHtml}
+                    <input type="number" id="voluntariasInput" class="wizard-input" placeholder="Número TOTAL de voluntarios (incluyéndote)" min="1" value="${voluntariosCount === 0 ? '1' : voluntariosCount}" oninput="updatevoluntariosCount(this.value)">
+                    <div id="voluntariosDetailsContainer" style="margin-top: 16px;">
+                        ${voluntariosDetailsHtml}
                     </div>
                     <input type="number" id="mujeresInput" class="wizard-input" placeholder="Beneficiarias Mujeres" min="0" value="${wizardData.beneficiadas_mujeres === 0 ? '' : (wizardData.beneficiadas_mujeres || '')}">
                     <input type="number" id="hombresInput" class="wizard-input" placeholder="Beneficiarios Hombres" min="0" value="${wizardData.beneficiados_hombres === 0 ? '' : (wizardData.beneficiados_hombres || '')}">
@@ -3192,7 +3105,7 @@ function renderWizardStep() {
                     nextBtn.style.opacity = '0.5';
                     nextBtn.style.cursor = 'not-allowed';
                 } else {
-                    const needsDetails = ['Voluntariado', 'Juventud', 'Socorismo'].includes(lastColab.org);
+                    const needsDetails = ['Voluntariado', 'Activo', 'Activo con Observaciones'].includes(lastColab.org);
                     if (needsDetails) {
                         const allFilled = lastColab.participants && 
                                         lastColab.participants.length === lastColab.cant &&
@@ -3216,7 +3129,7 @@ function renderWizardStep() {
 function generateActivityOptions(selectedVal) {
     const activities = [
         "-- Seleccionar actividad --",
-        "Mantenimiento y Adecuación", "Jornada de Salud", "Encuesta y Capacitación",
+        "Mantenimiento y Adecuación", "Revision & Preparación", "Encuesta y Capacitación",
         "Encuesta y Localización", "Trabajo Comunitario", "Jornadas Integración",
         "Atención a Beneficiarios", "Logística y Distribución", "Planificación",
         "Visita y Planificación", "Visita y Seguimiento", "Gestión y Coordinación", "Informes",
@@ -3240,6 +3153,31 @@ function handleActivityChange() {
         saveWizardState();
     }
 }
+function renderConditionalDetail() {
+    const container = document.getElementById('conditionalDetailContainer');
+    if (!container) return;
+    
+    const requiresDetail = ['Encuesta y Capacitación', 'Encuesta y Localización', 'Capacitación', 'Capacitación Interna', 'Jornada de Salud'];
+    
+    if (requiresDetail.includes(wizardData.activityName)) {
+        container.innerHTML = `
+            <div class="dynamic-dropdown">
+                <div class="question-label"> Detalle específico</div>
+                <select id="activityDetailSelect" class="wizard-input">
+                    <option value="">-- Seleccionar enfoque --</option>
+                    <option value="Prevención Violencia" ${wizardData.detail === 'Prevención Violencia' ? 'selected' : ''}>Prevención Violencia</option>
+                    <option value="Salud Comunitaria" ${wizardData.detail === 'Salud Comunitaria' ? 'selected' : ''}>Salud Comunitaria</option>
+                    <option value="Primeros Auxilios" ${wizardData.detail === 'Primeros Auxilios' ? 'selected' : ''}>Primeros Auxilios</option>
+                    <option value="Agua y Saneamiento" ${wizardData.detail === 'Agua y Saneamiento' ? 'selected' : ''}>Agua y Saneamiento</option>
+                    <option value="Gestión de Riesgos" ${wizardData.detail === 'Gestión de Riesgos' ? 'selected' : ''}>Gestión de Riesgos</option>
+                    <option value="Medio Ambiente" ${wizardData.detail === 'Medio Ambiente' ? 'selected' : ''}>Medio Ambiente</option>
+                </select>
+            </div>
+        `;
+    } else {
+        container.innerHTML = '';
+    }
+}
 
 
 
@@ -3261,9 +3199,9 @@ function renderColaboratorsDynamic() {
                     <select class="wizard-input colab-select" style="margin:0" data-index="${index}" onchange="updateColabType(this, ${index})">
                         <option value="">-- Seleccionar --</option>
                         <option value="Voluntariado" ${currentColab.org === 'Voluntariado' ? 'selected' : ''}>Voluntariado</option>
-                        <option value="Juventud" ${currentColab.org === 'Juventud' ? 'selected' : ''}>Juventud</option>
-                        <option value="Socorismo" ${currentColab.org === 'Socorismo' ? 'selected' : ''}>Socorismo</option>
-                        <option value="Seguridad" ${currentColab.org === 'Seguridad' ? 'selected' : ''}>Seguridad</option>
+                        <option value="Activo" ${currentColab.org === 'Activo' ? 'selected' : ''}>Activo</option>
+                        <option value="Activo con Observaciones" ${currentColab.org === 'Activo con Observaciones' ? 'selected' : ''}>Activo con Observaciones</option>
+                        <option value="Inactivo" ${currentColab.org === 'Inactivo' ? 'selected' : ''}>Seguridad</option>
                         <option value="Junta Directiva CD-17" ${currentColab.org === 'Junta Directiva CD-17' ? 'selected' : ''}>Junta Directiva CD-17</option>
                         <option value="Bomberos" ${currentColab.org === 'Bomberos' ? 'selected' : ''}>Bomberos</option>
                         <option value="Alcaldía Local" ${currentColab.org === 'Alcaldía Local' ? 'selected' : ''}>Alcaldía Local</option>
@@ -3291,12 +3229,13 @@ function renderColaboratorsDynamic() {
             <select class="wizard-input colab-select" style="margin:0" data-index="0" onchange="updateColabType(this, 0)">
                 <option value="">-- Seleccionar colaborador --</option>
                 <option value="Voluntariado">Voluntariado</option>
-                <option value="Juventud">Juventud</option>
-                <option value="Socorismo">Socorismo</option>
-                <option value="Seguridad">Seguridad</option>
-                <option value="Junta Directiva CD-17">Junta Directiva CD-17</option>
+                <option value="Activo">Activo</option>
+                <option value="Activo con Observaciones">Activo con Observaciones</option>
+                <option value="Inactivo">Inactivo</option>
+                <option value="Junta Directiva CD-17">Junta Directiva IV-08</option>
                 <option value="Bomberos">Bomberos</option>
                 <option value="Alcaldía Local">Alcaldía Local</option>
+                 <option value="Cis">Departamento de Salud | CIS</option>
                 <option value="Autoridad Competente">Autoridad Competente</option>
                 <option value="Iglesia Local">Iglesia Local</option>
                 <option value="ONG">ONG</option>
@@ -3311,7 +3250,7 @@ function renderColaboratorsDynamic() {
 function renderDetailedFields(col, index) {
     const participants = col.participants || [];
     const expectedCount = col.cant || 0;
-    const isInternal = ['Voluntariado', 'Juventud', 'Socorismo'].includes(col.org);
+    const isInternal = ['Voluntariado', 'Activo', 'Activo con Observaciones'].includes(col.org);
     
     // For external collaborators
     if (!isInternal && col.org !== '' && expectedCount > 0) {
@@ -3328,7 +3267,7 @@ function renderDetailedFields(col, index) {
         `;
     }
     
-    // For internal collaborators (Voluntariado, Juventud, Socorismo)
+    // For internal collaborators (Voluntariado, Activo, Activo con Observaciones)
     // Adjust participants array to match count
     if (participants.length !== expectedCount && expectedCount > 0) {
         while (participants.length < expectedCount) {
@@ -3466,7 +3405,7 @@ function updateColabDetails(input, index) {
             nextBtn.style.opacity = '0.5';
             nextBtn.style.cursor = 'not-allowed';
         } else {
-            const needsDetails = ['Voluntariado', 'Juventud', 'Socorismo'].includes(org);
+            const needsDetails = ['Voluntariado', 'Activo', 'Activo con Observaciones'].includes(org);
             if (!needsDetails && newCant > 0) {
                 // For external, check if person in charge is filled
                 const hasPersonInCharge = wizardData.colaboradores[index].personInCharge?.name && wizardData.colaboradores[index].personInCharge.name.trim() !== '';
@@ -3550,32 +3489,7 @@ function updateColaboratorData() {
     saveWizardState();
 }
 
-//Conditional Details when Collaborator Type is chosen
-function renderConditionalDetail() {
-    const container = document.getElementById('conditionalDetailContainer');
-    if (!container) return;
-    
-    const requiresDetail = ['Encuesta y Capacitación', 'Encuesta y Localización', 'Capacitación', 'Capacitación Interna', 'Jornada de Salud'];
-    
-    if (requiresDetail.includes(wizardData.activityName)) {
-        container.innerHTML = `
-            <div class="dynamic-dropdown">
-                <div class="question-label"> Detalle específico</div>
-                <select id="activityDetailSelect" class="wizard-input">
-                    <option value="">-- Seleccionar enfoque --</option>
-                    <option value="Prevención Violencia" ${wizardData.detail === 'Prevención Violencia' ? 'selected' : ''}>Prevención Violencia</option>
-                    <option value="Salud Comunitaria" ${wizardData.detail === 'Salud Comunitaria' ? 'selected' : ''}>Salud Comunitaria</option>
-                    <option value="Primeros Auxilios" ${wizardData.detail === 'Primeros Auxilios' ? 'selected' : ''}>Primeros Auxilios</option>
-                    <option value="Agua y Saneamiento" ${wizardData.detail === 'Agua y Saneamiento' ? 'selected' : ''}>Agua y Saneamiento</option>
-                    <option value="Gestión de Riesgos" ${wizardData.detail === 'Gestión de Riesgos' ? 'selected' : ''}>Gestión de Riesgos</option>
-                    <option value="Medio Ambiente" ${wizardData.detail === 'Medio Ambiente' ? 'selected' : ''}>Medio Ambiente</option>
-                </select>
-            </div>
-        `;
-    } else {
-        container.innerHTML = '';
-    }
-}
+
 
 function selectWizardRadio(field, value) {
     wizardData[field] = value;
@@ -3789,7 +3703,7 @@ function finalizeWizardActivity() {
     
     
     // ========== ADD HOURS TO PROFILES - CORRECTED LOGIC ==========
-    const damasParticipants = wizardData.damasParticipants || [];
+    const voluntariosParticipants = wizardData.voluntariosParticipants || [];
     function normalizeName(str) {
         return str
             .toLowerCase()
@@ -3807,23 +3721,23 @@ function finalizeWizardActivity() {
         currentUser.actividadesCount = (currentUser.actividadesCount || 0) + 1;
     }
     
-    // STEP 2: Add hours to OTHER participants (damasParticipants are the ADDITIONAL people, not including currentUser)
-    if (damasParticipants.length > 0) {
-        damasParticipants.forEach(dama => {
-            if (dama.name && dama.name.trim() !== '') {
+    // STEP 2: Add hours to OTHER participants (voluntariosParticipants are the ADDITIONAL people, not including currentUser)
+    if (voluntariosParticipants.length > 0) {
+        voluntariosParticipants.forEach(Voluntario => {
+            if (Voluntario.name && Voluntario.name.trim() !== '') {
                 // Skip if this is the current user (defensive check)
-                if (currentUser && normalizeName(dama.name) === normalizeName(currentUser.name)) {
+                if (currentUser && normalizeName(Voluntario.name) === normalizeName(currentUser.name)) {
                     return; // Already added in STEP 1
                 }
                 
-                const existingProfile = damaProfiles.find(p => 
-                    normalizeName(p.name) === normalizeName(dama.name)
+                const existingProfile = VoluntarioProfiles.find(p => 
+                    normalizeName(p.name) === normalizeName(Voluntario.name)
                 );
                 
                 if (!existingProfile) {
                     const newProfile = {
-                        id: `dama-${Date.now()}-${identidadSuffix}`,
-                        name: dama.name.trim(),
+                        id: `Voluntario-${Date.now()}-${identidadSuffix}`,
+                        name: Voluntario.name.trim(),
                         identidadSuffix: '',
                         rolNombre: 'Voluntaria',
                         totalHoras: formattedHours,
@@ -3831,7 +3745,7 @@ function finalizeWizardActivity() {
                         isPlaceholder: true,
                         mergedFrom: []
                     };
-                    damaProfiles.push(newProfile);
+                    VoluntarioProfiles.push(newProfile);
                 } else {
                     existingProfile.totalHoras = (existingProfile.totalHoras || 0) + formattedHours;
                     existingProfile.actividadesCount = (existingProfile.actividadesCount || 0) + 1;
@@ -3843,7 +3757,7 @@ function finalizeWizardActivity() {
     // Save profiles after all updates
     if (typeof saveProfiles === 'function') saveProfiles();
     if (typeof renderProfileSelector === 'function') renderProfileSelector();
-    if (typeof actualizarListaDamas === 'function') actualizarListaDamas();
+    if (typeof actualizarListavoluntarios === 'function') actualizarListavoluntarios();
     // ========== END CORRECTED ADDITION LOGIC ==========
     
     // Create activity object
@@ -3871,7 +3785,7 @@ function finalizeWizardActivity() {
             name: wizardData.personInChargeName || '',
             title: wizardData.personInChargeTitle || ''
         },
-        damasParticipants: wizardData.damasParticipants || [], 
+        voluntariosParticipants: wizardData.voluntariosParticipants || [], 
         voluntarias: wizardData.voluntarias || 0,
         createdBy: typeof currentUser !== 'undefined' && currentUser ? currentUser.id : null,
         createdByName: typeof currentUser !== 'undefined' && currentUser ? currentUser.name : 'Usuario'
@@ -3913,7 +3827,7 @@ function finalizeWizardActivity() {
     closeGlobalWizard();
     
     // Show success message
-    alert(`✅ ¡Actividad "${finalName}" registrada exitosamente!\n⏱️ Duración: ${finalMinutes} minutos (${finalHoursDisplay} horas)\n👥 ${voluntariasCount} dama(s) participaron${locationMsg}`);
+    alert(`✅ ¡Actividad "${finalName}" registrada exitosamente!\n⏱️ Duración: ${finalMinutes} minutos (${finalHoursDisplay} horas)\n👥 ${voluntariasCount} Voluntario(s) participaron${locationMsg}`);
 }
 // ==========================================
 // GPS FUNCTIONS
@@ -4256,11 +4170,11 @@ async function processImportedData(scannedData) {
         }
         
         // Validate the imported data
-        if (!importData || importData.type !== 'dama-export') {
-            throw new Error('Formato inválido: no es un reporte de Damas');
+        if (!importData || importData.type !== 'Voluntario-export') {
+            throw new Error('Formato inválido: no es un reporte de voluntarios');
         }
         
-        console.log('✅ Valid import data for:', importData.dama?.nombre);
+        console.log('✅ Valid import data for:', importData.Voluntario?.nombre);
         
         const statusDiv = document.getElementById('qrStatus');
         if (statusDiv) statusDiv.innerHTML = '📊 Procesando datos...';
@@ -4270,23 +4184,23 @@ async function processImportedData(scannedData) {
             return name?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
         }
         
-        // Find or create dama profile
-        let damaProfile = damaProfiles.find(d => d.id === importData.dama.id);
+        // Find or create Voluntario profile
+        let VoluntarioProfile = VoluntarioProfiles.find(d => d.id === importData.Voluntario.id);
         
-        if (!damaProfile) {
+        if (!VoluntarioProfile) {
             // Try to find by normalized name OR identity suffix
-            const importedNameNorm = normalizeName(importData.dama.name);
-            const matches = damaProfiles.filter(d => {
+            const importedNameNorm = normalizeName(importData.Voluntario.name);
+            const matches = VoluntarioProfiles.filter(d => {
                 const nameMatch = normalizeName(d.nombre) === importedNameNorm;
-                const idMatch = importData.dama.identidadSuffix && 
-                               d.identidadSuffix === importData.dama.identidadSuffix && 
-                               importData.dama.identidadSuffix !== '000000';
+                const idMatch = importData.Voluntario.identidadSuffix && 
+                               d.identidadSuffix === importData.Voluntario.identidadSuffix && 
+                               importData.Voluntario.identidadSuffix !== '000000';
                 return nameMatch || idMatch;
             });
             
             if (matches.length === 1) {
                 // Found exactly one match - use it
-                damaProfile = matches[0];
+                VoluntarioProfile = matches[0];
                 
                 // Show merge notification (non-intrusive)
                 setTimeout(() => {
@@ -4304,7 +4218,7 @@ async function processImportedData(scannedData) {
                         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
                         animation: fadeOutUp 3s ease forwards;
                     `;
-                    notification.innerHTML = `🔗 Datos importados vinculados a perfil existente: ${damaprofile.name}`;
+                    notification.innerHTML = `🔗 Datos importados vinculados a perfil existente: ${Voluntarioprofile.name}`;
                     document.body.appendChild(notification);
                     setTimeout(() => notification.remove(), 3000);
                 }, 100);
@@ -4315,52 +4229,52 @@ async function processImportedData(scannedData) {
                 const choice = prompt(`⚠️ Se encontraron ${matches.length} perfiles similares:\n\n${options}\n\n¿A cuál quieres vincular estos datos?\n(0 para crear nuevo perfil)`);
                 
                 if (choice && parseInt(choice) > 0 && parseInt(choice) <= matches.length) {
-                    damaProfile = matches[parseInt(choice) - 1];
+                    VoluntarioProfile = matches[parseInt(choice) - 1];
                 } else {
                     // Create new profile
-                    damaProfile = null;
+                    VoluntarioProfile = null;
                 }
             }
         }
         
         // If still not found, create a new profile
-        if (!damaProfile) {
-            damaProfile = {
-                id: importData.dama.id || `profile_${Date.now()}`,
-                identidadSuffix: importData.dama.identidadSuffix || '000000',
-                nombre: importData.dama.nombre,
-                rolId: importData.dama.rolId || 'voluntaria',
-                rolNombre: importData.dama.rolNombre || 'Voluntaria',
+        if (!VoluntarioProfile) {
+            VoluntarioProfile = {
+                id: importData.Voluntario.id || `profile_${Date.now()}`,
+                identidadSuffix: importData.Voluntario.identidadSuffix || '000000',
+                nombre: importData.Voluntario.nombre,
+                rolId: importData.Voluntario.rolId || 'voluntaria',
+                rolNombre: importData.Voluntario.rolNombre || 'Voluntaria',
                 totalHoras: 0,
                 actividadesCount: 0,
-                isPlaceholder: importData.dama.identidadSuffix === '000000',
+                isPlaceholder: importData.Voluntario.identidadSuffix === '000000',
                 mergedFrom: []
             };
-            damaProfiles.push(damaProfile);
+            VoluntarioProfiles.push(VoluntarioProfile);
             saveProfiles();
             renderProfileSelector();
         } else {
             // Profile exists - upgrade placeholder info if needed
-            if ((damaProfile.identidadSuffix === '000000' || !damaProfile.identidadSuffix) &&
-                importData.dama.identidadSuffix && importData.dama.identidadSuffix !== '000000') {
-                damaProfile.identidadSuffix = importData.dama.identidadSuffix;
-                damaProfile.isPlaceholder = false;
+            if ((VoluntarioProfile.identidadSuffix === '000000' || !VoluntarioProfile.identidadSuffix) &&
+                importData.Voluntario.identidadSuffix && importData.Voluntario.identidadSuffix !== '000000') {
+                VoluntarioProfile.identidadSuffix = importData.Voluntario.identidadSuffix;
+                VoluntarioProfile.isPlaceholder = false;
                 saveProfiles();
                 renderProfileSelector();
             }
             
             // Optional: Check if name has a typo and suggest correction
-            const currentNorm = normalizeName(damaprofile.name);
-            const importedNorm = normalizeName(importData.dama.nombre);
-            if (currentNorm !== importedNorm && damaprofile.name !== importData.dama.nombre) {
+            const currentNorm = normalizeName(Voluntarioprofile.name);
+            const importedNorm = normalizeName(importData.Voluntario.nombre);
+            if (currentNorm !== importedNorm && Voluntarioprofile.name !== importData.Voluntario.nombre) {
                 // Name mismatch - offer to update if the user wants
                 setTimeout(() => {
-                    const shouldUpdate = confirm(`⚠️ El nombre importado (${importData.dama.nombre}) es diferente al perfil existente (${damaprofile.name}).\n\n¿Quieres actualizar el nombre del perfil a "${importData.dama.nombre}"?`);
+                    const shouldUpdate = confirm(`⚠️ El nombre importado (${importData.Voluntario.nombre}) es diferente al perfil existente (${Voluntarioprofile.name}).\n\n¿Quieres actualizar el nombre del perfil a "${importData.Voluntario.nombre}"?`);
                     if (shouldUpdate) {
-                        damaprofile.name = importData.dama.nombre;
+                        Voluntarioprofile.name = importData.Voluntario.nombre;
                         saveProfiles();
                         renderProfileSelector();
-                        actualizarListaDamas();
+                        actualizarListavoluntarios();
                     }
                 }, 500);
             }
@@ -4401,7 +4315,7 @@ async function processImportedData(scannedData) {
                     existingEvent.horas = impAct.horas;
                 }
                 
-                // Voluntarias (other Damas): Take HIGHER
+                // Voluntarias (other voluntarios): Take HIGHER
                 if ((impAct.voluntarias || 0) > (existingEvent.voluntarias || 0)) {
                     existingEvent.voluntarias = impAct.voluntarias;
                 }
@@ -4450,12 +4364,12 @@ async function processImportedData(scannedData) {
                     existingEvent.lng = impAct.lng;
                 }
                 
-                // Track which Damas contributed to this event
-                if (!existingEvent.contributingDamas) {
-                    existingEvent.contributingDamas = [];
+                // Track which voluntarios contributed to this event
+                if (!existingEvent.contributingvoluntarios) {
+                    existingEvent.contributingvoluntarios = [];
                 }
-                if (!existingEvent.contributingDamas.includes(damaProfile.id)) {
-                    existingEvent.contributingDamas.push(damaProfile.id);
+                if (!existingEvent.contributingvoluntarios.includes(VoluntarioProfile.id)) {
+                    existingEvent.contributingvoluntarios.push(VoluntarioProfile.id);
                 }
                 
                 consolidatedCount++;
@@ -4479,9 +4393,9 @@ async function processImportedData(scannedData) {
                     links: linksArray,
                     lat: impAct.lat || '',
                     lng: impAct.lng || '',
-                    createdBy: damaProfile.id,
-                    createdByName: damaprofile.name,
-                    contributingDamas: [damaProfile.id],
+                    createdBy: VoluntarioProfile.id,
+                    createdByName: Voluntarioprofile.name,
+                    contributingvoluntarios: [VoluntarioProfile.id],
                     importedFromQR: true
                 };
                 activities.push(newAct);
@@ -4490,22 +4404,22 @@ async function processImportedData(scannedData) {
             }
         });
         
-        // Update dama profile hours (only for NEW events they created, not for consolidated)
-        // For consolidated events, the hours were already counted from the first Dama
-        damaProfile.totalHoras = (damaProfile.totalHoras || 0) + importedHours;
-        damaProfile.actividadesCount = (damaProfile.actividadesCount || 0) + importedCount;
+        // Update Voluntario profile hours (only for NEW events they created, not for consolidated)
+        // For consolidated events, the hours were already counted from the first Voluntario
+        VoluntarioProfile.totalHoras = (VoluntarioProfile.totalHoras || 0) + importedHours;
+        VoluntarioProfile.actividadesCount = (VoluntarioProfile.actividadesCount || 0) + importedCount;
         
         // Save everything
         saveProfiles();
         sortActivitiesByDate();
         renderActivities();
-        actualizarListaDamas();
+        actualizarListavoluntarios();
         saveAllToStorage();
         updateCharts();
         renderProfileSelector();
         
         const sourceType = isGistUrl ? 'URL / GitHub Gist' : 'QR directo';
-        let message = `✅ Importado desde ${sourceType}: ${damaprofile.name}\n`;
+        let message = `✅ Importado desde ${sourceType}: ${Voluntarioprofile.name}\n`;
         message += `📊 Eventos nuevos: ${importedCount}\n`;
         if (consolidatedCount > 0) {
             message += `🔄 Eventos consolidados: ${consolidatedCount}\n`;
@@ -4766,16 +4680,16 @@ function clearData() {
     if (confirm('Borrar toda la información del mes actual?')) {
         const monthKey = getCurrentMonthKey();
         activities = [];
-        damasActivas = [];
+        voluntariosActivas = [];
         localStorage.removeItem(`activities_${monthKey}`);
-        localStorage.removeItem(`damas_${monthKey}`);
+        localStorage.removeItem(`voluntarios_${monthKey}`);
         localStorage.removeItem(`desc_${monthKey}`);
         document.getElementById('scopeText').value = '';
         document.getElementById('difficultiesText').value = '';
         document.getElementById('recommendationsText').value = '';
         document.getElementById('impactText').value = '';
         updateCharCounts();
-        actualizarListaDamas();
+        actualizarListavoluntarios();
         renderActivities();
         updateCharts();
         document.getElementById('monthIndicator').innerText = formatDateForDisplay(new Date());
@@ -4794,12 +4708,12 @@ function getRealHoursFromActivities(profile) {
     activities.forEach(activity => {
         if (activity.createdBy === profile.id) {
             total += activity.horas || 0;
-        } else if (activity.damasParticipants && activity.damasParticipants.length > 0) {
-            const matched = activity.damasParticipants.some(p => 
+        } else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
+            const matched = activity.voluntariosParticipants.some(p => 
                 p.name && p.name.toLowerCase().trim() === profile.name.toLowerCase().trim()
             );
             if (matched) total += activity.horas || 0;
-        } else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.damasParticipants?.length) {
+        } else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.voluntariosParticipants?.length) {
             total += activity.horas || 0;
         }
     });
@@ -4823,15 +4737,15 @@ function updateCollaboratorsBarChart() {
         
         if (!activityData[activityName]) {
             activityData[activityName] = {
-                damas: 0,
+                voluntarios: 0,
                 colaboradores: 0
             };
         }
         
-        // Count Damas - voluntarias count already includes all participants
-        // (the reporting user + additional damas)
-        let damasCount = activity.voluntarias || 0;
-        activityData[activityName].damas += damasCount;
+        // Count voluntarios - voluntarias count already includes all participants
+        // (the reporting user + additional voluntarios)
+        let voluntariosCount = activity.voluntarias || 0;
+        activityData[activityName].voluntarios += voluntariosCount;
         
         // Count Collaborators (sum of all colaboradores for this activity)
         let colaboradoresCount = 0;
@@ -4847,9 +4761,9 @@ function updateCollaboratorsBarChart() {
     const sortedActivities = Object.entries(activityData)
         .map(([name, data]) => ({
             name,
-            damas: data.damas,
+            voluntarios: data.voluntarios,
             colaboradores: data.colaboradores,
-            total: data.damas + data.colaboradores
+            total: data.voluntarios + data.colaboradores
         }))
         .sort((a, b) => b.total - a.total)
         .slice(0, 10); // Top 10 activities
@@ -4862,8 +4776,8 @@ function updateCollaboratorsBarChart() {
             labels: sortedActivities.map(a => a.name.length > 30 ? a.name.substring(0, 27) + '...' : a.name),
             datasets: [
                 {
-                    label: 'Damas Voluntarias',
-                    data: sortedActivities.map(a => a.damas),
+                    label: 'voluntarios Voluntarias',
+                    data: sortedActivities.map(a => a.voluntarios),
                     backgroundColor: '#E34A2F',
                     borderColor: '#c03d1f',
                     borderWidth: 1,
@@ -4951,17 +4865,17 @@ function updateCollaboratorsBarChart() {
     });
 }
 
-function updateActiveDamasChart() {
-    const ctx = document.getElementById('chartActiveDamas')?.getContext('2d');
+function updateActivevoluntariosChart() {
+    const ctx = document.getElementById('chartActivevoluntarios')?.getContext('2d');
     if (!ctx) return;
     
-    if (typeof damaProfiles === 'undefined' || !damaProfiles.length) {
-        if (window.activeDamasChart) window.activeDamasChart.destroy();
+    if (typeof VoluntarioProfiles === 'undefined' || !VoluntarioProfiles.length) {
+        if (window.activevoluntariosChart) window.activevoluntariosChart.destroy();
         return;
     }
     
     // Calculate real hours from activities for each profile
-    const active = damaProfiles
+    const active = VoluntarioProfiles
         .map(p => ({ 
             name: p.name, 
             horas: getRealHoursFromActivities(p)
@@ -4969,9 +4883,9 @@ function updateActiveDamasChart() {
         .sort((a, b) => b.horas - a.horas)
         .slice(0, 8);
     
-    if (window.activeDamasChart) window.activeDamasChart.destroy();
+    if (window.activevoluntariosChart) window.activevoluntariosChart.destroy();
     
-    window.activeDamasChart = new Chart(ctx, {
+    window.activevoluntariosChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: active.map(d => d.name.length > 20 ? d.name.substring(0, 17) + '...' : d.name),
@@ -4998,7 +4912,7 @@ function updateActiveDamasChart() {
                 },
                 title: {
                     display: true,
-                    text: 'Damas Más Activas',
+                    text: 'voluntarios Más Activas',
                     font: { size: 14, weight: 'bold' },
                     padding: { bottom: 15 }
                 }
@@ -5019,7 +4933,7 @@ function updateActiveDamasChart() {
                 x: {
                     title: {
                         display: true,
-                        text: 'Damas'
+                        text: 'voluntarios'
                     }
                 }
             }
@@ -5218,8 +5132,8 @@ function updateCharts() {
     if (typeof activities === 'undefined') return;
     updateAtencionesPorGeneroChart();     // Atenciones by gender
     updateTiempoRequeridoChart();         // Time required per activity
-    updateCollaboratorsBarChart();        // Damas + Collaborators per activity
-    updateActiveDamasChart();             // Individual damas hours (now uses real data)
+    updateCollaboratorsBarChart();        // voluntarios + Collaborators per activity
+    updateActivevoluntariosChart();             // Individual voluntarios hours (now uses real data)
 }
 // ==========================================
 // OTHER FUNCTIONS
@@ -5229,9 +5143,9 @@ function saveData() { saveAllToStorage(); alert('✅ Datos guardados'); }
 function clearData() {
     if (confirm('Borrar todo?')) {
         activities = [];
-        damasActivas = [];
+        voluntariosActivas = [];
         saveAllToStorage();
-        actualizarListaDamas();
+        actualizarListavoluntarios();
         renderActivities();
         updateCharts();
         alert('🗑️ Datos borrados');
@@ -5295,6 +5209,7 @@ function getHondurasToday() {
     });
     return formatter.format(now);
 }
+
 // ============Single DOMContentLoaded event - everything combined===============
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize data from localStorage
@@ -5310,19 +5225,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateGlobalKPIs === 'function') updateGlobalKPIs();
     }
     
-    // Load dama profiles
-    const savedProfiles = localStorage.getItem(`damaProfiles_${monthKey}`);
-    if (savedProfiles && typeof damaProfiles !== 'undefined') {
-        damaProfiles = JSON.parse(savedProfiles);
-        if (typeof renderProfileSelector === 'function') renderProfileSelector();
-        if (typeof actualizarListaDamas === 'function') actualizarListaDamas();
-    } else if (typeof initProfileSystem === 'function') {
-        initProfileSystem();
+    // Load Voluntario profiles - SIMPLIFIED!
+    if (typeof initProfileSystem === 'function') {
+        initProfileSystem(); // This handles both existing and new profiles
     }
+    
     const identidadInput = document.getElementById("identidad");
-        if (identidadInput) {
-            identidadSuffix = `dama-${Date.now()}-${identidadInput.value}`;
-        }
+    if (identidadInput) {
+        identidadSuffix = `Voluntario-${Date.now()}-${identidadInput.value}`;
+    }
+    
     // --- jsQR check ---
     setTimeout(() => {
         if (typeof jsQR !== 'undefined') {
@@ -5337,7 +5249,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 3000);
 });
-// Update date display badge
+
+
 // Update date display badge
 const dateDisplay = document.getElementById('currentDateDisplay');
 if (dateDisplay) {
@@ -5356,8 +5269,8 @@ const state = {
             localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
         }
         
-        // Save dama profiles (with recalculated hours - inline calculation)
-        if (typeof damaProfiles !== 'undefined') {
+        // Save Voluntario profiles (with recalculated hours - inline calculation)
+        if (typeof VoluntarioProfiles !== 'undefined') {
             // Inline calculation function to avoid dependency issues
             const calcHours = (profile) => {
                 if (typeof activities === 'undefined' || !activities || !activities.length) return profile.totalHoras || 0;
@@ -5365,12 +5278,12 @@ const state = {
                 activities.forEach(activity => {
                     if (activity.createdBy === profile.id) {
                         total += activity.horas || 0;
-                    } else if (activity.damasParticipants && activity.damasParticipants.length > 0) {
-                        const matched = activity.damasParticipants.some(p => 
+                    } else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
+                        const matched = activity.voluntariosParticipants.some(p => 
                             p.name && p.name.toLowerCase().trim() === profile.name.toLowerCase().trim()
                         );
                         if (matched) total += activity.horas || 0;
-                    } else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.damasParticipants?.length) {
+                    } else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.voluntariosParticipants?.length) {
                         total += activity.horas || 0;
                     }
                 });
@@ -5383,23 +5296,23 @@ const state = {
                 activities.forEach(activity => {
                     if (activity.createdBy === profile.id) {
                         count++;
-                    } else if (activity.damasParticipants && activity.damasParticipants.length > 0) {
-                        const matched = activity.damasParticipants.some(p => 
+                    } else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
+                        const matched = activity.voluntariosParticipants.some(p => 
                             p.name && p.name.toLowerCase().trim() === profile.name.toLowerCase().trim()
                         );
                         if (matched) count++;
-                    } else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.damasParticipants?.length) {
+                    } else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.voluntariosParticipants?.length) {
                         count++;
                     }
                 });
                 return count;
             };
             
-            damaProfiles.forEach(profile => {
+            VoluntarioProfiles.forEach(profile => {
                 profile.totalHoras = calcHours(profile);
                 profile.actividadesCount = calcCount(profile);
             });
-            localStorage.setItem(`damaProfiles_${monthKey}`, JSON.stringify(damaProfiles));
+            localStorage.setItem(`VoluntarioProfiles_${monthKey}`, JSON.stringify(VoluntarioProfiles));
         }
         
         // Save description fields (scope, difficulties, recommendations, impact)
@@ -5433,12 +5346,12 @@ const state = {
             if (typeof updateGlobalKPIs === 'function') updateGlobalKPIs();
         }
         
-        // Load dama profiles
-        const savedProfiles = localStorage.getItem(`damaProfiles_${monthKey}`);
-        if (savedProfiles && typeof damaProfiles !== 'undefined') {
-            damaProfiles = JSON.parse(savedProfiles);
+        // Load Voluntario profiles
+        const savedProfiles = localStorage.getItem(`VoluntarioProfiles_${monthKey}`);
+        if (savedProfiles && typeof VoluntarioProfiles !== 'undefined') {
+            VoluntarioProfiles = JSON.parse(savedProfiles);
             if (typeof renderProfileSelector === 'function') renderProfileSelector();
-            if (typeof actualizarListaDamas === 'function') actualizarListaDamas();
+            if (typeof actualizarListavoluntarios === 'function') actualizarListavoluntarios();
         } else if (typeof initProfileSystem === 'function') {
             initProfileSystem();
         }
@@ -5461,14 +5374,14 @@ const state = {
         const monthKey = getCurrentMonthKey();
         if (confirm('⚠️ ¿Estás segura? Esto borrará TODAS las actividades y perfiles de este mes.')) {
             localStorage.removeItem(`activities_${monthKey}`);
-            localStorage.removeItem(`damaProfiles_${monthKey}`);
+            localStorage.removeItem(`VoluntarioProfiles_${monthKey}`);
             localStorage.removeItem(`desc_${monthKey}`);
             
             // Reset global arrays
             if (typeof activities !== 'undefined') activities = [];
-            if (typeof damaProfiles !== 'undefined') {
-                damaProfiles = [{
-                    id: `dama-${Date.now()}`,
+            if (typeof VoluntarioProfiles !== 'undefined') {
+                VoluntarioProfiles = [{
+                    id: `Voluntario-${Date.now()}`,
                     name: 'Usuario Principal',
                     identidadSuffix: '',
                     rolNombre: 'Subdirectora',
@@ -5482,7 +5395,7 @@ const state = {
             // Refresh UI
             if (typeof renderActivities === 'function') renderActivities();
             if (typeof renderProfileSelector === 'function') renderProfileSelector();
-            if (typeof actualizarListaDamas === 'function') actualizarListaDamas();
+            if (typeof actualizarListavoluntarios === 'function') actualizarListavoluntarios();
             if (typeof updateGlobalKPIs === 'function') updateGlobalKPIs();
             if (typeof updateCharts === 'function') updateCharts();
             
@@ -5515,7 +5428,7 @@ printStyle.innerHTML = `
             display: block !important; 
             margin: 10px auto !important; 
         }
-        button, .damas-dropdown { display: none !important; }
+        button, .voluntarios-dropdown { display: none !important; }
     }
 `;
 document.head.appendChild(printStyle);
@@ -5593,7 +5506,7 @@ function exportToExcel(event) {
     if (event) event.preventDefault();
     
     // ========== ROLE CHECK - Only Subdirectora or Directora can export monthly report ==========
-    const allowedRoles = ['Subdirectora', 'Directora', 'Presidenta', 'Presidente', 'Vicepresidente', 'Vicepresidenta'];
+    const allowedRoles = ['Subdirectora', 'Directora', 'Presidenta', 'Presidente', 'Fiscal', 'Secretario', 'Secretaria'];
     const userRole = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.rolNombre : '';
     
     if (!allowedRoles.includes(userRole)) {
@@ -5619,16 +5532,15 @@ function exportToExcel(event) {
     const data = [];
     
     // Logo and Title Section
-    data.push(["CRUZ ROJA HONDUREÑA"]);
-    data.push(["COMITÉ DE DAMAS CD-17"]);
+    data.push(["Comité Tecno-Cívico"]);
+    data.push(["Iniciativa de Voluntariado | IV-08"]);
     data.push([]);
     data.push(["INFORME TÉCNICO MENSUAL"]);
     data.push([]);
     
     // Info Section
-    data.push(["Consejo:", "CD-17"]);
+    data.push(["Alcance:", "IV-08"]);
     data.push(["Mes:", `${currentMonth} ${currentYear}`]);
-    data.push(["Organismo Auxiliar:", "Comité de Damas, Juventud, Socorrismo, Voluntariado"]);
     data.push([]);
     
     // RESUMEN Section
@@ -5648,11 +5560,11 @@ function exportToExcel(event) {
     // Activities rows
     activities.forEach((activity, index) => {
         let vh = 0, vm = 0;
-        const damasCount = activity.voluntarias || 0;
+        const voluntariosCount = activity.voluntarias || 0;
 
         if (activity.colaboradores) {
             activity.colaboradores.forEach(col => {
-                if (['Voluntariado', 'Juventud', 'Socorismo'].includes(col.org)) {
+                if (['Voluntariado', 'Activo', 'Activo con Observaciones'].includes(col.org)) {
                     col.participants?.forEach(p => {
                         if (p.gender === 'Masculino') vh++;
                         if (p.gender === 'Femenino') vm++;
@@ -5661,7 +5573,7 @@ function exportToExcel(event) {
             });
         }
         
-        vm += damasCount;
+        vm += voluntariosCount;
 
         data.push([
             index + 1,
@@ -5677,14 +5589,14 @@ function exportToExcel(event) {
     // Totals
     const totalBenH = activities.reduce((s, a) => s + (a.beneficiados_hombres || 0), 0);
     const totalBenM = activities.reduce((s, a) => s + (a.beneficiadas_mujeres || 0), 0);
-    const totalDamas = activities.reduce((s, a) => s + (a.voluntarias || 0), 0);
+    const totalvoluntarios = activities.reduce((s, a) => s + (a.voluntarias || 0), 0);
 
     let totalVolH = 0, totalVolM = 0, totalHoras = 0;
 
     activities.forEach(a => {
         totalHoras += a.horas || 0;
         a.colaboradores?.forEach(col => {
-            if (['Voluntariado', 'Juventud', 'Socorismo'].includes(col.org)) {
+            if (['Activo', 'Activo con Observaciones', 'Inactivo'].includes(col.org)) {
                 col.participants?.forEach(p => {
                     if (p.gender === 'Masculino') totalVolH++;
                     if (p.gender === 'Femenino') totalVolM++;
@@ -5693,7 +5605,7 @@ function exportToExcel(event) {
         });
     });
     
-    totalVolM += totalDamas;
+    totalVolM += totalvoluntarios;
 
     data.push([
         "",
@@ -5717,7 +5629,7 @@ function exportToExcel(event) {
     data.push([]);
     data.push(["ACTIVIDAD", "INSTITUCIÓN", "NOMBRE DEL REPRESENTANTE", "CARGO"]);
     
-    const internalTypes = ['Voluntariado', 'Juventud', 'Socorismo', 'Seguridad'];
+    const internalTypes = ['Activo', 'Activo con Observaciones', 'Inactivo'];
     let hasExternal = false;
     
     activities.forEach(activity => {
@@ -5747,33 +5659,33 @@ function exportToExcel(event) {
 data.push([]);
 data.push(["PERSONAL VOLUNTARIO (DETALLADO)"]);
 data.push([]);
-data.push(["Nº", "NOMBRE DEL VOLUNTARIO", "D", "J", "S", "JD", "Prof.", "Com.", "TOTAL HORAS"]);
+data.push(["Nº", "NOMBRE DEL VOLUNTARIO", "A", "ACO", "I", "JD", "TOTAL HORAS"]);
     
 // Initialize map to store volunteer data with all categories
 const volunteerMap = new Map();
     
 activities.forEach(activity => {
-    // Handle Damas participants
-    if (activity.damasParticipants && activity.damasParticipants.length > 0) {
-        activity.damasParticipants.forEach(dama => {
-            if (dama.name && dama.name.trim() !== '') {
-                const existing = volunteerMap.get(dama.name.trim());
+    // Handle voluntarios participants
+    if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
+        activity.voluntariosParticipants.forEach(Voluntario => {
+            if (Voluntario.name && Voluntario.name.trim() !== '') {
+                const existing = volunteerMap.get(Voluntario.name.trim());
                 if (existing) {
                     existing.D += activity.horas || 0;
                 } else {
-                    volunteerMap.set(dama.name.trim(), { 
-                        name: dama.name.trim(),
-                        D: activity.horas || 0,
-                        J: 0,
-                        S: 0,
-                        JD: 0,
-                        Prof: 0,
-                        Com: 0
+                    volunteerMap.set(Voluntario.name.trim(), { 
+                        name: Voluntario.name.trim(),
+                        V: activity.horas || 0,
+                        A: 0,
+                        ACO: 0,
+                        I:0,
+                        JD: 0
+                        
                     });
                 }
             }
         });
-    } else if (activity.voluntarias === 1 && !activity.damasParticipants) {
+    } else if (activity.voluntarias === 1 && !activity.voluntariosParticipants) {
         const reporterName = activity.createdByName || 'Usuario Principal';
         const existing = volunteerMap.get(reporterName);
         if (existing) {
@@ -5781,12 +5693,12 @@ activities.forEach(activity => {
         } else {
             volunteerMap.set(reporterName, { 
                 name: reporterName,
-                D: activity.horas || 0,
-                J: 0,
-                S: 0,
-                JD: 0,
-                Prof: 0,
-                Com: 0
+                V: activity.horas || 0,
+                A: 0,
+                ACO: 0,
+                I: 0,
+                JD: 0
+                
             });
         }
     }
@@ -5795,10 +5707,10 @@ activities.forEach(activity => {
     if (activity.colaboradores && activity.colaboradores.length > 0) {
         activity.colaboradores.forEach(col => {
             let category = '';
-            if (col.org === 'Juventud') category = 'J';
-            else if (col.org === 'Socorismo') category = 'S';
-            else if (col.org === 'Voluntariado') category = 'Com';
-            else if (col.org === 'Junta Directiva CD-17') category = 'JD';
+            if (col.org === 'Activo') category = 'A';
+            else if (col.org === 'Activo con Observaciones') category = 'ACO';
+            else if (col.org === 'Voluntariado') category = 'I';
+            else if (col.org === 'Junta Directiva IV-08') category = 'JD';
             else return;
             
             if (col.participants && col.participants.length > 0) {
@@ -5806,23 +5718,23 @@ activities.forEach(activity => {
                     if (p.name && p.name.trim() !== '') {
                         const existing = volunteerMap.get(p.name.trim());
                         if (existing) {
-                            if (category === 'J') existing.J += activity.horas || 0;
-                            else if (category === 'S') existing.S += activity.horas || 0;
-                            else if (category === 'Com') existing.Com += activity.horas || 0;
+                            if (category === 'J') existing.A += activity.horas || 0;
+                            else if (category === 'ACO') existing.S += activity.horas || 0;
+                            else if (category === 'I') existing.Com += activity.horas || 0;
                             else if (category === 'JD') existing.JD += activity.horas || 0;
                         } else {
                             const newVolunteer = {
                                 name: p.name.trim(),
-                                D: 0,
-                                J: 0,
-                                S: 0,
-                                JD: 0,
-                                Prof: 0,
-                                Com: 0
+                                V: 0,
+                                A: 0,
+                                ACO: 0,
+                                I:0,
+                                JD: 0
+                                
                             };
-                            if (category === 'J') newVolunteer.J = activity.horas || 0;
-                            else if (category === 'S') newVolunteer.S = activity.horas || 0;
-                            else if (category === 'Com') newVolunteer.Com = activity.horas || 0;
+                            if (category === 'A') newVolunteer.J = activity.horas || 0;
+                            else if (category === 'ACO') newVolunteer.S = activity.horas || 0;
+                            else if (category === 'I') newVolunteer.Com = activity.horas || 0;
                             else if (category === 'JD') newVolunteer.JD = activity.horas || 0;
                             volunteerMap.set(p.name.trim(), newVolunteer);
                         }
@@ -5833,23 +5745,22 @@ activities.forEach(activity => {
                     const genericName = `${col.org} ${i}`;
                     const existing = volunteerMap.get(genericName);
                     if (existing) {
-                        if (category === 'J') existing.J += activity.horas || 0;
-                        else if (category === 'S') existing.S += activity.horas || 0;
-                        else if (category === 'Com') existing.Com += activity.horas || 0;
+                        if (category === 'J') existing.A += activity.horas || 0;
+                        else if (category === 'S') existing.ACO += activity.horas || 0;
+                        else if (category === 'Com') existing.I += activity.horas || 0;
                         else if (category === 'JD') existing.JD += activity.horas || 0;
                     } else {
                         const newVolunteer = {
                             name: genericName,
-                            D: 0,
-                            J: 0,
-                            S: 0,
-                            JD: 0,
-                            Prof: 0,
-                            Com: 0
+                            V: 0,
+                            A: 0,
+                            ACO: 0,
+                            I: 0,
+                            JD: 0
                         };
-                        if (category === 'J') newVolunteer.J = activity.horas || 0;
-                        else if (category === 'S') newVolunteer.S = activity.horas || 0;
-                        else if (category === 'Com') newVolunteer.Com = activity.horas || 0;
+                        if (category === 'A') newVolunteer.J = activity.horas || 0;
+                        else if (category === 'S') newVolunteer.ACO = activity.horas || 0;
+                        else if (category === 'Com') newVolunteer.I = activity.horas || 0;
                         else if (category === 'JD') newVolunteer.JD = activity.horas || 0;
                         volunteerMap.set(genericName, newVolunteer);
                     }
@@ -5859,20 +5770,19 @@ activities.forEach(activity => {
     }
 });
     
-// Add damaProfiles data
-if (typeof damaProfiles !== 'undefined' && damaProfiles.length > 0) {
-    damaProfiles.forEach(profile => {
+// Add VoluntarioProfiles data
+if (typeof VoluntarioProfiles !== 'undefined' && VoluntarioProfiles.length > 0) {
+    VoluntarioProfiles.forEach(profile => {
         if (profile.totalHoras > 0 && profile.name && profile.name !== 'Usuario Principal') {
             const existing = volunteerMap.get(profile.name);
             if (!existing) {
                 volunteerMap.set(profile.name, {
                     name: profile.name,
-                    D: profile.totalHoras || 0,
-                    J: 0,
-                    S: 0,
-                    JD: 0,
-                    Prof: 0,
-                    Com: 0
+                    V: profile.totalHoras || 0,
+                    A: 0,
+                    ACO: 0,
+                    I:0,
+                    JD: 0
                 });
             }
         }
@@ -5884,28 +5794,26 @@ const volunteers = Array.from(volunteerMap.values())
     .sort((a, b) => a.name.localeCompare(b.name));
     
 let volunteerNumber = 1;
-let totalD = 0, totalJ = 0, totalS = 0, totalJD = 0, totalProf = 0, totalCom = 0, totalGeneral = 0;
+let totalV = 0, totalA = 0, totalACO = 0, totalI = 0, totalJD = 0, totalGeneral = 0;
     
 volunteers.forEach(vol => {
-    const totalHoras = vol.D + vol.J + vol.S + vol.JD + vol.Prof + vol.Com;
+    const totalHoras = vol.V + vol.A + vol.ACO + vol.I + vol.JD;
     data.push([
         volunteerNumber++, 
         vol.name, 
-        vol.D > 0 ? vol.D.toFixed(2) : 0,
-        vol.J > 0 ? vol.J.toFixed(2) : 0,
-        vol.S > 0 ? vol.S.toFixed(2) : 0,
-        vol.JD > 0 ? vol.JD.toFixed(2) : 0,
-        vol.Prof > 0 ? vol.Prof.toFixed(2) : 0,
-        vol.Com > 0 ? vol.Com.toFixed(2) : 0,
+        vol.V > 0 ? vol.D.toFixed(2) : 0,
+        vol.A > 0 ? vol.J.toFixed(2) : 0,
+        vol.ACO > 0 ? vol.S.toFixed(2) : 0,
+        vol.I > 0 ? vol.JD.toFixed(2) : 0,
+        vol.JD> 0 ? vol.Prof.toFixed(2) : 0,
         totalHoras.toFixed(2)
     ]);
     
-    totalD += vol.D;
-    totalJ += vol.J;
-    totalS += vol.S;
+    totalV += vol.V;
+    totalA += vol.A;
+    totalACO += vol.ACO;
+    totalI += vol.I;
     totalJD += vol.JD;
-    totalProf += vol.Prof;
-    totalCom += vol.Com;
     totalGeneral += totalHoras;
 });
     
@@ -5913,12 +5821,12 @@ volunteers.forEach(vol => {
 data.push([
     "", 
     "TOTALES", 
-    totalD > 0 ? totalD.toFixed(2) : 0,
-    totalJ > 0 ? totalJ.toFixed(2) : 0,
-    totalS > 0 ? totalS.toFixed(2) : 0,
+    totalV> 0 ? totalV.toFixed(2) : 0,
+    totalA > 0 ? totalA.toFixed(2) : 0,
+    totalACO > 0 ? totalACO.toFixed(2) : 0,
+    totalI > 0 ? totalI.toFixed(2) : 0,
     totalJD > 0 ? totalJD.toFixed(2) : 0,
-    totalProf > 0 ? totalProf.toFixed(2) : 0,
-    totalCom > 0 ? totalCom.toFixed(2) : 0,
+  
     totalGeneral.toFixed(2)
 ]);
 data.push([]);
@@ -5945,22 +5853,22 @@ data.push([]);
     // ========== ESTRUCTURA ORGANIZACIONAL SECTION ==========
     data.push(["ESTRUCTURA ORGANIZACIONAL"]);
     data.push([]);
-    data.push(["Nº", "Nombre Completo", "Junta Directiva", "Cargo", "Tel. celular", "Profesión/oficio"]);
-    data.push(["1", "Lilian", "Directora", "Tecnico Auxiliar", "--", "Jubilado-Profesora"]);
-    data.push(["2", "N.R. Diop de Galeas", "Sub-Directora", "Estrategias y Capacitaciones", "--", "enfermera profesional-docente preuniversitaria"]);
-    data.push(["3", "Florecita Milla", "Tesorera", "Encuestas & Localizaciones", "--", "Técnico Laboratorio Profesional"]);
-    data.push(["4", "Sarai Elzokm", "Secretaria", "Excursiones y Ferias", "--", "Muralista Profesional"]);
-    data.push(["5", "Vocal", "Vacante", "", "--", ""]);
+    data.push(["Nº", "Nombre Completo", "Iniciativa de Voluntariado", "Cargo", "Tel. celular", "Profesión/oficio"]);
+    data.push(["1", "VACANTE", "Presidente/a", "Sin Datos", "--", " Sin Datos"]);
+    data.push(["2", "VACANTE", "Secretario/a", "Sin Datos", "--", "Sin Datos"]);
+    data.push(["3", "VACANTE", "TesorerO/a", "Sin Datos", "--", "Sin Datos"]);
+    data.push(["4", "VACANTE", "Secretario/a", "Sin Datos", "--", "Sin Datos"]);
+    data.push(["5", "VACANTE", "Fiscal", "Sin Datos", "--", "Sin Datos"]);
     data.push([]);
     // ========== END ESTRUCTURA ORGANIZACIONAL SECTION ==========
     
     // ========== ANEXOS SECTION ==========
-    data.push([`ANEXOS: INFORME TECNICO CD-17 ${currentMonth.toUpperCase()} ${currentYear}`]);
+    data.push([`ANEXOS: INFORME TECNICO IV-08 ${currentMonth.toUpperCase()} ${currentYear}`]);
     data.push([]);
     // ========== END ANEXOS SECTION ==========
     
     // ========== SIGNATURE SECTION ==========
-    const currentUserName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.name : 'Subdirectora Comité de Damas CD-17';
+    const currentUserName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.name : 'Subdirectora Comité de voluntarios CD-17';
     const currentUserRoleId = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.rolId : 'subdirectora';
     const currentUserRoleName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.rolNombre : 'Subdirectora';
     
@@ -5975,7 +5883,7 @@ data.push([]);
         data.push([`Presentado por: ${currentUserName} (${currentUserRoleName})`]);
         data.push([]);
         data.push(["_________________________"]);
-        data.push(["Pendiente Visto Bueno de la Directora, Comite de Damas y/o Presidenta/VicePresidente CD-17"]);
+        data.push(["Pendiente Visto Bueno de la Directora, Comite de voluntarios y/o Presidenta/VicePresidente CD-17"]);
     }
     
     data.push([`Documento generado automáticamente el ${formatDateForDisplay(now, true)}`]);
@@ -5993,8 +5901,8 @@ data.push([]);
     const signatureRow = data.findIndex(row => row[0] === "_________________________________");
     
     ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },  // CRUZ ROJA HONDUREÑA
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } },  // COMITÉ DE DAMAS CD-17
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },  // Comité Tecno-Cívico 
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } },  // Iniciativa de Voluntariado IV-08
         { s: { r: 3, c: 0 }, e: { r: 3, c: 6 } },  // INFORME TÉCNICO MENSUAL
         { s: { r: 9, c: 0 }, e: { r: 9, c: 6 } },  // RESUMEN
         { s: { r: 15, c: 0 }, e: { r: 15, c: 6 } }, // ACTIVIDADES REALIZADAS
@@ -6064,15 +5972,15 @@ function exportUserReport(user) {
         // Check if user is the creator
         if (activity.createdBy === user.id) return true;
         
-        // Check if user is in damasParticipants list
-        if (activity.damasParticipants && activity.damasParticipants.length > 0) {
-            return activity.damasParticipants.some(p => 
+        // Check if user is in voluntariosParticipants list
+        if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
+            return activity.voluntariosParticipants.some(p => 
                 p.name && p.name.toLowerCase() === user.name.toLowerCase()
             );
         }
         
         // Check if it's the default "Usuario Principal" with no participants but voluntarias=1
-        if (user.isPlaceholder && activity.voluntarias === 1 && !activity.damasParticipants?.length) {
+        if (user.isPlaceholder && activity.voluntarias === 1 && !activity.voluntariosParticipants?.length) {
             return true;
         }
         
@@ -6094,8 +6002,8 @@ function exportUserReport(user) {
 
     
     // Header section
-    data.push(["CRUZ ROJA HONDUREÑA"]);
-    data.push(["COMITÉ DE DAMAS CD-17"]);
+    data.push(["Comité Tecno-Cívico "]);
+    data.push(["INICIATIVA DE VOLUNTARIADO IV-08 | HONDURAS"]);
     data.push([]);
     data.push(["INFORME INDIVIDUAL DE VOLUNTARIA"]);
     data.push([]);
@@ -6151,7 +6059,7 @@ function exportUserReport(user) {
     if (!isDirectora) {
         data.push([]);
         data.push(["_________________________"]);
-        data.push(["Pendiente Visto Bueno de la Directora, Comité de Damas"]);
+        data.push(["Comité Tecno-Cívico"]);
     }
     
     data.push([]);
@@ -6180,8 +6088,8 @@ function exportUserReport(user) {
     
     // Merge cells for titles
     ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } },  // CRUZ ROJA HONDUREÑA
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } },  // COMITÉ DE DAMAS CD-17
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } },  // Comité Tecno-Cívico HONDURAS
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } },  // INICIATIVA DE VOLUNTARIOS     IV-08
         { s: { r: 3, c: 0 }, e: { r: 3, c: 8 } },  // INFORME INDIVIDUAL
         { s: { r: 7, c: 0 }, e: { r: 7, c: 8 } },  // DATOS 
         { s: { r: detalleRow, c: 0 }, e: { r: detalleRow, c: 8 } },  // DETALLE DE ACTIVIDADES
