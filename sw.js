@@ -1,6 +1,6 @@
 // sw.js - Service Worker for offline support
 
-const CACHE_NAME = 'Iniciativa de Voluntariado-Informe-Tecnico-v1.1.1'; // 🔥 CHANGE THIS on every deploy
+const CACHE_NAME = 'Iniciativa de Voluntariado-Informe-Tecnico-v1.1.2'; // 🔥 CHANGE THIS on every deploy
 
 const urlsToCache = [
     './',
