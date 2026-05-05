@@ -1,94 +1,98 @@
 // sw.js - Service Worker for offline support
 
-const CACHE_NAME = 'Iniciativa de Voluntariado-Informe-Tecnico-v1.1.10
-    '; // 🔥 CHANGE THIS on every deploy
+const CACHE_NAME = 'Informe-Tecnico-v1.2.11'; // 🔥 CHANGE THIS on every deploy// sw.js - Complete offline support with external CDNs
 
 const urlsToCache = [
     './',
     './index.html',
-    'https://cdn.jsdelivr.net/npm/chart.js',
+    'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js',
+    'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
 
-// 🔧 INSTALL - cache core files
 self.addEventListener('install', event => {
-    console.log('[Service Worker] Installing...');
-    self.skipWaiting();
-
+    console.log('[SW] Installing...');
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
-                console.log('[Service Worker] Caching app shell');
-                return cache.addAll(urlsToCache);
+                console.log('[SW] Caching app shell and external libs');
+                // Cache each URL individually to handle failures
+                return Promise.allSettled(
+                    urlsToCache.map(url => 
+                        cache.add(url).catch(err => 
+                            console.warn(`[SW] Failed to cache ${url}:`, err)
+                        )
+                    )
+                );
             })
-            .catch(err => console.log('[Service Worker] Cache error:', err))
+            .then(() => self.skipWaiting())
     );
 });
 
-// 🔧 ACTIVATE - delete old caches
 self.addEventListener('activate', event => {
-    console.log('[Service Worker] Activating...');
-
+    console.log('[SW] Activating...');
     event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cache => {
-                    if (cache !== CACHE_NAME) {
-                        console.log('[Service Worker] Deleting old cache:', cache);
-                        return caches.delete(cache);
-                    }
-                })
-            );
-        })
+        caches.keys().then(keys => Promise.all(
+            keys.filter(key => key !== CACHE_NAME).map(key => {
+                console.log('[SW] Deleting old cache:', key);
+                return caches.delete(key);
+            })
+        )).then(() => self.clients.claim())
     );
-
-    return self.clients.claim();
 });
 
-// 🔥 FETCH - smart caching strategy
 self.addEventListener('fetch', event => {
-    const request = event.request;
-
-    // ✅ NETWORK-FIRST for HTML (ensures updates show)
-    if (request.headers.get('accept')?.includes('text/html')) {
+    const url = event.request.url;
+    
+    // Handle Google Fonts specially (they have CORS headers)
+    if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) {
         event.respondWith(
-            fetch(request)
-                .then(response => {
-                    const responseClone = response.clone();
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(request, responseClone);
-                    });
-                    return response;
-                })
-                .catch(() => caches.match(request)) // offline fallback
+            caches.match(event.request)
+                .then(response => response || fetch(event.request))
+                .catch(() => new Response('', { status: 200 }))
         );
         return;
     }
-
-    // 📦 CACHE-FIRST for assets (fast + offline)
+    
+    // For all other requests
     event.respondWith(
-        caches.match(request).then(response => {
-            if (response) return response;
-
-            return fetch(request).then(networkResponse => {
-                if (!networkResponse || networkResponse.status !== 200) {
-                    return networkResponse;
+        caches.match(event.request)
+            .then(cachedResponse => {
+                if (cachedResponse) {
+                    console.log('[SW] Cache hit:', url);
+                    return cachedResponse;
                 }
-
-                const responseClone = networkResponse.clone();
-
-                caches.open(CACHE_NAME).then(cache => {
-                    cache.put(request, responseClone);
-                });
-
-                return networkResponse;
-            });
-        })
+                
+                console.log('[SW] Fetching:', url);
+                return fetch(event.request)
+                    .then(networkResponse => {
+                        // Only cache successful responses
+                        if (networkResponse && networkResponse.status === 200) {
+                            const responseToCache = networkResponse.clone();
+                            caches.open(CACHE_NAME)
+                                .then(cache => {
+                                    cache.put(event.request, responseToCache);
+                                })
+                                .catch(err => console.warn('[SW] Failed to cache:', url, err));
+                        }
+                        return networkResponse;
+                    })
+                    .catch(error => {
+                        console.warn('[SW] Fetch failed:', url, error);
+                        // Return a basic offline fallback for HTML
+                        if (event.request.mode === 'navigate') {
+                            return caches.match('./index.html');
+                        }
+                        return new Response('Offline - Content not available', {
+                            status: 503,
+                            statusText: 'Service Unavailable'
+                        });
+                    });
+            })
     );
 });
-// 🔥 Listen for update trigger from UI
+
 self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
