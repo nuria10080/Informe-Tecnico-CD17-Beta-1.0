@@ -1181,8 +1181,7 @@ body {
 
     /* Show essential elements */
     .report-header, .kpi-grid, .kpi-item, .activities-section,
-    .activities-table, .footer-info, .section-title, .org-badge,
-    .org-badge-container, .gender-f, .gender-m, .badge, .logo-area,
+    .activities-table, .footer-info, .section-title, .gender-f, .gender-m, .badge, .logo-area,
     .title-section, .charts-container, .chart-box, .desc-grid, .desc-item {
         display: block !important;
         -webkit-print-color-adjust: exact;
@@ -1300,11 +1299,27 @@ body {
         border-bottom: 2px solid var(--secondary) !important;
         margin-bottom: 6px !important;
     }
+    /* Add this to your @media print block: */
+     .org-badge{
+        display: inline-block !important;
+        white-space: nowrap !important;}
+    .org-badge-container{
+         display: inline !important;
+        font-size: 0.7rem !important;
+    }
+    .gps-badge {
+        display: inline-block !important;
+        white-space: nowrap !important;
+    }
+    .gps-coords-print {
+        display: inline !important;
+        font-size: 0.7rem !important;
+    }
 
     /* Page setup */
     @page {
         size: A4;
-        margin: 0.8cm;
+        margin: 0.2cm 0.5cm 0.5cm 0.5cm;
     }
 
     body {
@@ -1539,13 +1554,21 @@ function normalizeName(str) {
 
 function updateGlobalKPIs() {
     if (typeof activities === 'undefined' || !activities.length) {
-        document.getElementById('totalHoras').innerText = '0';
-        document.getElementById('totalHorasDomicilio').innerText = '0';
-        document.getElementById('totalHorasCampo').innerText = '0';
-        document.getElementById('totalActividades').innerText = '0';
-        document.getElementById('totalBeneficiados').innerText = '0';
-        document.getElementById('totalMujeresBen').innerText = '0';
-        document.getElementById('totalHombresBen').innerText = '0';
+        const totalHorasEl = document.getElementById('totalHoras');
+        const totalHorasFilialEl = document.getElementById('totalHorasFilial');
+        const totalHorasCampoEl = document.getElementById('totalHorasCampo');
+        const totalActividadesEl = document.getElementById('totalActividades');
+        const totalBeneficiadosEl = document.getElementById('totalBeneficiados');
+        const totalMujeresBenEl = document.getElementById('totalMujeresBen');
+        const totalHombresBenEl = document.getElementById('totalHombresBen');
+        
+        if (totalHorasEl) totalHorasEl.innerText = '0';
+        if (totalHorasFilialEl) totalHorasFilialEl.innerText = '0';
+        if (totalHorasCampoEl) totalHorasCampoEl.innerText = '0';
+        if (totalActividadesEl) totalActividadesEl.innerText = '0';
+        if (totalBeneficiadosEl) totalBeneficiadosEl.innerText = '0';
+        if (totalMujeresBenEl) totalMujeresBenEl.innerText = '0';
+        if (totalHombresBenEl) totalHombresBenEl.innerText = '0';
         return;
     }
     
@@ -1570,17 +1593,33 @@ function updateGlobalKPIs() {
     
     const totalBeneficiados = totalMujeres + totalHombres;
     
-    document.getElementById('totalHoras').innerText = totalHoras.toFixed(2);
-    document.getElementById('totalHorasDomicilio').innerText = totalHorasDomicilio.toFixed(2);
-    document.getElementById('totalHorasCampo').innerText = totalHorasCampo.toFixed(2);
-    document.getElementById('totalActividades').innerText = totalActividades;
-    document.getElementById('totalBeneficiados').innerText = totalBeneficiados;
-    document.getElementById('totalMujeresBen').innerText = totalMujeres;
-    document.getElementById('totalHombresBen').innerText = totalHombres;
+    const totalHorasEl = document.getElementById('totalHoras');
+    const totalHorasFilialEl = document.getElementById('totalHorasFilial');
+    const totalHorasCampoEl = document.getElementById('totalHorasCampo');
+    const totalActividadesEl = document.getElementById('totalActividades');
+    const totalBeneficiadosEl = document.getElementById('totalBeneficiados');
+    const totalMujeresBenEl = document.getElementById('totalMujeresBen');
+    const totalHombresBenEl = document.getElementById('totalHombresBen');
+    
+    if (totalHorasEl) totalHorasEl.innerText = totalHoras.toFixed(2);
+    if (totalHorasFilialEl) totalHorasFilialEl.innerText = totalHorasFilial.toFixed(2);
+    if (totalHorasCampoEl) totalHorasCampoEl.innerText = totalHorasCampo.toFixed(2);
+    if (totalActividadesEl) totalActividadesEl.innerText = totalActividades;
+    if (totalBeneficiadosEl) totalBeneficiadosEl.innerText = totalBeneficiados;
+    if (totalMujeresBenEl) totalMujeresBenEl.innerText = totalMujeres;
+    if (totalHombresBenEl) totalHombresBenEl.innerText = totalHombres;
 }
 // ==========================================
 // UTILITY FUNCTIONS
 // ==========================================
+function getHondurasDate() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 function getCurrentMonthKey() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -1724,17 +1763,47 @@ function formatMonthYearForDisplay(d) {
     return `${spanishMonths[month]} ${year}`;
 }
 
-
 // ==========================================
 // ENHANCED TIMER SYSTEM WITH DUAL MODE
 // ==========================================
 
 let timerMode = 'manual'; // 'manual' or 'timeRange'
-let timerStartTime = null;
-let timerEndTime = null;
-let timerInterval = null;
 
-// Mode switching function
+function handleManualMinutesInput() {
+    const hoursInput = document.getElementById('hoursInput');
+    if (!hoursInput) return;
+    
+    let rawValue = hoursInput.value;
+    let minutes = 0;
+    
+    const match = rawValue.match(/(\d+)/);
+    if (match) {
+        minutes = parseInt(match[1]);
+        
+        if (minutes < 5 && minutes > 0) {
+            minutes = Math.ceil(minutes);
+        }
+        
+        const hoursDecimal = minutes / 60;
+        wizardData.horas = hoursDecimal;
+        hoursInput.setAttribute('data-decimal-hours', hoursDecimal);
+        
+        const minutesHelper = document.getElementById('minutesHelper');
+        if (minutesHelper) {
+            minutesHelper.innerHTML = minutes === 1 ? '1 minuto' : `${minutes} minutos`;
+        }
+        
+        const timerDisplay = document.getElementById('globalTimerDisplay');
+        if (timerDisplay) {
+            const hrs = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            timerDisplay.innerText = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:00`;
+        }
+        
+        wizardTimerElapsedMs = minutes * 60000;
+        saveWizardState();
+    }
+}
 function switchTimerMode(mode) {
     timerMode = mode;
     const manualModeDiv = document.getElementById('manualTimerMode');
@@ -1742,170 +1811,73 @@ function switchTimerMode(mode) {
     const modeButtons = document.querySelectorAll('.timer-mode-btn');
     
     if (mode === 'manual') {
-        manualModeDiv.style.display = 'block';
-        timeRangeModeDiv.style.display = 'none';
+        if (manualModeDiv) manualModeDiv.style.display = 'block';
+        if (timeRangeModeDiv) timeRangeModeDiv.style.display = 'none';
         modeButtons.forEach(btn => {
             btn.classList.toggle('active', btn.dataset.mode === 'manual');
         });
     } else {
-        manualModeDiv.style.display = 'none';
-        timeRangeModeDiv.style.display = 'block';
+        if (manualModeDiv) manualModeDiv.style.display = 'none';
+        if (timeRangeModeDiv) timeRangeModeDiv.style.display = 'block';
         modeButtons.forEach(btn => {
             btn.classList.toggle('active', btn.dataset.mode === 'timeRange');
         });
-        // Reset time range inputs when switching
-        document.getElementById('startTimeInput').value = '';
-        document.getElementById('endTimeInput').value = '';
-        document.getElementById('timeRangeMinutes').innerText = '0 minutos';
-    }
-}
-
-// Calculate minutes between start and end time
-function calculateTimeRange() {
-    const startTimeStr = document.getElementById('startTimeInput').value;
-    const endTimeStr = document.getElementById('endTimeInput').value;
-    
-    if (!startTimeStr || !endTimeStr) {
-        document.getElementById('timeRangeMinutes').innerText = '0 minutos';
-        return 0;
-    }
-    
-    const today = new Date().toISOString().split('T')[0];
-    const startDateTime = new Date(`${today}T${startTimeStr}`);
-    const endDateTime = new Date(`${today}T${endTimeStr}`);
-    
-    // Handle overnight activities (end time after midnight)
-    let diffMs = endDateTime - startDateTime;
-    if (diffMs < 0) {
-        // If end time is earlier than start time, assume it's next day
-        const nextDay = new Date(`${today}T${endTimeStr}`);
-        nextDay.setDate(nextDay.getDate() + 1);
-        diffMs = nextDay - startDateTime;
-    }
-    
-    const minutes = Math.round(diffMs / 60000);
-    const hoursDecimal = minutes / 60;
-    
-    document.getElementById('timeRangeMinutes').innerHTML = `
-        <strong style="color: #E34A2F;">${minutes} minutos</strong>
-        <span style="font-size: 0.7rem;">(${hoursDecimal.toFixed(2)} horas)</span>
-    `;
-    
-    return minutes;
-}
-
-// Apply time range to wizard
-function applyTimeRange() {
-    const minutes = calculateTimeRange();
-    const startTime = document.getElementById('startTimeInput').value;
-    const endTime = document.getElementById('endTimeInput').value;
-    
-    if (!startTime || !endTime) {
-        alert('❌ Por favor selecciona hora de inicio y fin');
-        return false;
-    }
-    
-    if (minutes <= 0) {
-        alert('❌ La hora de fin debe ser posterior a la hora de inicio');
-        return false;
-    }
-    
-    // Apply to wizard data
-    wizardData.horas = minutes / 60;
-    wizardData.startTime = startTime;
-    wizardData.endTime = endTime;
-    
-    // Update display
-    updateHoursInputDisplay(minutes);
-    updateMinutesHelper(minutes);
-    
-    // Update timer display
-    const timerDisplay = document.getElementById('globalTimerDisplay');
-    if (timerDisplay) {
-        timerDisplay.innerText = formatTimeFromMinutes(minutes);
-    }
-    
-    wizardTimerElapsedMs = minutes * 60000;
-    
-    // Show success notification
-    showRoundingNotification(
-        `${startTime} - ${endTime}`,
-        `${minutes} minutos (${(minutes/60).toFixed(2)} horas)`
-    );
-    
-    saveWizardState();
-    saveTimerState(false);
-    
-    return true;
-}
-
-// Enhanced timer stop function with time range saving
-function enhancedStopWizardTimer() {
-    if (wizardTimerInterval && wizardTimerStart) {  // ✅ Changed timerInterval to wizardTimerInterval
-        clearInterval(wizardTimerInterval);
-        wizardTimerInterval = null;
-        
-        const elapsedMs = Date.now() - wizardTimerStart;
-        wizardTimerElapsedMs = elapsedMs;
-        const elapsedMinutes = elapsedMs / 60000;
-        
-        let roundedMinutes = roundTimeMinutes(elapsedMinutes);
-        let roundedHoursDecimal = roundedMinutes / 60;
-        
-        wizardData.horas = roundedHoursDecimal;
-        
-        // Auto-fill time range based on actual timer duration
-        if (timerMode === 'timeRange') {
-            const endTime = new Date();
-            const startTime = new Date(Date.now() - elapsedMs);
-            
-            const startTimeStr = startTime.toLocaleTimeString('es-HN', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: false 
-            });
-            const endTimeStr = endTime.toLocaleTimeString('es-HN', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: false 
-            });
-            
-            document.getElementById('startTimeInput').value = startTimeStr;
-            document.getElementById('endTimeInput').value = endTimeStr;
-            calculateTimeRange();
-            
-            wizardData.startTime = startTimeStr;
-            wizardData.endTime = endTimeStr;
+        if (wizardData.startHour && wizardData.startMinute && wizardData.endHour && wizardData.endMinute) {
+            calculateTimeRangeFromNumbers();
         }
-        
-        updateHoursInputDisplay(roundedMinutes);
-        updateMinutesHelper(roundedMinutes);
-        
-        const originalMinutes = Math.floor(elapsedMinutes);
-        const originalSeconds = Math.floor((elapsedMinutes % 1) * 60);
-        const originalTime = `${originalMinutes}:${originalSeconds.toString().padStart(2,'0')}`;
-        const roundedTime = `${roundedMinutes} minutos`;
-        
-        if (originalMinutes !== roundedMinutes) {
-            showRoundingNotification(originalTime, roundedTime);
+    }
+}
+ function formatTimeFromMinutes(minutes) {
+    const hrs = Math.floor(minutes / 60);
+    const mins = Math.floor(minutes % 60);
+    return `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:00`;
+}
+
+function updateHoursInputDisplay(minutes) {
+    const hoursInput = document.getElementById('hoursInput');
+    if (hoursInput) {
+        if (minutes === 0) {
+            hoursInput.value = '';
+            hoursInput.placeholder = '0 minutos';
+        } else if (minutes === 1) {
+            hoursInput.value = '1 minuto';
+        } else {
+            hoursInput.value = `${minutes} minutos`;
         }
+        hoursInput.style.color = '#E34A2F';
+        hoursInput.style.fontWeight = '600';
         
-        saveTimerState(false);
-        saveWizardState();
+        const hoursDecimal = minutes / 60;
+        hoursInput.setAttribute('data-decimal-hours', hoursDecimal);
+        wizardData.horas = hoursDecimal;
     }
 }
 
-// Enhanced wizard step 2 rendering with dual mode
+function updateMinutesHelper(minutes) {
+    const minutesHelper = document.getElementById('minutesHelper');
+    if (minutesHelper) {
+        minutesHelper.innerHTML = minutes === 1 ? `${minutes} minuto` : `${minutes} minutos`;
+    }
+}
+
+function formatTimeDisplay(minutes) {
+    const hrs = Math.floor(minutes / 60);
+    const mins = Math.floor(minutes % 60);
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:00`;
+}
+
+
 function renderEnhancedTimerStep() {
     const currentMinutes = Math.round((wizardData.horas || 0) * 60);
-    const startTime = wizardData.startTime || '';
-    const endTime = wizardData.endTime || '';
+    const startHour = wizardData.startHour || '';
+    const startMinute = wizardData.startMinute || '';
+    const endHour = wizardData.endHour || '';
+    const endMinute = wizardData.endMinute || '';
     
     return `
         <div class="dynamic-question">
             <div class="question-label">⏱ Duración de la actividad</div>
             
-            <!-- Mode Selector -->
             <div style="display: flex; gap: 8px; margin-bottom: 20px; background: var(--neutral-light); padding: 26px; border-radius: 60px;">
                 <button type="button" class="timer-mode-btn ${timerMode === 'manual' ? 'active' : ''}" 
                         data-mode="manual" onclick="switchTimerMode('manual')"
@@ -1925,7 +1897,6 @@ function renderEnhancedTimerStep() {
                 </button>
             </div>
             
-            <!-- Manual Mode -->
             <div id="manualTimerMode" style="display: ${timerMode === 'manual' ? 'block' : 'none'};">
                 <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
                     <input type="text" id="hoursInput" class="wizard-input" 
@@ -1938,39 +1909,65 @@ function renderEnhancedTimerStep() {
                 </div>
                 <div style="display: flex; gap: 12px; margin: 16px 0;">
                     <button class="wiz-btn wiz-btn-secondary" style="flex:1" onclick="startWizardTimerGlobal()">▶ Iniciar Timer</button>
-                    <button class="wiz-btn wiz-btn-secondary" style="flex:1" onclick="enhancedStopWizardTimer()">⏹ Detener Timer</button>
+                    <button class="wiz-btn wiz-btn-secondary" style="flex:1" onclick="stopWizardTimerGlobal()">⏹ Detener Timer</button>
                 </div>
             </div>
             
-            <!-- Time Range Mode -->
             <div id="timeRangeTimerMode" style="display: ${timerMode === 'timeRange' ? 'block' : 'none'};">
                 <div style="background: var(--neutral-light); padding: 16px; border-radius: 16px; margin-bottom: 16px;">
-                    <div style="display: grid; gap: 12px;">
+                    <div style="display: grid; gap: 16px;">
                         <div>
-                            <label style="font-size: 0.75rem; color: var(--text-medium); display: block; margin-bottom: 4px;">🕐 Hora de Inicio</label>
-                            <input type="time" id="startTimeInput" class="wizard-input" 
-                                   value="${startTime}"
-                                   onchange="calculateTimeRange()"
-                                   style="font-size: 1.1rem; font-weight: 600;">
+                            <label style="font-size: 0.75rem; color: var(--text-medium); display: block; margin-bottom: 8px;">🕐 Hora de Inicio</label>
+                            <div style="display: flex; gap: 12px;">
+                                <div style="flex: 1;">
+                                    <input type="number" id="startHour" class="wizard-input" 
+                                           placeholder="Hora (0-23)" min="0" max="23"
+                                           value="${startHour}"
+                                           onchange="calculateTimeRangeFromNumbers()"
+                                           style="text-align: center;">
+                                </div>
+                                <div style="flex: 1;">
+                                    <input type="number" id="startMinute" class="wizard-input" 
+                                           placeholder="Min (0-59)" min="0" max="59"
+                                           value="${startMinute}"
+                                           onchange="calculateTimeRangeFromNumbers()"
+                                           style="text-align: center;">
+                                </div>
+                            </div>
                         </div>
+                        
                         <div>
-                            <label style="font-size: 0.75rem; color: var(--text-medium); display: block; margin-bottom: 4px;">🕒 Hora de Fin</label>
-                            <input type="time" id="endTimeInput" class="wizard-input" 
-                                   value="${endTime}"
-                                   onchange="calculateTimeRange()"
-                                   style="font-size: 1.1rem; font-weight: 600;">
+                            <label style="font-size: 0.75rem; color: var(--text-medium); display: block; margin-bottom: 8px;">🕒 Hora de Fin</label>
+                            <div style="display: flex; gap: 12px;">
+                                <div style="flex: 1;">
+                                    <input type="number" id="endHour" class="wizard-input" 
+                                           placeholder="Hora (0-23)" min="0" max="23"
+                                           value="${endHour}"
+                                           onchange="calculateTimeRangeFromNumbers()"
+                                           style="text-align: center;">
+                                </div>
+                                <div style="flex: 1;">
+                                    <input type="number" id="endMinute" class="wizard-input" 
+                                           placeholder="Min (0-59)" min="0" max="59"
+                                           value="${endMinute}"
+                                           onchange="calculateTimeRangeFromNumbers()"
+                                           style="text-align: center;">
+                                </div>
+                            </div>
                         </div>
                     </div>
+                    
                     <div id="timeRangeMinutes" style="margin-top: 16px; padding: 12px; background: white; border-radius: 12px; text-align: center; font-size: 1rem;">
-                        ${currentMinutes > 0 ? `${currentMinutes} minutos` : '0 minutos'}
+                        ${currentMinutes > 0 ? `${currentMinutes} minutos (${(currentMinutes/60).toFixed(2)} horas)` : '0 minutos'}
                     </div>
-                    <button class="wiz-btn wiz-btn-primary" style="width:90%; margin-top: 16px;" 
-                            onclick="applyTimeRange()">
+                    
+                    <button class="wiz-btn wiz-btn-primary" style="width:100%; margin-top: 16px;" 
+                            onclick="applyTimeRangeFromNumbers()">
                         ✅ Aplicar duración
                     </button>
                 </div>
                 <p style="font-size:0.7rem; text-align:center; color: var(--text-medium);">
-                    💡 Registra la hora exacta de inicio y fin de tu actividad
+                    💡 Ingresa la hora exacta de inicio y fin (formato 24 horas)
                 </p>
             </div>
             
@@ -1982,53 +1979,138 @@ function renderEnhancedTimerStep() {
     `;
 }
 
-// Update the wizard step rendering to use enhanced timer
+function calculateTimeRangeFromNumbers() {
+    const startHour = parseInt(document.getElementById('startHour')?.value || '');
+    const startMinute = parseInt(document.getElementById('startMinute')?.value || '');
+    const endHour = parseInt(document.getElementById('endHour')?.value || '');
+    const endMinute = parseInt(document.getElementById('endMinute')?.value || '');
+    
+    if (isNaN(startHour) || isNaN(startMinute) || isNaN(endHour) || isNaN(endMinute)) {
+        document.getElementById('timeRangeMinutes').innerHTML = `<strong>0 minutos</strong>`;
+        return 0;
+    }
+    
+    if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23 ||
+        startMinute < 0 || startMinute > 59 || endMinute < 0 || endMinute > 59) {
+        document.getElementById('timeRangeMinutes').innerHTML = `<span style="color:red;">⚠️ Horas inválidas (0-23, 0-59)</span>`;
+        return 0;
+    }
+    
+    const startTotalMinutes = (startHour * 60) + startMinute;
+    let endTotalMinutes = (endHour * 60) + endMinute;
+    
+    if (endTotalMinutes < startTotalMinutes) {
+        endTotalMinutes += 24 * 60;
+    }
+    
+    const minutes = endTotalMinutes - startTotalMinutes;
+    
+    if (minutes <= 0) {
+        document.getElementById('timeRangeMinutes').innerHTML = `<span style="color:red;">⚠️ La hora de fin debe ser posterior</span>`;
+        return 0;
+    }
+    
+    const hoursDecimal = minutes / 60;
+    document.getElementById('timeRangeMinutes').innerHTML = `
+        <strong style="color: #E34A2F;">${minutes} minutos</strong>
+        <span style="font-size: 0.7rem;">(${hoursDecimal.toFixed(2)} horas)</span>
+    `;
+    
+    return minutes;
+}
+
+function applyTimeRangeFromNumbers() {
+    const minutes = calculateTimeRangeFromNumbers();
+    const startHour = document.getElementById('startHour')?.value;
+    const startMinute = document.getElementById('startMinute')?.value;
+    const endHour = document.getElementById('endHour')?.value;
+    const endMinute = document.getElementById('endMinute')?.value;
+    
+    if (!startHour || !startMinute || !endHour || !endMinute) {
+        alert('❌ Por favor completa todos los campos de hora');
+        return false;
+    }
+    
+    if (minutes <= 0) {
+        alert('❌ La hora de fin debe ser posterior a la hora de inicio');
+        return false;
+    }
+    
+    const startTimeFormatted = `${startHour.padStart(2,'0')}:${startMinute.padStart(2,'0')}`;
+    const endTimeFormatted = `${endHour.padStart(2,'0')}:${endMinute.padStart(2,'0')}`;
+    
+    wizardData.horas = minutes / 60;
+    wizardData.startTime = startTimeFormatted;
+    wizardData.endTime = endTimeFormatted;
+    wizardData.startHour = startHour;
+    wizardData.startMinute = startMinute;
+    wizardData.endHour = endHour;
+    wizardData.endMinute = endMinute;
+    
+    updateHoursInputDisplay(minutes);
+    updateMinutesHelper(minutes);
+    
+    const timerDisplay = document.getElementById('globalTimerDisplay');
+    if (timerDisplay) {
+        timerDisplay.innerText = formatTimeFromMinutes(minutes);
+    }
+    
+    wizardTimerElapsedMs = minutes * 60000;
+    
+    showRoundingNotification(
+        `${startTimeFormatted} - ${endTimeFormatted}`,
+        `${minutes} minutos (${(minutes/60).toFixed(2)} horas)`
+    );
+    
+    saveWizardState();
+    saveTimerState(false);
+    
+    return true;
+}
+
+function stopWizardTimerGlobal() {
+    if (wizardTimerInterval && wizardTimerStart) {
+        clearInterval(wizardTimerInterval);
+        wizardTimerInterval = null;
+        
+        const elapsedMs = Date.now() - wizardTimerStart;
+        wizardTimerElapsedMs = elapsedMs;
+        const elapsedMinutes = elapsedMs / 60000;
+        
+        let roundedMinutes = roundTimeMinutes(elapsedMinutes);
+        let roundedHoursDecimal = roundedMinutes / 60;
+        
+        wizardData.horas = roundedHoursDecimal;
+        updateHoursInputDisplay(roundedMinutes);
+        updateMinutesHelper(roundedMinutes);
+        
+        const originalMinutes = Math.floor(elapsedMinutes);
+        const originalSeconds = Math.floor((elapsedMinutes % 1) * 60);
+        const originalTime = `${originalMinutes}:${originalSeconds.toString().padStart(2,'0')}`;
+        const roundedTime = `${roundedMinutes} minutos`;
+        
+        if (originalMinutes !== roundedMinutes) {
+            showRoundingNotification(originalTime, roundedTime);
+        }
+        
+        saveTimerState(false);
+        saveWizardState();
+    }
+}
+
 function updateWizardStep2() {
     const body = document.getElementById('wizardDynamicBody');
     if (body && wizardStep === 2) {
         body.innerHTML = renderEnhancedTimerStep();
         setTimeout(() => attachHoursInputListener(), 50);
-        
-        // Re-attach time range change handlers
-        const startInput = document.getElementById('startTimeInput');
-        const endInput = document.getElementById('endTimeInput');
-        if (startInput) startInput.addEventListener('change', calculateTimeRange);
-        if (endInput) endInput.addEventListener('change', calculateTimeRange);
-    }
-}
-
-// Save time range data in wizard data persistence
-function saveTimeRangeData() {
-    if (timerMode === 'timeRange') {
-        const startTime = document.getElementById('startTimeInput')?.value;
-        const endTime = document.getElementById('endTimeInput')?.value;
-        if (startTime && endTime) {
-            wizardData.startTime = startTime;
-            wizardData.endTime = endTime;
-            saveWizardState();
-        }
-    }
-}
-
-// Load saved time range data when resuming wizard
-function loadTimeRangeData() {
-    if (wizardData.startTime && wizardData.endTime) {
-        timerMode = 'timeRange';
-        const startInput = document.getElementById('startTimeInput');
-        const endInput = document.getElementById('endTimeInput');
-        if (startInput) startInput.value = wizardData.startTime;
-        if (endInput) endInput.value = wizardData.endTime;
-        calculateTimeRange();
     }
 }
 
 function updateFooterDates() {
     const now = new Date();
     
-    // Get the most recent activity date as last modified
     let lastModifiedDate = formatDateForDisplay(now, true);
     if (activities.length > 0) {
-        // Sort activities by date to get the latest
         const sortedActivities = [...activities].sort((a, b) => new Date(b.date) - new Date(a.date));
         const mostRecentActivity = sortedActivities[0];
         if (mostRecentActivity && mostRecentActivity.date) {
@@ -2036,16 +2118,17 @@ function updateFooterDates() {
         }
     }
     
-    // Update footer elements if they exist
     const lastModifiedEl = document.getElementById('lastModifiedDate');
     const deliveryDateEl = document.getElementById('deliveryDate');
     
     if (lastModifiedEl) lastModifiedEl.innerText = lastModifiedDate;
     if (deliveryDateEl) deliveryDateEl.innerText = formatDateForDisplay(now, true);
 }
+
 // ==========================================
 // STORAGE
 // ==========================================
+
 function saveAllToStorage() {
     const monthKey = getCurrentMonthKey();
     localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
@@ -2076,7 +2159,7 @@ function loadCurrentMonthData() {
         if(document.getElementById('recommendationsText')) document.getElementById('recommendationsText').value = d.recommendations || '';
         if(document.getElementById('impactText')) document.getElementById('impactText').value = d.impact || '';
     }
-    initProfileSystem(); // Add this line
+    initProfileSystem();
     actualizarListavoluntarios();
     renderActivities();
     updateCharts();
@@ -2084,23 +2167,16 @@ function loadCurrentMonthData() {
 }
 
 // ==========================================
-// COMPLETE WIZARD SYSTEM - PERSISTENT, MINUTE DISPLAY, RESUME CAPABLE
+// COMPLETE WIZARD SYSTEM
 // ==========================================
 
-// GLOBAL WIZARD STATE
 let activeWizard = null;
 let wizardStep = 1;
 let wizardData = {};
 let autoSaveInterval = null;
-
-// TIMER VARIABLES
 let wizardTimerInterval = null;
 let wizardTimerStart = null;
 let wizardTimerElapsedMs = 0;
-
-// ==========================================
-// TIMER FUNCTIONS - WITH PERSISTENT STORAGE
-// ==========================================
 
 function loadSavedTimerState() {
     const savedTimer = localStorage.getItem('wizardTimerState');
@@ -2164,35 +2240,6 @@ function startWizardTimerGlobal() {
     saveTimerState(true);
 }
 
-function stopWizardTimerGlobal() {
-    if (wizardTimerInterval && wizardTimerStart) {
-        clearInterval(wizardTimerInterval);
-        wizardTimerInterval = null;
-        
-        const elapsedMs = Date.now() - wizardTimerStart;
-        wizardTimerElapsedMs = elapsedMs;
-        const elapsedMinutes = elapsedMs / 60000;
-        
-        let roundedMinutes = roundTimeMinutes(elapsedMinutes);
-        let roundedHoursDecimal = roundedMinutes / 60;
-        
-        wizardData.horas = roundedHoursDecimal;
-        updateHoursInputDisplay(roundedMinutes);
-        updateMinutesHelper(roundedMinutes);
-        
-        const originalMinutes = Math.floor(elapsedMinutes);
-        const originalSeconds = Math.floor((elapsedMinutes % 1) * 60);
-        const originalTime = `${originalMinutes}:${originalSeconds.toString().padStart(2,'0')}`;
-        const roundedTime = `${roundedMinutes} minutos`;
-        
-        if (originalMinutes !== roundedMinutes) {
-            showRoundingNotification(originalTime, roundedTime);
-        }
-        
-        saveTimerState(false);
-    }
-}
-
 function resetWizardTimer() {
     if (wizardTimerInterval) {
         clearInterval(wizardTimerInterval);
@@ -2225,94 +2272,6 @@ function roundTimeMinutes(minutes) {
     
     const remainder = minutes % 5;
     return remainder >= 2.5 ? Math.ceil(minutes / 5) * 5 : Math.floor(minutes / 5) * 5;
-}
-
-function updateHoursInputDisplay(minutes) {
-    const hoursInput = document.getElementById('hoursInput');
-    if (hoursInput) {
-        if (minutes === 0) {
-            hoursInput.value = '';
-            hoursInput.placeholder = '0 minutos';
-        } else if (minutes === 1) {
-            hoursInput.value = '1 minuto';
-        } else {
-            hoursInput.value = `${minutes} minutos`;
-        }
-        hoursInput.style.color = '#E34A2F';
-        hoursInput.style.fontWeight = '600';
-        
-        const hoursDecimal = minutes / 60;
-        hoursInput.setAttribute('data-decimal-hours', hoursDecimal);
-        wizardData.horas = hoursDecimal;
-    }
-}
-
-function updateMinutesHelper(minutes) {
-    const minutesHelper = document.getElementById('minutesHelper');
-    if (minutesHelper) {
-        minutesHelper.innerHTML = minutes === 1 ? `${minutes} minuto` : `${minutes} minutos`;
-    }
-}
-
-function handleManualMinutesInput() {
-    const hoursInput = document.getElementById('hoursInput');
-    if (!hoursInput) return;
-    
-    let rawValue = hoursInput.value;
-    let minutes = 0;
-    let hoursDecimal = 0;
-    
-    const numberMatch = rawValue.match(/^[\d.]+$/);
-    
-    if (numberMatch) {
-        hoursDecimal = parseFloat(rawValue);
-        minutes = Math.round(hoursDecimal * 60);
-    } else {
-        const match = rawValue.match(/(\d+)/);
-        if (match) {
-            minutes = parseInt(match[1]);
-            hoursDecimal = minutes / 60;
-        } else {
-            return;
-        }
-    }
-    
-    if (minutes < 5 && minutes > 0) {
-        minutes = Math.ceil(minutes);
-    } else if (minutes >= 5 && minutes <= 60) {
-        const remainder = minutes % 5;
-        minutes = remainder >= 3 ? Math.ceil(minutes / 5) * 5 : Math.floor(minutes / 5) * 5;
-    }
-    
-    if (minutes < 0) minutes = 0;
-    if (minutes > 720) minutes = 720;
-    
-    hoursDecimal = minutes / 60;
-    wizardData.horas = hoursDecimal;
-    
-    if (minutes === 0) {
-        hoursInput.value = '';
-        hoursInput.placeholder = '0 minutos';
-    } else if (minutes === 1) {
-        hoursInput.value = '1 minuto';
-    } else {
-        hoursInput.value = `${minutes} minutos`;
-    }
-    
-    hoursInput.setAttribute('data-decimal-hours', hoursDecimal);
-    updateMinutesHelper(minutes);
-    
-    const timerDisplay = document.getElementById('globalTimerDisplay');
-    if (timerDisplay) timerDisplay.innerText = formatTimeFromMinutes(minutes);
-    
-    wizardTimerElapsedMs = minutes * 60000;
-    saveTimerState(wizardTimerInterval !== null);
-}
-
-function formatTimeFromMinutes(minutes) {
-    const hrs = Math.floor(minutes / 60);
-    const mins = Math.floor(minutes % 60);
-    return `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:00`;
 }
 
 function showRoundingNotification(original, rounded) {
@@ -2352,7 +2311,6 @@ function attachHoursInputListener() {
         hoursInput.addEventListener('input', handleManualMinutesInput);
     }
 }
-
 // ==========================================
 // WIZARD STATE MANAGEMENT
 // ==========================================
@@ -2394,7 +2352,6 @@ function stopAutoSave() {
         autoSaveInterval = null;
     }
 }
-
 
 // ==========================================
 // PROFILE SYSTEM (Complete replacement for voluntariosActivas)
@@ -2657,29 +2614,30 @@ function actualizarListavoluntarios() {
     // Sort by calculated hours
     const sortedvoluntarios = [...updatedvoluntarios].sort((a, b) => (b.totalHoras || 0) - (a.totalHoras || 0));
     
-    sortedvoluntarios.forEach(Voluntario => {
+    sortedvoluntarios.forEach(voluntario => {
         const div = document.createElement('div');
         div.className = 'Voluntario-card';
         
-        const idBadge = (Voluntario.identidadSuffix && Voluntario.identidadSuffix !== '000000' && Voluntario.identidadSuffix !== '') ? 
-            `<span class="badge-id verified">✓ ID:${Voluntario.identidadSuffix}</span>` : 
+        const idBadge = (voluntario.identidadSuffix && voluntario.identidadSuffix !== '000000' && voluntario.identidadSuffix !== '') ? 
+            `<span class="badge-id verified">✓ ID:${voluntario.identidadSuffix}</span>` : 
             `<span class="badge-id temp">⚡ temporal</span>`;
         
         div.innerHTML = `
-            <div class="Voluntario-info">
-                <div class="Voluntario-name-row">
-                    <strong class="Voluntario-nombre">${escapeHtml(Voluntario.name)}</strong>
+            <div class="voluntario-info">
+                <div class="voluntario-name-row">
+                    <strong class="voluntario-nombre">${escapeHtml(voluntario.name)}</strong>
                     ${idBadge}
                 </div>
-                <div class="Voluntario-details">
-                    <span class="Voluntario-role">${escapeHtml(Voluntario.rolNombre)}</span>
-                    <span class="Voluntario-hours">${(Voluntario.totalHoras || 0).toFixed(2)} hrs</span>
-                    <span class="Voluntario-activities">${Voluntario.actividadesCount || 0} act.</span>
+                <div class="voluntario-details">
+                    <span class="voluntario-role">${escapeHtml(voluntario.rolNombre)}</span>
+                    <span class="voluntario-hours">${(voluntario.totalHoras || 0).toFixed(2)} hrs</span>
+                    <span class="voluntario-activities">${voluntario.actividadesCount || 0} act.</span>
+                    <span class="voluntario-status" style="background: ${getStatusColor(voluntario.status || 'V')}; padding: 2px 8px; border-radius: 12px; font-size: 0.65rem;">${voluntario.status || 'V'}</span>
                 </div>
             </div>
-            <div class="Voluntario-actions">
-                <button onclick="editVoluntarioProfile('${Voluntario.id}')" class="Voluntario-btn edit-btn" title="Editar">✏️</button>
-                <button onclick="eliminarVoluntario('${Voluntario.id}')" class="Voluntario-btn delete-btn" title="Eliminar">🗑️</button>
+            <div class="voluntario-actions">
+                <button onclick="editVoluntarioProfile('${voluntario.id}')" class="voluntario-btn edit-btn" title="Editar">✏️</button>
+                <button onclick="eliminarVoluntario('${voluntario.id}')" class="voluntario-btn delete-btn" title="Eliminar">🗑️</button>
             </div>
         `;
         lista.appendChild(div);
@@ -2749,6 +2707,21 @@ function agregarVoluntario() {
     const rol = rolesDisponibles.find(r => r.id === rolSelect.value);
     const identidadSuffix = identidadInput?.value?.trim() || '000000';
     
+    // Add status selection for new volunteer
+    const statusOptions = ['V - Voluntariado', 'A - Activo', 'ACO - Activo con Observaciones', 'I - Inactivo', 'JD - Junta Directiva'];
+    const statusPrompt = `Selecciona el estado (código para el reporte):\n\n${statusOptions.join('\n')}\n\nIngresa la letra (V, A, ACO, I, JD):`;
+    const selectedStatus = prompt(statusPrompt, 'V');
+    
+    let finalStatus = 'V';
+    if (selectedStatus) {
+        const upperStatus = selectedStatus.toUpperCase();
+        if (upperStatus === 'V' || upperStatus === 'VOLUNTARIADO') finalStatus = 'V';
+        else if (upperStatus === 'A' || upperStatus === 'ACTIVO') finalStatus = 'A';
+        else if (upperStatus === 'ACO' || upperStatus === 'ACTIVO CON OBSERVACIONES') finalStatus = 'ACO';
+        else if (upperStatus === 'I' || upperStatus === 'INACTIVO') finalStatus = 'I';
+        else if (upperStatus === 'JD' || upperStatus === 'JUNTA DIRECTIVA') finalStatus = 'JD';
+    }
+    
     // Check if profile already exists
     const inputNormalized = normalizeString(nameInput.value);
     const existing = VoluntarioProfiles.find(
@@ -2771,7 +2744,8 @@ function agregarVoluntario() {
         totalHoras: 0,
         actividadesCount: 0,
         isPlaceholder: identidadSuffix === '000000',
-        mergedFrom: []
+        mergedFrom: [],
+        status: finalStatus
     });
     
     nameInput.value = '';
@@ -2780,6 +2754,7 @@ function agregarVoluntario() {
     renderProfileSelector();
     actualizarListavoluntarios();
     updateActivevoluntariosChart();
+    alert(`✅ Voluntario agregada: ${nameInput.value.trim()} (Estado: ${finalStatus})`);
 }
 
 function eliminarVoluntario(id) {
@@ -2797,30 +2772,47 @@ function eliminarVoluntario(id) {
     }
 }
 
-// Edit existing Voluntario profile
 function editVoluntarioProfile(id) {
-    const Voluntario = VoluntarioProfiles.find(d => d.id === id);
-    if (!Voluntario) return;
+    const voluntario = VoluntarioProfiles.find(d => d.id === id);
+    if (!voluntario) return;
     
-    const newName = prompt('Editar nombre completo:', Voluntario.name);
-    if (!newName || newName.trim() === Voluntario.name) return;
+    const newName = prompt('Editar nombre completo:', voluntario.name);
+    if (!newName || newName.trim() === voluntario.name) return;
     
-    const newRol = prompt('Editar rol:', Voluntario.rolNombre);
+    const newRol = prompt('Editar rol:', voluntario.rolNombre);
     if (!newRol) return;
     
-    const newIdentidad = prompt('Editar últimos 6 dígitos de identidad:', Voluntario.identidadSuffix || '');
+    const newIdentidad = prompt('Editar últimos 6 dígitos de identidad:', voluntario.identidadSuffix || '');
+    
+    // Add status selection
+    const currentStatus = voluntario.status || 'V';
+    const statusOptions = ['V - Voluntariado', 'A - Activo', 'ACO - Activo con Observaciones', 'I - Inactivo', 'JD - Junta Directiva'];
+    const statusPrompt = `Selecciona el estado (código para el reporte):\n\n${statusOptions.join('\n')}\n\nEstado actual: ${currentStatus}\n\nIngresa la letra (V, A, ACO, I, JD):`;
+    const newStatus = prompt(statusPrompt, currentStatus);
+    
+    let finalStatus = 'V';
+    if (newStatus) {
+        const upperStatus = newStatus.toUpperCase();
+        if (upperStatus === 'V' || upperStatus === 'VOLUNTARIADO') finalStatus = 'V';
+        else if (upperStatus === 'A' || upperStatus === 'ACTIVO') finalStatus = 'A';
+        else if (upperStatus === 'ACO' || upperStatus === 'ACTIVO CON OBSERVACIONES') finalStatus = 'ACO';
+        else if (upperStatus === 'I' || upperStatus === 'INACTIVO') finalStatus = 'I';
+        else if (upperStatus === 'JD' || upperStatus === 'JUNTA DIRECTIVA') finalStatus = 'JD';
+        else finalStatus = currentStatus;
+    }
     
     // Update profile
-    Voluntario.name = newName.trim();
-    Voluntario.rolNombre = newRol.trim();
-    Voluntario.identidadSuffix = newIdentidad || '000000';
-    Voluntario.isPlaceholder = (!newIdentidad || newIdentidad === '000000');
+    voluntario.name = newName.trim();
+    voluntario.rolNombre = newRol.trim();
+    voluntario.identidadSuffix = newIdentidad || '000000';
+    voluntario.isPlaceholder = (!newIdentidad || newIdentidad === '000000');
+    voluntario.status = finalStatus;
     
     saveProfiles();
     renderProfileSelector();
     actualizarListavoluntarios();
     updateActivevoluntariosChart();
-    alert(`✅ Voluntario actualizada: ${Voluntario.name}`);
+    alert(`✅ Voluntario actualizada: ${voluntario.name} (Estado: ${finalStatus})`);
 }
 
 // Merge duplicate Voluntario profiles
@@ -2945,6 +2937,15 @@ function updateVoluntarioParticipant(participantIndex, field, value) {
     wizardData.voluntariosParticipants[participantIndex][field] = value;
     saveWizardState();
 }
+function getStatusColor(status) {
+    switch(status) {
+        case 'A': return '#4CAF50'; // Verde - Activo
+        case 'ACO': return '#FF9800'; // Naranja - Activo con Observaciones
+        case 'I': return '#F44336'; // Rojo - Inactivo
+        case 'JD': return '#9C27B0'; // Morado - Junta Directiva
+        default: return '#2196F3'; // Azul - Voluntariado
+    }
+}
 // ==========================================
 // MAIN WIZARD FUNCTIONS
 // ==========================================
@@ -3045,16 +3046,12 @@ function renderWizardStep() {
             break;
             
         case 2:
-                 html = renderEnhancedTimerStep();
+            html = renderEnhancedTimerStep();
             break;
-                   
+            
         case 3:
             const voluntariosCount = wizardData.voluntarias || 0;
             const voluntariosParticipants = wizardData.voluntariosParticipants || [];
-            
-            // Adjust participants array to match count
-            // Note: count INCLUDES the reporting user automatically
-            // So additional participants = voluntariosCount - 1
             const additionalCount = Math.max(0, voluntariosCount - 1);
             
             if (voluntariosParticipants.length !== additionalCount && additionalCount > 0) {
@@ -3068,7 +3065,6 @@ function renderWizardStep() {
                 saveWizardState();
             }
             
-            // Render voluntarios details for additional participants only
             let voluntariosDetailsHtml = '';
             if (additionalCount > 0) {
                 voluntariosDetailsHtml = `
@@ -3088,7 +3084,7 @@ function renderWizardStep() {
                     <div style="background: var(--primary-light); border-radius: 16px; padding: 12px; margin-bottom: 16px;">
                         <p style="font-size:0.75rem; margin:0;"><strong>📌 Importante:</strong> Tú, como usuaria que reporta, ya estás incluida automáticamente. El número abajo incluye todas las voluntarios (tú + otras).</p>
                     </div>
-                    <input type="number" id="voluntariasInput" class="wizard-input" placeholder="Número TOTAL de voluntarios (incluyéndote)" min="1" value="${voluntariosCount === 0 ? '1' : voluntariosCount}" oninput="updatevoluntariosCount(this.value)">
+                    <input type="number" id="voluntariasInput" class="wizard-input" placeholder="Número TOTAL de voluntarios (incluyéndote)" min="1" value="${voluntariosCount > 0 ? voluntariosCount : ''}" oninput="updatevoluntariosCount(this.value)">
                     <div id="voluntariosDetailsContainer" style="margin-top: 16px;">
                         ${voluntariosDetailsHtml}
                     </div>
@@ -3096,7 +3092,9 @@ function renderWizardStep() {
                     <input type="number" id="hombresInput" class="wizard-input" placeholder="Beneficiarios Hombres" min="0" value="${wizardData.beneficiados_hombres === 0 ? '' : (wizardData.beneficiados_hombres || '')}">
                 </div>
             `;
-            break;   
+            break;
+            break;
+            
         case 4:
             html = `
                 <div class="dynamic-question">
@@ -3132,20 +3130,33 @@ function renderWizardStep() {
     }
     
     body.innerHTML = html;
-        // After setting innerHTML, update step pills and buttons
-        updateStepPills();
-
-        const prevBtn = document.getElementById('wizardPrevBtn');
-        if (prevBtn) prevBtn.style.display = wizardStep === 1 ? 'none' : 'flex';
-
-        const nextBtn = document.getElementById('wizardNextBtn');
-        if (nextBtn) nextBtn.innerText = wizardStep === 6 ? '✅ Finalizar Actividad' : 'Siguiente →';
-
-        if (wizardStep === 1) renderConditionalDetail();
-        if (wizardStep === 2) setTimeout(() => attachHoursInputListener(), 50);
-
-        // Set button state for step 5 based on current data
-        if (wizardStep === 5) {
+    
+    // Update step pills and buttons
+    updateStepPills();
+    
+    const prevBtn = document.getElementById('wizardPrevBtn');
+    if (prevBtn) prevBtn.style.display = wizardStep === 1 ? 'none' : 'flex';
+    
+    const nextBtn = document.getElementById('wizardNextBtn');
+    if (nextBtn) nextBtn.innerText = wizardStep === 6 ? '✅ Finalizar Actividad' : 'Siguiente →';
+    
+    if (wizardStep === 1) renderConditionalDetail();
+    
+    // Fix for step 2 - ensure timer elements are properly initialized
+    if (wizardStep === 2) {
+        // Small delay to ensure DOM is ready
+        setTimeout(() => {
+            attachHoursInputListener();
+            
+            // Re-calculate time range if we have saved data
+            if (timerMode === 'timeRange' && wizardData.startHour && wizardData.startMinute) {
+                calculateTimeRangeFromNumbers();
+            }
+        }, 50);
+    }
+    
+    // Set button state for step 5 based on current data
+    if (wizardStep === 5) {
         const colabs = wizardData.colaboradores || [];
         if (nextBtn) {
             if (colabs.length === 0) {
@@ -3178,17 +3189,15 @@ function renderWizardStep() {
     }
 }
 
-
-
 function generateActivityOptions(selectedVal) {
     const activities = [
         "-- Seleccionar actividad --",
-        "Mantenimiento y Adecuación", "Revision & Preparación", "Encuesta y Capacitación",
+        "Mantenimiento y Adecuación", "Abastecimiento o Gestión de Insumos", "Revision & Preparación", "Encuesta y Capacitación",
         "Encuesta y Localización", "Trabajo Comunitario", "Jornadas Integración",
         "Atención a Beneficiarios", "Logística y Distribución", "Planificación",
         "Visita y Planificación", "Visita y Seguimiento", "Gestión y Coordinación", "Informes",
         "Gestión y Recuperación", "Gestión de Acuerdos", "Recaudación Fondos",
-        "Capacitación", "Capacitación Interna", "Estrategias Digitales",
+        "Capacitación Comunitario", "Capacitación Interna", "Estrategias Digitales",
         "Reunión por Video Llamada/Whatsapp", "Junta Directiva", "Promoción y Difusión"
     ];
     
@@ -3211,7 +3220,7 @@ function renderConditionalDetail() {
     const container = document.getElementById('conditionalDetailContainer');
     if (!container) return;
     
-    const requiresDetail = ['Encuesta y Capacitación', 'Encuesta y Localización', 'Capacitación', 'Capacitación Interna', 'Jornada de Salud'];
+    const requiresDetail = ['Encuesta y Capacitación', 'Encuesta y Localización', 'Capacitación Comunitario', 'Capacitación Interna', 'Abastecimiento o Gestión de Insumos'];
     
     if (requiresDetail.includes(wizardData.activityName)) {
         container.innerHTML = `
@@ -3219,12 +3228,12 @@ function renderConditionalDetail() {
                 <div class="question-label"> Detalle específico</div>
                 <select id="activityDetailSelect" class="wizard-input">
                     <option value="">-- Seleccionar enfoque --</option>
-                    <option value="Prevención Violencia" ${wizardData.detail === 'Prevención Violencia' ? 'selected' : ''}>Prevención Violencia</option>
+                    <option value="Equipo y/o Accesorios" ${wizardData.detail === 'Equipo y/o Accesorios' ? 'selected' : ''}>Equipo y/o Accesorios</option>
                     <option value="Salud Comunitaria" ${wizardData.detail === 'Salud Comunitaria' ? 'selected' : ''}>Salud Comunitaria</option>
-                    <option value="Primeros Auxilios" ${wizardData.detail === 'Primeros Auxilios' ? 'selected' : ''}>Primeros Auxilios</option>
+                    <option value="Profesionalizacion" ${wizardData.detail === 'Profesionalizacion' ? 'selected' : ''}>Profesionalizacion</option>
                     <option value="Agua y Saneamiento" ${wizardData.detail === 'Agua y Saneamiento' ? 'selected' : ''}>Agua y Saneamiento</option>
-                    <option value="Gestión de Riesgos" ${wizardData.detail === 'Gestión de Riesgos' ? 'selected' : ''}>Gestión de Riesgos</option>
-                    <option value="Medio Ambiente" ${wizardData.detail === 'Medio Ambiente' ? 'selected' : ''}>Medio Ambiente</option>
+                    <option value="Manipulacion de Alimentos" ${wizardData.detail === 'Manipulacion de Alimentos' ? 'selected' : ''}>Manipulacion de Alimentos</option>
+                    <option value="Colaboradores y/o Insumos" ${wizardData.detail === 'Colaboradores y/o Insumos' ? 'selected' : ''}>Colaboradores y/o Insumos</option>
                 </select>
             </div>
         `;
@@ -3233,17 +3242,13 @@ function renderConditionalDetail() {
     }
 }
 
-
-
 // ==========================================
 // COLABORADORS FUNCTIONS
 // ==========================================
 function renderColaboratorsDynamic() {
     const colabs = wizardData.colaboradores || [];
     
-    // If we already have collaborators and we're NOT showing the new form, show the current collaborator being edited
     if (colabs.length > 0 && !wizardShowingNewColabForm) {
-        // Show the most recently added collaborator
         const currentColab = colabs[colabs.length - 1];
         const index = colabs.length - 1;
         
@@ -3252,16 +3257,14 @@ function renderColaboratorsDynamic() {
                 <div class="colab-row-modern" style="margin-bottom: 8px;">
                     <select class="wizard-input colab-select" style="margin:0" data-index="${index}" onchange="updateColabType(this, ${index})">
                         <option value="">-- Seleccionar --</option>
-                        <option value="Voluntariado" ${currentColab.org === 'Voluntariado' ? 'selected' : ''}>Voluntariado</option>
-                        <option value="Activo" ${currentColab.org === 'Activo' ? 'selected' : ''}>Activo</option>
-                        <option value="Activo con Observaciones" ${currentColab.org === 'Activo con Observaciones' ? 'selected' : ''}>Activo con Observaciones</option>
-                        <option value="Inactivo" ${currentColab.org === 'Inactivo' ? 'selected' : ''}>Seguridad</option>
-                        <option value="Junta Directiva CD-17" ${currentColab.org === 'Junta Directiva CD-17' ? 'selected' : ''}>Junta Directiva CD-17</option>
                         <option value="Bomberos" ${currentColab.org === 'Bomberos' ? 'selected' : ''}>Bomberos</option>
                         <option value="Alcaldía Local" ${currentColab.org === 'Alcaldía Local' ? 'selected' : ''}>Alcaldía Local</option>
+                        <option value="CIS" ${currentColab.org === 'CIS' ? 'selected' : ''}>Departamento de Salud | CIS</option>
                         <option value="Autoridad Competente" ${currentColab.org === 'Autoridad Competente' ? 'selected' : ''}>Autoridad Competente</option>
                         <option value="Iglesia Local" ${currentColab.org === 'Iglesia Local' ? 'selected' : ''}>Iglesia Local</option>
                         <option value="ONG" ${currentColab.org === 'ONG' ? 'selected' : ''}>ONG</option>
+                        <option value="Empresa Privada" ${currentColab.org === 'Empresa Privada' ? 'selected' : ''}>Empresa Privada</option>
+                        <option value="Universidad" ${currentColab.org === 'Universidad' ? 'selected' : ''}>Universidad</option>
                     </select>
                     <input type="number" placeholder="Cant." class="wizard-input colab-cant" style="margin:0; width:100px" value="${currentColab.cant}" min="0" oninput="updateColabDetails(this, ${index})">
                     <button class="remove-colab" onclick="removeColabRow(this)">✖</button>
@@ -3274,25 +3277,20 @@ function renderColaboratorsDynamic() {
         `;
     }
     
-    // Reset flag and show blank form for new collaborator
     wizardShowingNewColabForm = false;
     
-    // Show blank form for first collaborator
     return `
         <div class="colab-row-modern" style="margin-bottom: 16px;">
             <select class="wizard-input colab-select" style="margin:0" data-index="0" onchange="updateColabType(this, 0)">
                 <option value="">-- Seleccionar colaborador --</option>
-                <option value="Voluntariado">Voluntariado</option>
-                <option value="Activo">Activo</option>
-                <option value="Activo con Observaciones">Activo con Observaciones</option>
-                <option value="Inactivo">Inactivo</option>
-                <option value="Junta Directiva CD-17">Junta Directiva IV-08</option>
                 <option value="Bomberos">Bomberos</option>
                 <option value="Alcaldía Local">Alcaldía Local</option>
-                 <option value="Cis">Departamento de Salud | CIS</option>
+                <option value="CIS">Departamento de Salud | CIS</option>
                 <option value="Autoridad Competente">Autoridad Competente</option>
                 <option value="Iglesia Local">Iglesia Local</option>
                 <option value="ONG">ONG</option>
+                <option value="Empresa Privada">Empresa Privada</option>
+                <option value="Universidad">Universidad</option>
             </select>
             <input type="number" placeholder="Cant." class="wizard-input colab-cant" style="margin:0; width:100px" min="0" oninput="updateColabDetails(this, 0)">
             <button class="remove-colab" onclick="removeColabRow(this)">✖</button>
@@ -3302,12 +3300,10 @@ function renderColaboratorsDynamic() {
 }
 
 function renderDetailedFields(col, index) {
-    const participants = col.participants || [];
     const expectedCount = col.cant || 0;
-    const isInternal = ['Voluntariado', 'Activo', 'Activo con Observaciones'].includes(col.org);
     
-    // For external collaborators
-    if (!isInternal && col.org !== '' && expectedCount > 0) {
+    // All collaborators are now external
+    if (col.org !== '' && expectedCount > 0) {
         const personInCharge = col.personInCharge || { name: '', title: '' };
         return `
             <div class="detailed-participants" style="margin-left: 20px; margin-bottom: 12px; padding: 12px; background: var(--neutral-light); border-radius: 16px;">
@@ -3321,46 +3317,16 @@ function renderDetailedFields(col, index) {
         `;
     }
     
-    // For internal collaborators (Voluntariado, Activo, Activo con Observaciones)
-    // Adjust participants array to match count
-    if (participants.length !== expectedCount && expectedCount > 0) {
-        while (participants.length < expectedCount) {
-            participants.push({ name: '', gender: '' });
-        }
-        while (participants.length > expectedCount) {
-            participants.pop();
-        }
-        col.participants = participants;
-        saveWizardState();
-    }
-    
     if (expectedCount === 0) {
         return `
             <div class="detailed-participants" style="margin-left: 20px; margin-bottom: 12px; padding: 12px; background: var(--neutral-light); border-radius: 16px;">
-                <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">📋 Detalles de ${col.org}</div>
-                <p style="font-size:0.7rem; color:var(--text-medium); text-align:center; padding: 8px;">Ingresa la cantidad para registrar los nombres y géneros</p>
+                <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">📋 Detalles de ${col.org || 'colaborador'}</div>
+                <p style="font-size:0.7rem; color:var(--text-medium); text-align:center; padding: 8px;">Ingresa la cantidad para registrar la persona de contacto</p>
             </div>
         `;
     }
     
-    return `
-        <div class="detailed-participants" style="margin-left: 20px; margin-bottom: 12px; padding: 12px; background: var(--neutral-light); border-radius: 16px;">
-            <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">📋 Detalles de ${col.org} (${expectedCount} persona${expectedCount !== 1 ? 's' : ''})</div>
-            <div id="participants_${index}" class="participants-list">
-                ${participants.map((p, pIdx) => `
-                    <div class="participant-row" style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
-                        <input type="text" placeholder="Nombre completo" class="wizard-input participant-name" style="flex:2; margin:0;" value="${escapeHtml(p.name || '')}" onchange="updateParticipantAndValidate(${index}, ${pIdx}, 'name', this.value)">
-                        <select class="wizard-input participant-gender" style="flex:1; margin:0;" onchange="updateParticipantAndValidate(${index}, ${pIdx}, 'gender', this.value)">
-                            <option value="">Género</option>
-                            <option value="Femenino" ${p.gender === 'Femenino' ? 'selected' : ''}>Femenino</option>
-                            <option value="Masculino" ${p.gender === 'Masculino' ? 'selected' : ''}>Masculino</option>
-                        </select>
-                    </div>
-                `).join('')}
-            </div>
-            <p style="font-size:0.65rem; color:var(--text-medium); margin-top: 6px;">Registra el nombre y género de cada persona de ${col.org} que participó.</p>
-        </div>
-    `;
+    return '';
 }
 
 function updateColabType(select, index) {
@@ -3629,17 +3595,143 @@ function updateParticipantAndValidate(colabIndex, participantIndex, field, value
         }
     }
 }
+function renderEnhancedTimerStep() {
+    const currentMinutes = Math.round((wizardData.horas || 0) * 60);
+    const startHour = wizardData.startHour || '';
+    const startMinute = wizardData.startMinute || '';
+    const endHour = wizardData.endHour || '';
+    const endMinute = wizardData.endMinute || '';
+    
+    return `
+        <div class="dynamic-question">
+            <div class="question-label">⏱ Duración de la actividad</div>
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 20px; background: var(--neutral-light); padding: 26px; border-radius: 60px;">
+                <button type="button" class="timer-mode-btn ${timerMode === 'manual' ? 'active' : ''}" 
+                        data-mode="manual" onclick="switchTimerMode('manual')"
+                        style="flex:1; padding: 10px; border: none; border-radius: 40px; cursor: pointer; 
+                               background: ${timerMode === 'manual' ? 'var(--accent)' : 'transparent'};
+                               color: ${timerMode === 'manual' ? 'white' : 'var(--text-medium)'};
+                               font-weight: 600; transition: all 0.2s;">
+                    📝 Manual
+                </button>
+                <button type="button" class="timer-mode-btn ${timerMode === 'timeRange' ? 'active' : ''}" 
+                        data-mode="timeRange" onclick="switchTimerMode('timeRange')"
+                        style="flex:1; padding: 10px; border: none; border-radius: 40px; cursor: pointer;
+                               background: ${timerMode === 'timeRange' ? 'var(--accent)' : 'transparent'};
+                               color: ${timerMode === 'timeRange' ? 'white' : 'var(--text-medium)'};
+                               font-weight: 600; transition: all 0.2s;">
+                    ⏰ Hora Inicio/Fin
+                </button>
+            </div>
+            
+            <div id="manualTimerMode" style="display: ${timerMode === 'manual' ? 'block' : 'none'};">
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
+                    <input type="text" id="hoursInput" class="wizard-input" 
+                           placeholder="Ej: 30 minutos" 
+                           value="${currentMinutes === 0 ? '' : (currentMinutes === 1 ? '1 minuto' : `${currentMinutes} minutos`)}" 
+                           style="flex:2">
+                    <div id="minutesHelper" style="flex:1; background: #f0f2f5; border-radius: 60px; padding: 12px 16px; text-align: center; font-weight: 600; color: #E34A2F;">
+                        ${currentMinutes === 0 ? '0 minutos' : (currentMinutes === 1 ? '1 minuto' : `${currentMinutes} minutos`)}
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; margin: 16px 0;">
+                    <button class="wiz-btn wiz-btn-secondary" style="flex:1" onclick="startWizardTimerGlobal()">▶ Iniciar Timer</button>
+                    <button class="wiz-btn wiz-btn-secondary" style="flex:1" onclick="stopWizardTimerGlobal()">⏹ Detener Timer</button>
+                </div>
+            </div>
+            
+            <div id="timeRangeTimerMode" style="display: ${timerMode === 'timeRange' ? 'block' : 'none'};">
+                <div style="background: var(--neutral-light); padding: 16px; border-radius: 16px; margin-bottom: 16px;">
+                    <div style="display: grid; gap: 16px;">
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-medium); display: block; margin-bottom: 8px;">🕐 Hora de Inicio</label>
+                            <div style="display: flex; gap: 12px;">
+                                <div style="flex: 1;">
+                                    <input type="number" id="startHour" class="wizard-input" 
+                                           placeholder="Hora (0-23)" min="0" max="23"
+                                           value="${startHour}"
+                                           onchange="calculateTimeRangeFromNumbers()"
+                                           style="text-align: center;">
+                                </div>
+                                <div style="flex: 1;">
+                                    <input type="number" id="startMinute" class="wizard-input" 
+                                           placeholder="Min (0-59)" min="0" max="59"
+                                           value="${startMinute}"
+                                           onchange="calculateTimeRangeFromNumbers()"
+                                           style="text-align: center;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-medium); display: block; margin-bottom: 8px;">🕒 Hora de Fin</label>
+                            <div style="display: flex; gap: 12px;">
+                                <div style="flex: 1;">
+                                    <input type="number" id="endHour" class="wizard-input" 
+                                           placeholder="Hora (0-23)" min="0" max="23"
+                                           value="${endHour}"
+                                           onchange="calculateTimeRangeFromNumbers()"
+                                           style="text-align: center;">
+                                </div>
+                                <div style="flex: 1;">
+                                    <input type="number" id="endMinute" class="wizard-input" 
+                                           placeholder="Min (0-59)" min="0" max="59"
+                                           value="${endMinute}"
+                                           onchange="calculateTimeRangeFromNumbers()"
+                                           style="text-align: center;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="timeRangeMinutes" style="margin-top: 16px; padding: 12px; background: white; border-radius: 12px; text-align: center; font-size: 1rem;">
+                        ${currentMinutes > 0 ? `${currentMinutes} minutos (${(currentMinutes/60).toFixed(2)} horas)` : '0 minutos'}
+                    </div>
+                    
+                    <button class="wiz-btn wiz-btn-primary" style="width:100%; margin-top: 16px;" 
+                            onclick="applyTimeRangeFromNumbers()">
+                        ✅ Aplicar duración
+                    </button>
+                </div>
+                <p style="font-size:0.7rem; text-align:center; color: var(--text-medium);">
+                    💡 Ingresa la hora exacta de inicio y fin (formato 24 horas)
+                </p>
+            </div>
+            
+            <div class="timer-glow" id="globalTimerDisplay">${formatTimeDisplay(currentMinutes)}</div>
+            <p style="font-size:0.7rem; text-align:center; margin-top:8px;">
+                ⚡ El tiempo se redondea automáticamente para facilitar el registro
+            </p>
+        </div>
+    `;
+}
+
+
 
 function saveCurrentStepData() {
     switch(wizardStep) {
         case 1:
-            // Remove the default - don't set actionType automatically
+            // Save date
             const dateInput = document.getElementById('activityDate');
-            if (dateInput) wizardData.date = dateInput.value;
+            if (dateInput && dateInput.value) {
+                // Fix date format - ensure it's YYYY-MM-DD
+                let dateValue = dateInput.value;
+                // If date is in format "2026-5-5", convert to "2026-05-05"
+                if (dateValue && dateValue.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+                    const parts = dateValue.split('-');
+                    dateValue = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                }
+                wizardData.date = dateValue;
+            }
+            // Save detail if it exists
             const detailSelect = document.getElementById('activityDetailSelect');
-            if (detailSelect) wizardData.detail = detailSelect.value;
-            // actionType should only be set when user actually selects it
+            if (detailSelect && detailSelect.value) {
+                wizardData.detail = detailSelect.value;
+            }
+            // actionType is already saved via selectWizardRadio
             break;
+            
         case 2:
             const hoursInput = document.getElementById('hoursInput');
             if (hoursInput) {
@@ -3648,10 +3740,14 @@ function saveCurrentStepData() {
                     wizardData.horas = parseFloat(decimalValue);
                 } else {
                     const match = hoursInput.value.match(/(\d+)/);
-                    if (match) wizardData.horas = parseInt(match[1]) / 60;
+                    if (match) {
+                        let minutes = parseInt(match[1]);
+                        wizardData.horas = minutes / 60;
+                    }
                 }
             }
             break;
+            
         case 3:
             const voluntarias = document.getElementById('voluntariasInput');
             const mujeres = document.getElementById('mujeresInput');
@@ -3660,33 +3756,33 @@ function saveCurrentStepData() {
             if (mujeres) wizardData.beneficiadas_mujeres = parseInt(mujeres.value) || 0;
             if (hombres) wizardData.beneficiados_hombres = parseInt(hombres.value) || 0;
             break;
+            
         case 4:
             const link1 = document.getElementById('link1Input');
             const link2 = document.getElementById('link2Input');
             if (link1) wizardData.link1 = link1.value;
             if (link2) wizardData.link2 = link2.value;
             break;
-        case 5:
-        // Save current collaborator data from the visible form before proceeding
-        const colabRows = document.querySelectorAll('.colab-row-modern');
-        if (colabRows.length > 0 && wizardData.colaboradores && wizardData.colaboradores.length > 0) {
-            const index = wizardData.colaboradores.length - 1;
-            const select = document.querySelector('.colab-select');
-            const cantInput = document.querySelector('.colab-cant');
-            if (select && select.value) wizardData.colaboradores[index].org = select.value;
-            if (cantInput) wizardData.colaboradores[index].cant = parseInt(cantInput.value) || 0;
             
-            // Save external person in charge if exists
-            const externalPersonName = document.getElementById(`externalPersonName_${index}`);
-            const externalPersonTitle = document.getElementById(`externalPersonTitle_${index}`);
-            if (externalPersonName) {
-                if (!wizardData.colaboradores[index].personInCharge) wizardData.colaboradores[index].personInCharge = {};
-                wizardData.colaboradores[index].personInCharge.name = externalPersonName.value;
-                wizardData.colaboradores[index].personInCharge.title = externalPersonTitle ? externalPersonTitle.value : '';
+        case 5:
+            const colabRows = document.querySelectorAll('.colab-row-modern');
+            if (colabRows.length > 0 && wizardData.colaboradores && wizardData.colaboradores.length > 0) {
+                const index = wizardData.colaboradores.length - 1;
+                const select = document.querySelector('.colab-select');
+                const cantInput = document.querySelector('.colab-cant');
+                if (select && select.value) wizardData.colaboradores[index].org = select.value;
+                if (cantInput) wizardData.colaboradores[index].cant = parseInt(cantInput.value) || 0;
+                
+                const externalPersonName = document.getElementById(`externalPersonName_${index}`);
+                const externalPersonTitle = document.getElementById(`externalPersonTitle_${index}`);
+                if (externalPersonName) {
+                    if (!wizardData.colaboradores[index].personInCharge) wizardData.colaboradores[index].personInCharge = {};
+                    wizardData.colaboradores[index].personInCharge.name = externalPersonName.value;
+                    wizardData.colaboradores[index].personInCharge.title = externalPersonTitle ? externalPersonTitle.value : '';
+                }
             }
-        }
-        updateColaboratorData();
-        break;
+            break;
+            
         case 6:
             const lat = document.getElementById('wizardLat');
             const lng = document.getElementById('wizardLng');
@@ -3696,7 +3792,6 @@ function saveCurrentStepData() {
     }
     saveWizardState();
 }
-
 
 function wizardGoPrev() {
     if (wizardStep > 1) {
@@ -3722,7 +3817,10 @@ function wizardGoNext() {
     saveCurrentStepData();
     if (!validateCurrentStep()) return;
     
-    if (wizardStep === 2 && wizardTimerInterval) stopWizardTimerGlobal();
+    // Only stop timer if we're on step 2 AND timer is actually running
+    if (wizardStep === 2 && wizardTimerInterval) {
+        stopWizardTimerGlobal();
+    }
     
     if (wizardStep < 6) {
         wizardStep++;
@@ -3755,45 +3853,42 @@ function finalizeWizardActivity() {
     // Format hours to 2 decimal places
     const formattedHours = Math.round((wizardData.horas || 0) * 100) / 100;
     
-    
-    // ========== ADD HOURS TO PROFILES - CORRECTED LOGIC ==========
+    // ========== ADD HOURS TO PROFILES ==========
     const voluntariosParticipants = wizardData.voluntariosParticipants || [];
     function normalizeName(str) {
         return str
             .toLowerCase()
             .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')  // Remove accents
-            .replace(/[^a-z0-9]/g, '_')       // Replace special chars with underscore
-            .replace(/_+/g, '_')              // Remove multiple underscores
-            .replace(/^_|_$/g, '');           // Trim underscores
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]/g, '_')
+            .replace(/_+/g, '_')
+            .replace(/^_|_$/g, '');
     }
-
     
-    // STEP 1: ALWAYS add hours to the reporting user (currentUser) ONCE
+    // STEP 1: Add hours to reporting user
     if (typeof currentUser !== 'undefined' && currentUser && formattedHours > 0) {
         currentUser.totalHoras = (currentUser.totalHoras || 0) + formattedHours;
         currentUser.actividadesCount = (currentUser.actividadesCount || 0) + 1;
     }
     
-    // STEP 2: Add hours to OTHER participants (voluntariosParticipants are the ADDITIONAL people, not including currentUser)
+    // STEP 2: Add hours to other participants
     if (voluntariosParticipants.length > 0) {
-        voluntariosParticipants.forEach(Voluntario => {
-            if (Voluntario.name && Voluntario.name.trim() !== '') {
-                // Skip if this is the current user (defensive check)
-                if (currentUser && normalizeName(Voluntario.name) === normalizeName(currentUser.name)) {
-                    return; // Already added in STEP 1
+        voluntariosParticipants.forEach(voluntario => {
+            if (voluntario.name && voluntario.name.trim() !== '') {
+                if (currentUser && normalizeName(voluntario.name) === normalizeName(currentUser.name)) {
+                    return;
                 }
                 
                 const existingProfile = VoluntarioProfiles.find(p => 
-                    normalizeName(p.name) === normalizeName(Voluntario.name)
+                    normalizeName(p.name) === normalizeName(voluntario.name)
                 );
                 
                 if (!existingProfile) {
                     const newProfile = {
-                        id: `Voluntario-${Date.now()}-${identidadSuffix}`,
-                        name: Voluntario.name.trim(),
+                        id: `voluntario-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        name: voluntario.name.trim(),
                         identidadSuffix: '',
-                        rolNombre: 'Voluntaria',
+                        rolNombre: 'voluntaria',
                         totalHoras: formattedHours,
                         actividadesCount: 1,
                         isPlaceholder: true,
@@ -3808,21 +3903,16 @@ function finalizeWizardActivity() {
         });
     }
     
-    // Save profiles after all updates
+    // Save profiles
     if (typeof saveProfiles === 'function') saveProfiles();
     if (typeof renderProfileSelector === 'function') renderProfileSelector();
     if (typeof actualizarListavoluntarios === 'function') actualizarListavoluntarios();
-    // ========== END CORRECTED ADDITION LOGIC ==========
     
     // Create activity object
-    const date = wizardData.date;
-    const activityName = finalName;
-
-    // Generate an ID by combining date and name
-    const generateActivityId = `${wizardData.date}_${finalName}`;
-
+    const generateActivityId = `${wizardData.date}_${finalName}_${Date.now()}`;
+    
     const newActivity = {
-    id: generateActivityId,
+        id: generateActivityId,
         date: wizardData.date,
         name: finalName,
         horas: formattedHours,
@@ -3861,28 +3951,43 @@ function finalizeWizardActivity() {
         wizardTimerInterval = null;
     }
     
-    // Clear saved state
-    clearSavedTimerState();
-    clearWizardState();
-    stopAutoSave();
-    
-    // Store success message info before resetting
+    // Store success message info BEFORE clearing wizardData
     const finalMinutes = Math.round(formattedHours * 60);
     const finalHoursDisplay = formattedHours.toFixed(2);
     const locationMsg = (wizardData.lat && wizardData.lng) ? `\n📍 Ubicación registrada` : `\n📍 Sin ubicación (opcional)`;
     const voluntariasCount = wizardData.voluntarias || 0;
+    const activityName = finalName;
     
-    // Reset wizard data for next use
+    // ========== FIX: Clear state BEFORE closing ==========
+    // Clear saved state first
+    clearSavedTimerState();
+    clearWizardState();
+    stopAutoSave();
+    
+    // Reset all wizard data
     wizardData = {};
     wizardStep = 1;
     wizardTimerElapsedMs = 0;
+    activeWizard = null;
     
-    // Close wizard
-    closeGlobalWizard();
+    // Clear localStorage directly
+    localStorage.removeItem('wizardState');
+    localStorage.removeItem('wizardTimerState');
+    localStorage.removeItem('wizardFullState');
+    
+    // Now close the wizard (it will see empty wizardData and not save)
+    const overlay = document.getElementById('globalWizardOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        setTimeout(() => overlay.remove(), 300);
+    }
     
     // Show success message
-    alert(`✅ ¡Actividad "${finalName}" registrada exitosamente!\n⏱️ Duración: ${finalMinutes} minutos (${finalHoursDisplay} horas)\n👥 ${voluntariasCount} Voluntario(s) participaron${locationMsg}`);
+    setTimeout(() => {
+        alert(`✅ ¡Actividad "${activityName}" registrada exitosamente!\n⏱️ Duración: ${finalMinutes} minutos (${finalHoursDisplay} horas)\n👥 ${voluntariasCount} voluntario(s) participaron${locationMsg}`);
+    }, 100);
 }
+
 // ==========================================
 // GPS FUNCTIONS
 // ==========================================
