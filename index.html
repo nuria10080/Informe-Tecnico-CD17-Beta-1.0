@@ -161,7 +161,7 @@ body {
 .gender-m { color:var(--gender-m); }
 
 /* voluntarios */
-#voluntariosActivasContainer { position:relative; padding-bottom:20px; }
+#voluntariosActivosContainer { position:relative; padding-bottom:20px; }
 
 .voluntarios-dropdown {
     position:absolute;
@@ -179,7 +179,7 @@ body {
     z-index: 1000;
 }
 
-#voluntariosActivasContainer:hover .voluntarios-dropdown {
+#voluntariosActivosContainer:hover .voluntarios-dropdown {
     opacity:1;
     visibility:visible;
 }
@@ -1440,9 +1440,9 @@ body {
 </div>
 
 <div class="kpi-grid">
-    <div class="kpi-item" id="voluntariosActivasContainer">
+    <div class="kpi-item" id="voluntariosActivosContainer">
             <div class="kpi-label">⚡ Voluntarios Activos</div>
-            <div class="kpi-value" id="totalvoluntariosActivas">0</div>
+            <div class="kpi-value" id="totalvoluntariosActivos">0</div>
             <div class="voluntarios-dropdown">
                 <div style="display:flex; flex-direction:column; gap:6px;">
                     <select id="voluntariosRoles"><option value="">Seleccionar rol</option></select>
@@ -1594,7 +1594,7 @@ body {
 // ==========================================
 // At the very top of your script, right after the opening <script> tag
 let activities = [];
-let voluntariosActivas = [];
+let voluntariosActivos = [];
 let VoluntarioProfiles = [];
 let currentUser = null;
 let wizardSubmitting = false;
@@ -2209,7 +2209,7 @@ function updateFooterDates() {
 function saveAllToStorage() {
     const monthKey = getCurrentMonthKey();
     localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
-    localStorage.setItem(`voluntarios_${monthKey}`, JSON.stringify(voluntariosActivas));
+    localStorage.setItem(`voluntarios_${monthKey}`, JSON.stringify(voluntariosActivos));
     const desc = {
         scope: document.getElementById('scopeText')?.value || '',
         difficulties: document.getElementById('difficultiesText')?.value || '',
@@ -2227,7 +2227,7 @@ function loadCurrentMonthData() {
         sortActivitiesByDate();
     }
     const savedvoluntarios = localStorage.getItem(`voluntarios_${monthKey}`);
-    if (savedvoluntarios) voluntariosActivas = JSON.parse(savedvoluntarios);
+    if (savedvoluntarios) voluntariosActivos = JSON.parse(savedvoluntarios);
     const savedDesc = localStorage.getItem(`desc_${monthKey}`);
     if (savedDesc) {
         const d = JSON.parse(savedDesc);
@@ -2431,7 +2431,7 @@ function stopAutoSave() {
 }
 
 // ==========================================
-// PROFILE SYSTEM (Complete replacement for voluntariosActivas)
+// PROFILE SYSTEM (Complete replacement for voluntariosActivos)
 // ==========================================
 
 
@@ -2626,7 +2626,7 @@ function showManagevoluntarios() {
 // ==========================================
 
 function actualizarListavoluntarios() {
-    const totalEl = document.getElementById('totalvoluntariosActivas');
+    const totalEl = document.getElementById('totalvoluntariosActivos');
     if (totalEl) totalEl.innerText = VoluntarioProfiles.length;
     
     const lista = document.getElementById('rolesActivosList');
@@ -5049,7 +5049,7 @@ function clearData() {
     if (confirm('Borrar toda la información del mes actual?')) {
         const monthKey = getCurrentMonthKey();
         activities = [];
-        voluntariosActivas = [];
+        voluntariosActivos = [];
         localStorage.removeItem(`activities_${monthKey}`);
         localStorage.removeItem(`voluntarios_${monthKey}`);
         localStorage.removeItem(`desc_${monthKey}`);
@@ -5512,7 +5512,7 @@ function saveData() { saveAllToStorage(); alert('✅ Datos guardados'); }
 function clearData() {
     if (confirm('Borrar todo?')) {
         activities = [];
-        voluntariosActivas = [];
+        voluntariosActivos = [];
         saveAllToStorage();
         actualizarListavoluntarios();
         renderActivities();
