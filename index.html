@@ -3051,11 +3051,33 @@ function resetWizardState() {
 }
 
 function openActivityWizard() {
-    resetWizardState();
-    if (document.getElementById('globalWizardOverlay')) {
-        document.getElementById('globalWizardOverlay').remove();
+    // COMPLETELY RESET EVERYTHING
+    wizardStep = 1;
+    wizardData = {};
+    wizardCompleted = false;
+    wizardSubmitting = false;
+    wizardTimerElapsedMs = 0;
+    wizardTimerStart = null;
+    timerMode = 'manual';
+    activeWizard = true;
+    
+    // Clear localStorage
+    localStorage.removeItem('wizardFullState');
+    localStorage.removeItem('wizardTimerState');
+    
+    // Clear timer if running
+    if (wizardTimerInterval) {
+        clearInterval(wizardTimerInterval);
+        wizardTimerInterval = null;
     }
     
+    // Remove existing overlay if any
+    const existingOverlay = document.getElementById('globalWizardOverlay');
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
+    
+    // Create new overlay
     const overlay = document.createElement('div');
     overlay.id = 'globalWizardOverlay';
     overlay.className = 'wizard-overlay-global';
@@ -3084,23 +3106,12 @@ function openActivityWizard() {
     
     setTimeout(() => overlay.classList.add('active'), 10);
     
-    activeWizard = true;
-    
-    // Check if there's saved state
-    const savedState = localStorage.getItem('wizardFullState');
-    if (savedState) {
-        const state = JSON.parse(savedState);
-        wizardStep = state.step || 1;
-        wizardData = state.data || {};
-    } else {
-        wizardStep = 1;
-        wizardData = {};
-    }
-    
-    loadSavedTimerState();
     renderWizardStep();
     startAutoSave();
+    
+    console.log('✅ Wizard opened, step 1');
 }
+
 
 function closeGlobalWizard() {
     const overlay = document.getElementById('globalWizardOverlay');
@@ -3111,19 +3122,13 @@ function closeGlobalWizard() {
     activeWizard = null;
     stopAutoSave();
     
-    // IMPORTANT: Don't clear wizard state if we're still in the middle of submitting/saving
-    // The wizardSubmitting flag tells us if we're actively saving
-    if (!wizardSubmitting) {
-        // Only save if wizard was NOT completed
-        if (!wizardCompleted && (wizardTimerInterval || Object.keys(wizardData).length > 0)) {
-            saveWizardState();
-            if (wizardTimerInterval) saveTimerState(true);
-        } else {
-            clearWizardState();
-            clearSavedTimerState();
-        }
+    // Clear timer
+    if (wizardTimerInterval) {
+        clearInterval(wizardTimerInterval);
+        wizardTimerInterval = null;
     }
-    // If wizardSubmitting is true, we skip clearing state so the sync can complete
+    
+    console.log('✅ Wizard closed');
 }
 
 function clearWizardStateOnUserChange() {
