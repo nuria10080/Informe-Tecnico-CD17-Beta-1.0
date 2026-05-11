@@ -3834,7 +3834,7 @@ function wizardGoPrev() {
     }
 }
 
-function wizardGoNext() {
+async function wizardGoNext() {
     if (wizardStep === 6) {
         saveCurrentStepData();
         
@@ -3858,39 +3858,34 @@ function wizardGoNext() {
             createdByName: currentUser ? currentUser.name : 'Usuario'
         };
         
-        // Add to activities array and render IMMEDIATELY
+        // Add to activities and render
         activities.push(newActivity);
         saveAllToStorage();
         renderActivities();
         
-        // Close wizard IMMEDIATELY (UI feedback)
-        closeGlobalWizard();
-        
-        // Send to backend in the background (don't await)
+        // Send to backend
         const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
         
-        // Use Promise to ensure it runs even after wizard closes
-        Promise.resolve().then(() => {
-            return fetch(apiUrl, {
+        try {
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newActivity)
             });
-        }).then(response => {
+            
             if (response.ok) {
-                console.log('✅ Activity sent to backend successfully');
+                console.log('✅ Activity sent to backend');
             } else {
-                console.error('❌ Backend responded with error:', response.status);
+                console.error('❌ Backend error:', response.status);
             }
-        }).catch(err => {
+        } catch (err) {
             console.error('❌ Backend send failed:', err);
-            // Optionally store failed request in localStorage to retry later
-            const failedRequests = JSON.parse(localStorage.getItem('failedBackendRequests') || '[]');
-            failedRequests.push({ activity: newActivity, timestamp: Date.now() });
-            localStorage.setItem('failedBackendRequests', JSON.stringify(failedRequests));
-        });
+        } finally {
+            // Close wizard AFTER backend request completes
+            closeGlobalWizard();
+        }
         
-        // Reset wizard data for next activity
+        // Reset wizard data
         wizardData = {};
         wizardStep = 1;
         wizardCompleted = true;
@@ -3901,7 +3896,6 @@ function wizardGoNext() {
     saveCurrentStepData();
     if (!validateCurrentStep()) return;
     
-    // Only stop timer if we're on step 2 AND timer is actually running
     if (wizardStep === 2 && wizardTimerInterval) {
         stopWizardTimerGlobal();
     }
