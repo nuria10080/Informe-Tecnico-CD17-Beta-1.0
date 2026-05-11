@@ -1526,6 +1526,7 @@ let voluntariosActivos = [];
 let activityFormCount = 0;
 let timers = {};
 let wizardShowingNewColabForm = false;
+let wizardCompleted = false;
 const identidad = null;
 const identidadSuffix = identidad
   ? `Voluntario-${Date.now()}-${identidad}`
@@ -3837,62 +3838,164 @@ function wizardGoNext() {
 // FINALIZE ACTIVITY - FIXED VERSION
 // Preserves persistence, fixes decimal formatting and state clearing
 // ==========================================
-function openActivityWizard() {
-    if (document.getElementById('globalWizardOverlay')) {
-        document.getElementById('globalWizardOverlay').remove();
+function finalizeWizardActivity() {
+    wizardCompleted = true;
+    
+    // Get final GPS data
+    const latInput = document.getElementById('wizardLat');
+    const lngInput = document.getElementById('wizardLng');
+    if (latInput && latInput.value) wizardData.lat = latInput.value;
+    if (lngInput && lngInput.value) wizardData.lng = lngInput.value;
+    
+    // Build activity name with detail
+    let finalName = wizardData.activityName;
+    if (wizardData.detail && wizardData.detail !== '') {
+        finalName = `${wizardData.activityName} - ${wizardData.detail}`;
+    }
+     
+    // Collect links
+    const links = [];
+    if (wizardData.link1 && wizardData.link1.trim()) links.push(wizardData.link1.trim());
+    if (wizardData.link2 && wizardData.link2.trim()) links.push(wizardData.link2.trim());
+    
+    // Format hours to 2 decimal places
+    const formattedHours = Math.round((wizardData.horas || 0) * 100) / 100;
+    
+    // ========== ADD HOURS TO PROFILES ==========
+    const voluntariosParticipants = wizardData.voluntariosParticipants || [];
+    function normalizeName(str) {
+        return str
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]/g, '_')
+            .replace(/_+/g, '_')
+            .replace(/^_|_$/g, '');
     }
     
-    const overlay = document.createElement('div');
-    overlay.id = 'globalWizardOverlay';
-    overlay.className = 'wizard-overlay-global';
-    overlay.innerHTML = `
-        <div class="wizard-card">
-            <div class="wizard-header">
-                <h2>Registro de Actividad</h2>
-                <button class="wizard-close-btn" onclick="closeGlobalWizard()">✕</button>
-            </div>
-            <div class="wizard-steps-modern" id="wizardStepsModern">
-                <div class="step-pill active" data-step="1">1</div>
-                <div class="step-pill" data-step="2">2</div>
-                <div class="step-pill" data-step="3">3</div>
-                <div class="step-pill" data-step="4">4</div>
-                <div class="step-pill" data-step="5">5</div>
-                <div class="step-pill" data-step="6">6</div>
-            </div>
-            <div class="wizard-body" id="wizardDynamicBody"></div>
-            <div class="wizard-actions">
-                <button class="wiz-btn wiz-btn-secondary" id="wizardPrevBtn" onclick="wizardGoPrev()" style="display:none">← Anterior</button>
-                <button class="wiz-btn wiz-btn-primary" id="wizardNextBtn" onclick="wizardGoNext()">Siguiente →</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-    
-    setTimeout(() => overlay.classList.add('active'), 10);
-    
-    activeWizard = true;
-    
-    // Check for saved state directly (don't use loadWizardState)
-    const savedState = localStorage.getItem('wizardFullState');
-    if (savedState) {
-        try {
-            const state = JSON.parse(savedState);
-            wizardStep = state.step || 1;
-            wizardData = state.data || {};
-        } catch (e) {
-            wizardStep = 1;
-            wizardData = {};
-        }
-    } else {
-        wizardStep = 1;
-        wizardData = {};
+    // STEP 1: Add hours to reporting user
+    if (typeof currentUser !== 'undefined' && currentUser && formattedHours > 0) {
+        currentUser.totalHoras = (currentUser.totalHoras || 0) + formattedHours;
+        currentUser.actividadesCount = (currentUser.actividadesCount || 0) + 1;
     }
     
-    loadSavedTimerState();
-    renderWizardStep();
-    startAutoSave();
+    // STEP 2: Add hours to other participants
+    if (voluntariosParticipants.length > 0) {
+        voluntariosParticipants.forEach(voluntario => {
+            if (voluntario.name && voluntario.name.trim() !== '') {
+                if (currentUser && normalizeName(voluntario.name) === normalizeName(currentUser.name)) {
+                    return;
+                }
+                
+                const existingProfile = VoluntarioProfiles.find(p => 
+                    normalizeName(p.name) === normalizeName(voluntario.name)
+                );
+                
+                if (!existingProfile) {
+                    const newProfile = {
+                        id: `voluntario-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        name: voluntario.name.trim(),
+                        identidadSuffix: '',
+                        rolNombre: 'voluntaria',
+                        totalHoras: formattedHours,
+                        actividadesCount: 1,
+                        isPlaceholder: true,
+                        mergedFrom: []
+                    };
+                    VoluntarioProfiles.push(newProfile);
+                } else {
+                    existingProfile.totalHoras = (existingProfile.totalHoras || 0) + formattedHours;
+                    existingProfile.actividadesCount = (existingProfile.actividadesCount || 0) + 1;
+                }
+            }
+        });
+    }
+    
+    // Save profiles
+    if (typeof saveProfiles === 'function') saveProfiles();
+    if (typeof renderProfileSelector === 'function') renderProfileSelector();
+    if (typeof actualizarListavoluntarios === 'function') actualizarListavoluntarios();
+    
+    // Create activity object
+    const generateActivityId = `${wizardData.date}_${finalName}_${Date.now()}`;
+    
+    const newActivity = {
+        id: generateActivityId,
+        date: wizardData.date,
+        name: finalName,
+        horas: formattedHours,
+        startTime: wizardData.startTime || '',
+        endTime: wizardData.endTime || '',
+        actionType: wizardData.actionType || 'filial',
+        beneficiadas_mujeres: wizardData.beneficiadas_mujeres || 0,
+        beneficiados_hombres: wizardData.beneficiados_hombres || 0,
+        colaboradores: wizardData.colaboradores || [],
+        links: links,
+        lat: wizardData.lat || '',
+        lng: wizardData.lng || '',
+        personInCharge: {
+            name: wizardData.personInChargeName || '',
+            title: wizardData.personInChargeTitle || ''
+        },
+        voluntariosParticipants: wizardData.voluntariosParticipants || [], 
+        voluntarias: wizardData.voluntarias || 0,
+        createdBy: typeof currentUser !== 'undefined' && currentUser ? currentUser.id : null,
+        createdByName: typeof currentUser !== 'undefined' && currentUser ? currentUser.name : 'Usuario'
+    };
+    
+    // Add to global activities array
+    if (typeof activities !== 'undefined') {
+        activities.push(newActivity);
+        if (typeof sortActivitiesByDate === 'function') sortActivitiesByDate();
+        if (typeof renderActivities === 'function') renderActivities();
+        if (typeof saveAllToStorage === 'function') saveAllToStorage();
+        if (typeof updateGlobalKPIs === 'function') updateGlobalKPIs();
+        if (typeof updateCharts === 'function') updateCharts();
+    }
+    
+    // Stop timer if running
+    if (wizardTimerInterval) {
+        clearInterval(wizardTimerInterval);
+        wizardTimerInterval = null;
+    }
+    
+    // Store success message info BEFORE clearing wizardData
+    const finalMinutes = Math.round(formattedHours * 60);
+    const finalHoursDisplay = formattedHours.toFixed(2);
+    const locationMsg = (wizardData.lat && wizardData.lng) ? `\n📍 Ubicación registrada` : `\n📍 Sin ubicación (opcional)`;
+    const voluntariasCount = wizardData.voluntarias || 0;
+    const activityName = finalName;
+    
+    // ========== CLEAR STATE ==========
+    clearSavedTimerState();
+    clearWizardState();
+    stopAutoSave();
+    
+    // Reset all wizard data
+    wizardData = {};
+    wizardStep = 1;
+    wizardTimerElapsedMs = 0;
+    activeWizard = null;
+    
+    // Clear localStorage directly
+    localStorage.removeItem('wizardState');
+    localStorage.removeItem('wizardTimerState');
+    localStorage.removeItem('wizardFullState');
+    
+    wizardCompleted = false;
+    
+    // Close the wizard
+    const overlay = document.getElementById('globalWizardOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        setTimeout(() => overlay.remove(), 300);
+    }
+    
+    // Show success message
+    setTimeout(() => {
+        alert(`✅ ¡Actividad "${activityName}" registrada exitosamente!\n⏱️ Duración: ${finalMinutes} minutos (${finalHoursDisplay} horas)\n👥 ${voluntariasCount} voluntario(s) participaron${locationMsg}`);
+    }, 100);
 }
-
 // ==========================================
 // GPS FUNCTIONS
 // ==========================================
