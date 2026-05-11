@@ -4065,7 +4065,8 @@ function renderActivities() {
         }
 
         // Build table row
-        tbody.innerHTML += `<tr>
+        tbody.innerHTML += `
+        <tr>
             <td>${formatDateForDisplay(a.date)}</td>
             <td style="text-align:left">${a.name}</td>
             <td>${a.voluntarias || 0}</td>
@@ -4076,8 +4077,15 @@ function renderActivities() {
             <td>${colaboradoresHtml}</td>
             <td>${gpsBadge}</td>
             <td>${qrCellHtml}</td>
-            <td><button onclick="deleteActivity(${idx})" style="border:none;background:none;color:var(--warning);">🗑️</button></td>
-        　`;
+            <td>
+                <button
+                    onclick="deleteActivity(${idx})"
+                    style="border:none;background:none;color:var(--warning);cursor:pointer;">
+                    🗑️
+                </button>
+            </td>
+        </tr>
+        `;
     });
 
     // Totals - Update all summary displays
@@ -4158,14 +4166,12 @@ function wizardGoPrev() {
     }
 }
 
-
-
 // Function to show loading overlay
 function showWizardLoading(message = 'Guardando actividad...', submessage = 'Por favor espera') {
     if (loadingOverlay) {
         hideWizardLoading();
     }
-    
+
     loadingOverlay = document.createElement('div');
     loadingOverlay.className = 'wizard-loading-overlay';
     loadingOverlay.innerHTML = `
@@ -4175,6 +4181,7 @@ function showWizardLoading(message = 'Guardando actividad...', submessage = 'Por
             <div class="wizard-loading-subtext">${submessage}</div>
         </div>
     `;
+
     document.body.appendChild(loadingOverlay);
 }
 
@@ -4187,6 +4194,7 @@ function hideWizardLoading() {
 
 async function wizardGoNext() {
     saveData();
+
     if (wizardSubmitting) {
         console.log('Wizard already submitting');
         return;
@@ -4198,238 +4206,351 @@ async function wizardGoNext() {
         return;
     }
 
+    // ==========================================
+    // FINAL STEP
+    // ==========================================
     if (wizardStep === 6) {
+
         wizardSubmitting = true;
 
         const finalizeBtn = document.getElementById('wizardFinalizeBtn');
+
         if (finalizeBtn) {
             finalizeBtn.disabled = true;
             finalizeBtn.classList.add('btn-loading');
-            finalizeBtn.innerHTML = '<span class="btn-text">Guardando...</span><span class="btn-spinner"></span>';
+            finalizeBtn.innerHTML = `
+                <span class="btn-text">Guardando...</span>
+                <span class="btn-spinner"></span>
+            `;
         }
-        
-        showWizardLoading('Guardando actividad...', 'Por favor espera');
 
+        showWizardLoading(
+            'Guardando actividad...',
+            'Por favor espera'
+        );
+
+        // ==========================================
+        // CREATE ACTIVITY
+        // ==========================================
         const newActivity = {
             id: crypto.randomUUID(),
             date: wizardData.date || getHondurasDate(),
-            name: wizardData.activityName,
-            horas: wizardData.horas || 0,
-            actionType: wizardData.actionType,
-            beneficiadas_mujeres: wizardData.beneficiadas_mujeres || 0,
-            beneficiados_hombres: wizardData.beneficiados_hombres || 0,
-            voluntarias: wizardData.voluntarias || 1,
-            colaboradores: wizardData.colaboradores || [],
-            links: [],
+            name: wizardData.activityName || '',
+            horas: Number(wizardData.horas) || 0,
+            actionType: wizardData.actionType || 'campo',
+            beneficiadas_mujeres: Number(wizardData.beneficiadas_mujeres) || 0,
+            beneficiados_hombres: Number(wizardData.beneficiados_hombres) || 0,
+            voluntarias: Number(wizardData.voluntarias) || 1,
+            colaboradores: Array.isArray(wizardData.colaboradores)
+                ? wizardData.colaboradores
+                : [],
+            links: Array.isArray(wizardData.links)
+                ? wizardData.links
+                : [],
             lat: wizardData.lat || '',
             lng: wizardData.lng || '',
             startTime: wizardData.startTime || '',
             endTime: wizardData.endTime || '',
-            voluntariosParticipants: wizardData.voluntariosParticipants || [],
+            voluntariosParticipants: Array.isArray(wizardData.voluntariosParticipants)
+                ? wizardData.voluntariosParticipants
+                : [],
             createdBy: currentUser ? currentUser.id : null,
             createdByName: currentUser ? currentUser.name : 'Usuario',
-            synced: false
+            synced: false,
+            createdAt: Date.now()
         };
 
-        console.log('📝 New activity created:', newActivity);
+        console.log('📝 New activity:', newActivity);
 
         // ==========================================
-        // FIXED LOCAL SAVE - Ensuring activities exists
+        // LOCAL SAVE
         // ==========================================
-        let localSaveSuccess = false;
-        
         try {
-            // CRITICAL FIX: Ensure activities is initialized
-            if (typeof activities === 'undefined' || activities === null) {
-                console.log('⚠️ activities was undefined, initializing empty array');
-                window.activities = [];
-                // Use var to make it globally accessible
-                var activities = window.activities;
-            }
-            
-            // Also check window.activities as fallback
-            if (typeof window.activities === 'undefined' || window.activities === null) {
-                console.log('⚠️ window.activities was undefined, initializing');
+
+            // Ensure global array exists
+            if (!Array.isArray(window.activities)) {
                 window.activities = [];
             }
-            
-            // Get the correct reference to the activities array
-            const activitiesRef = (typeof activities !== 'undefined' && activities !== null) ? activities : window.activities;
-            
-            if (!activitiesRef || !Array.isArray(activitiesRef)) {
-                throw new Error('Activities array is not properly initialized');
+
+            // Ensure global reference
+            activities = window.activities;
+
+            // Prevent duplicates
+            const exists = activities.some(a => a.id === newActivity.id);
+
+            if (!exists) {
+                activities.push(newActivity);
             }
-            
-            activitiesRef.push(newActivity);
-            console.log('✅ Activity pushed to array. New length:', activitiesRef.length);
-            
-            // Save to localStorage using multiple methods for redundancy
+
+            console.log('✅ Activity added locally');
+            console.log('📊 Total activities:', activities.length);
+
+            // ==========================================
+            // SAVE TO LOCAL STORAGE
+            // ==========================================
             const monthKey = getCurrentMonthKey();
-            
-            // Method 1: Use saveAllToStorage if available
+
+            localStorage.setItem(
+                `activities_${monthKey}`,
+                JSON.stringify(activities)
+            );
+
+            // Backup
+            localStorage.setItem(
+                'activities_backup',
+                JSON.stringify(activities)
+            );
+
+            // Optional app save system
             if (typeof saveAllToStorage === 'function') {
-                saveAllToStorage();
-                console.log('✅ saveAllToStorage called');
+                try {
+                    saveAllToStorage();
+                } catch (e) {
+                    console.warn('saveAllToStorage warning:', e);
+                }
             }
-            
-            // Method 2: Direct localStorage save (redundancy)
-            const existingActivities = JSON.parse(localStorage.getItem(`activities_${monthKey}`) || '[]');
-            existingActivities.push(newActivity);
-            localStorage.setItem(`activities_${monthKey}`, JSON.stringify(existingActivities));
-            console.log('✅ Direct localStorage save complete');
-            
-            // Update the global reference
-            if (typeof activities !== 'undefined') {
-                activities = activitiesRef;
-            }
-            window.activities = activitiesRef;
-            
-            localSaveSuccess = true;
-            console.log('✅ Local save COMPLETE');
-            
-        } catch (localError) {
-            console.error('❌ LOCAL save error:', localError);
-            console.error('Error details:', localError.message);
-            console.error('Stack trace:', localError.stack);
-            
-            hideWizardLoading();
-            alert('Error crítico: No se pudo guardar localmente. Detalle: ' + localError.message);
-            wizardSubmitting = false;
-            if (finalizeBtn) {
-                finalizeBtn.disabled = false;
-                finalizeBtn.classList.remove('btn-loading');
-                finalizeBtn.innerHTML = '<span class="btn-text">Finalizar</span><span class="btn-spinner"></span>';
-            }
-            return;
-        }
 
-        // Only close wizard if local save succeeded
-        if (localSaveSuccess) {
+            // Ensure references stay synced
+            window.activities = activities;
+
+            console.log('✅ Local save complete');
+
+            // ==========================================
+            // IMMEDIATE UI REFRESH
+            // ==========================================
+            try {
+
+                if (typeof renderActivities === 'function') {
+                    renderActivities();
+                }
+
+                if (typeof updateCharts === 'function') {
+                    updateCharts();
+                }
+
+                if (typeof updateGlobalKPIs === 'function') {
+                    updateGlobalKPIs();
+                }
+
+            } catch (uiError) {
+                console.warn('UI refresh warning:', uiError);
+            }
+
+            // CLOSE AFTER RENDER
             closeGlobalWizard();
-        } else {
+
+        } catch (localError) {
+
+            console.error('❌ LOCAL SAVE FAILED:', localError);
+
             hideWizardLoading();
+
+            alert(
+                'Error guardando localmente: ' +
+                localError.message
+            );
+
             wizardSubmitting = false;
+
             if (finalizeBtn) {
                 finalizeBtn.disabled = false;
                 finalizeBtn.classList.remove('btn-loading');
-                finalizeBtn.innerHTML = '<span class="btn-text">Finalizar</span><span class="btn-spinner"></span>';
+
+                finalizeBtn.innerHTML = `
+                    <span class="btn-text">Finalizar</span>
+                    <span class="btn-spinner"></span>
+                `;
             }
+
             return;
         }
 
-        // Refresh UI immediately
-        try {
-            if (typeof renderActivities === 'function') {
-                renderActivities();
-            }
-            if (typeof updateCharts === 'function') {
-                updateCharts();
-            }
-            if (typeof updateGlobalKPIs === 'function') {
-                updateGlobalKPIs();
-            }
-        } catch (refreshError) {
-            console.warn('UI refresh error:', refreshError);
-        }
-
         // ==========================================
-        // BACKEND SYNC (non-blocking)
+        // BACKEND SYNC
         // ==========================================
-        const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
+        const apiUrl =
+            'https://api.contranormdigital.com/api/tecno-civico/activity';
 
         try {
-            showWizardLoading('Local guardado', 'Enviando al servidor...');
-            
-            console.log('📡 Attempting backend sync to:', apiUrl);
-            
+
+            showWizardLoading(
+                'Guardado localmente',
+                'Enviando al servidor...'
+            );
+
+            console.log('📡 Syncing to backend...');
+
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    id: newActivity.id,
-                    date: newActivity.date,
-                    name: newActivity.name,
-                    horas: newActivity.horas,
-                    actionType: newActivity.actionType,
-                    beneficiadas_mujeres: newActivity.beneficiadas_mujeres,
-                    beneficiados_hombres: newActivity.beneficiados_hombres,
-                    voluntarias: newActivity.voluntarias,
-                    colaboradores: newActivity.colaboradores,
-                    links: newActivity.links,
-                    lat: newActivity.lat,
-                    lng: newActivity.lng,
-                    startTime: newActivity.startTime,
-                    endTime: newActivity.endTime,
-                    voluntariosParticipants: newActivity.voluntariosParticipants,
-                    createdBy: newActivity.createdBy,
-                    createdByName: newActivity.createdByName
-                })
+                body: JSON.stringify(newActivity)
             });
 
             console.log('📡 Response status:', response.status);
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                throw new Error(
+                    `HTTP ${response.status}: ${response.statusText}`
+                );
             }
 
             const result = await response.json();
+
             console.log('📡 Response body:', result);
 
             if (!result.success) {
-                throw new Error(result.error || 'Backend rejected activity');
+                throw new Error(
+                    result.error || 'Backend rejected activity'
+                );
             }
 
-            console.log('✅ Backend sync SUCCESS');
+            // ==========================================
+            // MARK AS SYNCED
+            // ==========================================
             newActivity.synced = true;
-            
-            if (typeof saveAllToStorage === 'function') {
-                saveAllToStorage();
+
+            // Update local copy
+            const activityIndex = activities.findIndex(
+                a => a.id === newActivity.id
+            );
+
+            if (activityIndex !== -1) {
+                activities[activityIndex].synced = true;
             }
-            
-            showWizardLoading('¡Completado!', 'Actividad sincronizada');
-            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Save updated synced state
+            const monthKey = getCurrentMonthKey();
+
+            localStorage.setItem(
+                `activities_${monthKey}`,
+                JSON.stringify(activities)
+            );
+
+            localStorage.setItem(
+                'activities_backup',
+                JSON.stringify(activities)
+            );
+
+            if (typeof saveAllToStorage === 'function') {
+                try {
+                    saveAllToStorage();
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+
+            console.log('✅ Backend sync success');
+
+            showWizardLoading(
+                '¡Completado!',
+                'Actividad sincronizada'
+            );
+
+            await new Promise(resolve =>
+                setTimeout(resolve, 1000)
+            );
 
         } catch (backendError) {
-            console.error('❌ BACKEND sync FAILED:', backendError);
-            
+
+            console.error(
+                '❌ BACKEND SYNC FAILED:',
+                backendError
+            );
+
             newActivity.synced = false;
 
-            // Queue for later sync
-            let pendingQueue = JSON.parse(localStorage.getItem('pendingSyncQueue') || '[]');
-            if (!pendingQueue.some(a => a.id === newActivity.id)) {
-                pendingQueue.push(newActivity);
-                localStorage.setItem('pendingSyncQueue', JSON.stringify(pendingQueue));
-                console.log('📦 Activity queued for later sync. Queue size:', pendingQueue.length);
+            // ==========================================
+            // SAVE TO PENDING QUEUE
+            // ==========================================
+            try {
+
+                let pendingQueue = JSON.parse(
+                    localStorage.getItem('pendingSyncQueue') || '[]'
+                );
+
+                if (!Array.isArray(pendingQueue)) {
+                    pendingQueue = [];
+                }
+
+                const alreadyQueued = pendingQueue.some(
+                    a => a.id === newActivity.id
+                );
+
+                if (!alreadyQueued) {
+
+                    pendingQueue.push(newActivity);
+
+                    localStorage.setItem(
+                        'pendingSyncQueue',
+                        JSON.stringify(pendingQueue)
+                    );
+
+                    console.log(
+                        '📦 Added to pending sync queue'
+                    );
+                }
+
+            } catch (queueError) {
+                console.warn(
+                    'Pending queue warning:',
+                    queueError
+                );
             }
-            
-            let userMessage = 'Actividad guardada localmente. ';
-            if (backendError.message.includes('Failed to fetch') || backendError.message.includes('NetworkError')) {
-                userMessage += 'Sin conexión al servidor. Se sincronizará automáticamente.';
+
+            let userMessage =
+                'Actividad guardada localmente. ';
+
+            if (
+                backendError.message.includes('Failed to fetch') ||
+                backendError.message.includes('NetworkError')
+            ) {
+
+                userMessage +=
+                    'Sin conexión al servidor. Se sincronizará automáticamente.';
+
             } else {
-                userMessage += 'Error al sincronizar. Se reintentará más tarde.';
+
+                userMessage +=
+                    'Error al sincronizar. Se reintentará más tarde.';
             }
-            
-            showWizardLoading('Guardado localmente', userMessage);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
+
+            showWizardLoading(
+                'Guardado localmente',
+                userMessage
+            );
+
+            await new Promise(resolve =>
+                setTimeout(resolve, 2000)
+            );
+
         } finally {
+
             hideWizardLoading();
+
             wizardSubmitting = false;
 
             if (finalizeBtn) {
+
                 finalizeBtn.disabled = false;
+
                 finalizeBtn.classList.remove('btn-loading');
-                finalizeBtn.innerHTML = '<span class="btn-text">Finalizar</span><span class="btn-spinner"></span>';
+
+                finalizeBtn.innerHTML = `
+                    <span class="btn-text">Finalizar</span>
+                    <span class="btn-spinner"></span>
+                `;
             }
         }
 
         return;
     }
 
-    // Non-final steps
+    // ==========================================
+    // NON-FINAL STEPS
+    // ==========================================
     if (wizardStep === 2 && wizardTimerInterval) {
         stopWizardTimerGlobal();
     }
@@ -4439,7 +4560,6 @@ async function wizardGoNext() {
         renderWizardStep();
     }
 }
-
 
 
 // ==========================================
