@@ -3834,10 +3834,35 @@ function wizardGoPrev() {
     }
 }
 
-function wizardGoNext() {
+let wizardSubmitting = false;
+
+async function wizardGoNext() {
+
+    // Prevent duplicate taps
+    if (wizardSubmitting) {
+        return;
+    }
+
+    saveCurrentStepData();
+
+    // Validate current step
+    if (!validateCurrentStep()) {
+        return;
+    }
+
+    // FINAL STEP
     if (wizardStep === 6) {
-        saveCurrentStepData();
-        
+
+        wizardSubmitting = true;
+
+        const finalizeBtn = document.getElementById('wizardFinalizeBtn');
+
+        // Disable button while saving
+        if (finalizeBtn) {
+            finalizeBtn.disabled = true;
+            finalizeBtn.innerText = 'Guardando...';
+        }
+
         const newActivity = {
             id: `${wizardData.date}_${wizardData.activityName}_${Date.now()}`,
             date: wizardData.date || getHondurasDate(),
@@ -3857,68 +3882,65 @@ function wizardGoNext() {
             createdBy: currentUser ? currentUser.id : null,
             createdByName: currentUser ? currentUser.name : 'Usuario'
         };
-        
-        // Add to activities array FIRST
-        activities.push(newActivity);
-        
-        // Save to localStorage
-        saveAllToStorage();
-        
-        // Render the activity in the UI
-        renderActivities();
-        
-        // Close the wizard (UI feedback first)
-        closeGlobalWizard();
-        
-        // Use sendBeacon for more reliable background sending
-        const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
-        const blob = new Blob([JSON.stringify(newActivity)], { type: 'application/json' });
-        
-        if (navigator.sendBeacon) {
-            // sendBeacon works even after page unload
-            const sent = navigator.sendBeacon(apiUrl, blob);
-            if (sent) {
-                console.log('✅ Activity queued for backend via sendBeacon');
-            } else {
-                console.error('❌ sendBeacon failed, falling back to fetch');
-                // Fallback to fetch
-                fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newActivity)
-                }).catch(err => console.error('Backend send failed:', err));
-            }
-        } else {
-            // Fallback for older browsers
-            fetch(apiUrl, {
+
+        try {
+
+            // Send to backend FIRST
+            const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
+
+            const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(newActivity)
-            }).catch(err => console.error('Backend send failed:', err));
+            });
+
+            if (!response.ok) {
+                throw new Error(`Backend error: ${response.status}`);
+            }
+
+            // Only update UI after backend success
+            activities.push(newActivity);
+
+            saveAllToStorage();
+
+            renderActivities();
+
+            // Close wizard after success
+            closeGlobalWizard();
+
+        } catch (err) {
+
+            console.error('Backend send failed:', err);
+
+            alert('No se pudo guardar la actividad. Intente nuevamente.');
+
+            // Re-enable button
+            if (finalizeBtn) {
+                finalizeBtn.disabled = false;
+                finalizeBtn.innerText = 'Finalizar';
+            }
+
+            wizardSubmitting = false;
+            return;
         }
-        
-        // Reset wizard data for next activity
-        wizardData = {};
-        wizardStep = 1;
-        wizardCompleted = true;
-        
+
+        wizardSubmitting = false;
         return;
     }
-    
-    saveCurrentStepData();
-    if (!validateCurrentStep()) return;
-    
+
     // Only stop timer if we're on step 2 AND timer is actually running
     if (wizardStep === 2 && wizardTimerInterval) {
         stopWizardTimerGlobal();
     }
-    
+
+    // Move to next step
     if (wizardStep < 6) {
         wizardStep++;
         renderWizardStep();
     }
 }
-
 
 // ==========================================
 // GPS FUNCTIONS
