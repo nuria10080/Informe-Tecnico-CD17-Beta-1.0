@@ -3100,7 +3100,6 @@ function renderWizardStep() {
                 </div>
             `;
             break;
-            break;
             
         case 4:
             html = `
@@ -3116,7 +3115,7 @@ function renderWizardStep() {
         case 5:
             html = `
                 <div class="dynamic-question">
-                    <div class="question-label"> Colaboradores (Aliados / Instituciones)</div>
+                    <div class="question-label">🤝 Colaboradores (Aliados / Instituciones)</div>
                     <div id="colabsDynamicContainer">${renderColaboratorsDynamic()}</div>
                 </div>
             `;
@@ -3151,48 +3150,52 @@ function renderWizardStep() {
     
     // Fix for step 2 - ensure timer elements are properly initialized
     if (wizardStep === 2) {
-        // Small delay to ensure DOM is ready
         setTimeout(() => {
             attachHoursInputListener();
-            
-            // Re-calculate time range if we have saved data
             if (timerMode === 'timeRange' && wizardData.startHour && wizardData.startMinute) {
                 calculateTimeRangeFromNumbers();
             }
         }, 50);
     }
     
-    // Set button state for step 5 based on current data
+    // Initialize step 5 with proper button state and event listeners
     if (wizardStep === 5) {
-        const colabs = wizardData.colaboradores || [];
-        if (nextBtn) {
-            if (colabs.length === 0) {
-                nextBtn.disabled = false;
-                nextBtn.style.opacity = '1';
-                nextBtn.style.cursor = 'pointer';
+        setTimeout(() => {
+            const nextBtn = document.getElementById('wizardNextBtn');
+            const colabs = wizardData.colaboradores || [];
+            
+            if (colabs.length === 0 || (colabs.length === 1 && !colabs[0].org)) {
+                if (nextBtn) {
+                    nextBtn.disabled = false;
+                    nextBtn.style.opacity = '1';
+                    nextBtn.style.cursor = 'pointer';
+                }
             } else {
                 const lastColab = colabs[colabs.length - 1];
-                if (!lastColab.org || !lastColab.cant || lastColab.cant <= 0) {
-                    nextBtn.disabled = true;
-                    nextBtn.style.opacity = '0.5';
-                    nextBtn.style.cursor = 'not-allowed';
-                } else {
-                    const needsDetails = ['Voluntariado', 'Activo', 'Activo con Observaciones'].includes(lastColab.org);
-                    if (needsDetails) {
-                        const allFilled = lastColab.participants && 
-                                        lastColab.participants.length === lastColab.cant &&
-                                        lastColab.participants.every(p => p.name && p.name.trim() !== '');
-                        nextBtn.disabled = !allFilled;
-                        nextBtn.style.opacity = allFilled ? '1' : '0.5';
-                        nextBtn.style.cursor = allFilled ? 'pointer' : 'not-allowed';
+                if (nextBtn) {
+                    if (!lastColab.org || !lastColab.cant || lastColab.cant <= 0) {
+                        nextBtn.disabled = true;
+                        nextBtn.style.opacity = '0.5';
+                        nextBtn.style.cursor = 'not-allowed';
                     } else {
-                        nextBtn.disabled = false;
-                        nextBtn.style.opacity = '1';
-                        nextBtn.style.cursor = 'pointer';
+                        const needsDetails = ['Voluntariado', 'Activo', 'Activo con Observaciones'].includes(lastColab.org);
+                        if (needsDetails) {
+                            const allFilled = lastColab.participants && 
+                                            lastColab.participants.length === lastColab.cant &&
+                                            lastColab.participants.every(p => p.name && p.name.trim() !== '');
+                            nextBtn.disabled = !allFilled;
+                            nextBtn.style.opacity = allFilled ? '1' : '0.5';
+                            nextBtn.style.cursor = allFilled ? 'pointer' : 'not-allowed';
+                        } else {
+                            const hasPersonInCharge = lastColab.personInCharge?.name && lastColab.personInCharge.name.trim() !== '';
+                            nextBtn.disabled = !hasPersonInCharge;
+                            nextBtn.style.opacity = hasPersonInCharge ? '1' : '0.5';
+                            nextBtn.style.cursor = hasPersonInCharge ? 'pointer' : 'not-allowed';
+                        }
                     }
                 }
             }
-        }
+        }, 50);
     }
 }
 
@@ -3273,6 +3276,35 @@ function renderColaboratorsDynamic() {
     `;
 }
 
+function renderDetailedFields(col, index) {
+    const expectedCount = col.cant || 0;
+    
+    // All collaborators are now external
+    if (col.org !== '' && expectedCount > 0) {
+        const personInCharge = col.personInCharge || { name: '', title: '' };
+        return `
+            <div class="detailed-participants" style="margin-left: 20px; margin-bottom: 12px; padding: 12px; background: var(--neutral-light); border-radius: 16px;">
+                <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">👤 Persona a cargo de ${col.org}</div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <input type="text" id="externalPersonName_${index}" class="wizard-input" style="flex:2; margin:0;" placeholder="Nombre completo" value="${escapeHtml(personInCharge.name || '')}" onchange="updateExternalPersonInCharge(${index}, 'name', this.value)">
+                    <input type="text" id="externalPersonTitle_${index}" class="wizard-input" style="flex:1; margin:0;" placeholder="Cargo / Título" value="${escapeHtml(personInCharge.title || '')}" onchange="updateExternalPersonInCharge(${index}, 'title', this.value)">
+                </div>
+                <p style="font-size:0.65rem; color:var(--text-medium); margin-top: 6px;">Registra la persona de contacto de ${col.org}.</p>
+            </div>
+        `;
+    }
+    
+    if (expectedCount === 0) {
+        return `
+            <div class="detailed-participants" style="margin-left: 20px; margin-bottom: 12px; padding: 12px; background: var(--neutral-light); border-radius: 16px;">
+                <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">📋 Detalles de ${col.org || 'colaborador'}</div>
+                <p style="font-size:0.7rem; color:var(--text-medium); text-align:center; padding: 8px;">Ingresa la cantidad para registrar la persona de contacto</p>
+            </div>
+        `;
+    }
+    
+    return '';
+}
 
 function updateColabType(select, index) {
     const newOrg = select.value;
@@ -3306,7 +3338,6 @@ function updateColabType(select, index) {
         nextBtn.style.opacity = '0.5';
         nextBtn.style.cursor = 'not-allowed';
     }
-    
 }
 
 function updateExternalPersonInCharge(index, field, value) {
@@ -3370,30 +3401,12 @@ function updateColabDetails(input, index) {
             nextBtn.style.opacity = '0.5';
             nextBtn.style.cursor = 'not-allowed';
         } else {
-            const needsDetails = ['Voluntariado', 'Activo', 'Activo con Observaciones'].includes(org);
-            if (!needsDetails && newCant > 0) {
-                // For external, check if person in charge is filled
-                const hasPersonInCharge = wizardData.colaboradores[index].personInCharge?.name && wizardData.colaboradores[index].personInCharge.name.trim() !== '';
-                nextBtn.disabled = !hasPersonInCharge;
-                nextBtn.style.opacity = hasPersonInCharge ? '1' : '0.5';
-                nextBtn.style.cursor = hasPersonInCharge ? 'pointer' : 'not-allowed';
-            } else if (needsDetails && newCant > 0) {
-                // For internal, check if all participants are filled
-                const allFilled = wizardData.colaboradores[index].participants?.every(p => p.name && p.name.trim() !== '') || false;
-                nextBtn.disabled = !allFilled;
-                nextBtn.style.opacity = allFilled ? '1' : '0.5';
-                nextBtn.style.cursor = allFilled ? 'pointer' : 'not-allowed';
-            }
+            // For external collaborators, check if person in charge is filled
+            const hasPersonInCharge = wizardData.colaboradores[index].personInCharge?.name && wizardData.colaboradores[index].personInCharge.name.trim() !== '';
+            nextBtn.disabled = !hasPersonInCharge;
+            nextBtn.style.opacity = hasPersonInCharge ? '1' : '0.5';
+            nextBtn.style.cursor = hasPersonInCharge ? 'pointer' : 'not-allowed';
         }
-    }
-    
-}
-function updateParticipant(colabIndex, participantIndex, field, value) {
-    if (wizardData.colaboradores && wizardData.colaboradores[colabIndex] && 
-        wizardData.colaboradores[colabIndex].participants && 
-        wizardData.colaboradores[colabIndex].participants[participantIndex]) {
-        wizardData.colaboradores[colabIndex].participants[participantIndex][field] = value;
-        saveWizardState();
     }
 }
 
@@ -3423,7 +3436,7 @@ function addColaboratorRow() {
     wizardData.colaboradores.push({
         org: '',
         cant: 0,
-        participants: []
+        personInCharge: { name: '', title: '' }
     });
     
     // Re-render to show the new blank form
@@ -3433,25 +3446,26 @@ function addColaboratorRow() {
 function removeColabRow(button) {
     const row = button.closest('.colab-row-modern');
     const container = row.parentElement;
-    const rows = container.querySelectorAll('.colab-row-modern');
-    const index = Array.from(rows).indexOf(row);
     
-    if (wizardData.colaboradores && wizardData.colaboradores[index]) {
-        wizardData.colaboradores.splice(index, 1);
-        saveWizardState();
-        renderWizardStep();
-        updatePersonInChargeVisibility();
+    if (wizardData.colaboradores && wizardData.colaboradores.length > 1) {
+        // Find which collaborator to remove
+        const wrapper = row.closest('.colab-wrapper');
+        const wrappers = document.querySelectorAll('.colab-wrapper');
+        const index = Array.from(wrappers).indexOf(wrapper);
+        
+        if (index >= 0 && index < wizardData.colaboradores.length) {
+            wizardData.colaboradores.splice(index, 1);
+            saveWizardState();
+            renderWizardStep();
+        }
+    } else {
+        // If only one collaborator, just clear it instead of removing
+        if (wizardData.colaboradores && wizardData.colaboradores[0]) {
+            wizardData.colaboradores[0] = { org: '', cant: 0, personInCharge: { name: '', title: '' } };
+            saveWizardState();
+            renderWizardStep();
+        }
     }
-}
-
-function updateColaboratorData() {
-    // Save person in charge info
-    const personName = document.getElementById('personInChargeName');
-    const personTitle = document.getElementById('personInChargeTitle');
-    if (personName) wizardData.personInChargeName = personName.value;
-    if (personTitle) wizardData.personInChargeTitle = personTitle.value;
-    
-    saveWizardState();
 }
 
 
