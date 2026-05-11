@@ -3837,6 +3837,7 @@ function wizardGoPrev() {
 function wizardGoNext() {
     if (wizardStep === 6) {
         saveCurrentStepData();
+        
         const newActivity = {
         id: `${wizardData.date}_${wizardData.activityName}_${Date.now()}`,
         date: wizardData.date || getHondurasDate(),
@@ -3859,7 +3860,9 @@ function wizardGoNext() {
     
     // Add to activities array
     activities.push(newActivity);
-    
+    renderActivities();
+     // Close wizard
+    closeGlobalWizard();
     // Send to backend
     const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
     fetch(apiUrl, {
@@ -3870,13 +3873,7 @@ function wizardGoNext() {
     
     // Save to localStorage and render
     saveAllToStorage();
-    renderActivities();
-    
-    // Close wizard
-    closeGlobalWizard();
-    
-    
-        return;
+    return;
     }
     
     saveCurrentStepData();
