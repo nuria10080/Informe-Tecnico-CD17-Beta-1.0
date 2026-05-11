@@ -3199,10 +3199,10 @@ function renderWizardStep() {
 function generateActivityOptions(selectedVal) {
     const activities = [
         "-- Seleccionar actividad --",
-        "Mantenimiento y Adecuación", "Abastecimiento o Gestión de Insumos", "Revision & Preparación", "Encuesta y Capacitación",
+        "Mantenimiento y Adecuación", "Abastecimiento o Gestión de Insumos", "Revision & Preparación", "Encuesta y Capacitación", "Encuestas y Observaciones Comunitarias",
         "Encuesta y Localización", "Trabajo Comunitario", "Jornadas Integración",
         "Atención a Beneficiarios", "Logística y Distribución", "Planificación",
-        "Visita y Planificación", "Visita y Seguimiento", "Gestión y Coordinación", "Informes",
+        "Visita y Planificación", "Visita y Seguimiento", "Gestión y Coordinación", "Informes", "Elaboracion & Revision",
         "Gestión y Recuperación", "Gestión de Acuerdos", "Recaudación Fondos",
         "Capacitación Comunitario", "Capacitación Interna", "Estrategias Digitales",
         "Reunión por Video Llamada/Whatsapp", "Junta Directiva", "Promoción y Difusión"
@@ -3227,7 +3227,7 @@ function renderConditionalDetail() {
     const container = document.getElementById('conditionalDetailContainer');
     if (!container) return;
     
-    const requiresDetail = ['Encuesta y Capacitación', 'Encuesta y Localización', 'Capacitación Comunitario', 'Capacitación Interna', 'Abastecimiento o Gestión de Insumos'];
+    const requiresDetail = ['Encuesta y Capacitación', 'Encuesta y Localización', 'Capacitación Comunitario', 'Capacitación Interna', 'Abastecimiento o Gestión de Insumos','Elaboracion & Revision'];
     
     if (requiresDetail.includes(wizardData.activityName)) {
         container.innerHTML = `
@@ -3241,6 +3241,7 @@ function renderConditionalDetail() {
                     <option value="Agua y Saneamiento" ${wizardData.detail === 'Agua y Saneamiento' ? 'selected' : ''}>Agua y Saneamiento</option>
                     <option value="Manipulacion de Alimentos" ${wizardData.detail === 'Manipulacion de Alimentos' ? 'selected' : ''}>Manipulacion de Alimentos</option>
                     <option value="Colaboradores y/o Insumos" ${wizardData.detail === 'Colaboradores y/o Insumos' ? 'selected' : ''}>Colaboradores y/o Insumos</option>
+                     <option value="Elaboracion & Revision" ${wizardData.detail === 'Documentos Externos' ? 'selected' : ''}>Documentos Internos</option>
                 </select>
             </div>
         `;
