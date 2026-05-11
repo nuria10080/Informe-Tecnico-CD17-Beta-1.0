@@ -1497,10 +1497,7 @@ body {
     ></canvas><div class="chart-title">Duración Actividades</div></div>
     <div class="chart-box"><canvas id="chartActivevoluntarios"></canvas><div class="chart-title">Voluntarios Más Activas</div></div>
 </div>
-<button id="wizardFinalizeBtn" class="wizard-btn">
-    <span class="btn-text">Finalizar</span>
-    <span class="btn-spinner"></span>
-</button>
+
 <div class="activities-section">
 <table class="activities-table">
 <thead><tr><th>Fecha</th><th>Actividad</th><th>Voluntarios</th><th>Horas</th><th>F</th><th>M</th><th>Beneficiarios</th><th>Colaboradores</th><th>Ubicación</th><th>QR</th><th></th></tr></thead>
@@ -3961,13 +3958,13 @@ async function wizardGoNext() {
         if (finalizeBtn) {
             finalizeBtn.disabled = true;
             finalizeBtn.classList.add('btn-loading');
-            finalizeBtn.innerText = 'Guardando...';
+            finalizeBtn.innerHTML = '<span class="btn-text">Guardando...</span><span class="btn-spinner"></span>';
         }
         
-        // Show loading overlay
+        // Show loading overlay IMMEDIATELY
         showWizardLoading(
             'Guardando actividad...', 
-            'No cierres esta ventana'
+            'Por favor espera, no cierres esta ventana'
         );
 
         const newActivity = {
@@ -3992,7 +3989,7 @@ async function wizardGoNext() {
         };
 
         // ==========================================
-        // IMMEDIATE LOCAL SAVE
+        // LOCAL SAVE (keep overlay visible)
         // ==========================================
         try {
             // Make sure activities is accessible
@@ -4010,14 +4007,17 @@ async function wizardGoNext() {
             // Update overlay message
             showWizardLoading('Actividad guardada localmente', 'Sincronizando con el servidor...');
             
-            // Refresh UI immediately
-            if (typeof refreshDashboard === 'function') {
-                await refreshDashboard(); // Wait for UI update
-            } else if (typeof renderActivities === 'function') {
+            // Refresh UI
+            if (typeof renderActivities === 'function') {
                 renderActivities();
-            } else if (typeof loadActivities === 'function') {
-                await loadActivities();
             }
+            if (typeof updateCharts === 'function') {
+                updateCharts();
+            }
+            if (typeof updateGlobalKPIs === 'function') {
+                updateGlobalKPIs();
+            }
+            
         } catch (localError) {
             console.error('Local save failed:', localError);
             hideWizardLoading();
@@ -4026,16 +4026,16 @@ async function wizardGoNext() {
             if (finalizeBtn) {
                 finalizeBtn.disabled = false;
                 finalizeBtn.classList.remove('btn-loading');
-                finalizeBtn.innerText = 'Finalizar';
+                finalizeBtn.innerHTML = '<span class="btn-text">Finalizar</span><span class="btn-spinner"></span>';
             }
             return;
         }
 
-        // Close wizard immediately (UI feedback)
+        // Close wizard AFTER local save (but keep overlay visible)
         closeGlobalWizard();
 
         // ==========================================
-        // BACKEND SYNC (non-blocking for UI)
+        // BACKEND SYNC (keep overlay visible)
         // ==========================================
         const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
 
@@ -4045,7 +4045,25 @@ async function wizardGoNext() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(newActivity)
+                body: JSON.stringify({
+                    id: newActivity.id,
+                    date: newActivity.date,
+                    name: newActivity.name,
+                    horas: newActivity.horas,
+                    actionType: newActivity.actionType,
+                    beneficiadas_mujeres: newActivity.beneficiadas_mujeres,
+                    beneficiados_hombres: newActivity.beneficiados_hombres,
+                    voluntarias: newActivity.voluntarias,
+                    colaboradores: newActivity.colaboradores,
+                    links: newActivity.links,
+                    lat: newActivity.lat,
+                    lng: newActivity.lng,
+                    startTime: newActivity.startTime,
+                    endTime: newActivity.endTime,
+                    voluntariosParticipants: newActivity.voluntariosParticipants,
+                    createdBy: newActivity.createdBy,
+                    createdByName: newActivity.createdByName
+                })
             });
 
             if (!response.ok) {
@@ -4064,10 +4082,10 @@ async function wizardGoNext() {
             newActivity.synced = true;
             saveAllToStorage();
             
-            // Show success briefly before hiding
+            // Show success
             showWizardLoading('¡Completado!', 'Actividad sincronizada correctamente');
             
-            // Wait 1 second to show success, then hide
+            // Wait 1 second to show success, then hide overlay
             await new Promise(resolve => setTimeout(resolve, 1000));
 
         } catch (err) {
@@ -4104,7 +4122,7 @@ async function wizardGoNext() {
             
         } finally {
             // ==========================================
-            // RELEASE LOCK AND CLEAN UP
+            // HIDE OVERLAY AND RELEASE LOCK
             // ==========================================
             hideWizardLoading();
             wizardSubmitting = false;
@@ -4112,7 +4130,7 @@ async function wizardGoNext() {
             if (finalizeBtn) {
                 finalizeBtn.disabled = false;
                 finalizeBtn.classList.remove('btn-loading');
-                finalizeBtn.innerText = 'Finalizar';
+                finalizeBtn.innerHTML = '<span class="btn-text">Finalizar</span><span class="btn-spinner"></span>';
             }
         }
 
@@ -4134,7 +4152,6 @@ async function wizardGoNext() {
         renderWizardStep();
     }
 }
-
 // ==========================================
 // GPS FUNCTIONS
 // ==========================================
