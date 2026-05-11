@@ -3921,7 +3921,7 @@ function deleteActivity(idx) {
 function saveData() {
     sortActivitiesByDate();
     saveAllToStorage();
-    alert('✅ Datos guardados para el mes actual.');
+  
 }
 
 function clearData() {
@@ -5634,7 +5634,7 @@ function updateCharts() {
 // OTHER FUNCTIONS
 // ==========================================
 function exportPDF() { window.print(); }
-function saveData() { saveAllToStorage(); alert('✅ Datos guardados'); }
+function saveData() { saveAllToStorage();  }
 function clearData() {
     if (confirm('Borrar todo?')) {
         activities = [];
