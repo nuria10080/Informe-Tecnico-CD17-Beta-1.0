@@ -3905,6 +3905,212 @@ function saveCurrentStepData() {
     saveWizardState();
 }
 
+
+function renderActivities() {
+    closeGlobalWizard();
+    // Inject print styles if not already present
+    if (!document.getElementById('print-gps-styles')) {
+        const style = document.createElement('style');
+        style.id = 'print-gps-styles';
+        style.textContent = `
+            @media print {
+                .gps-thumb { display: none !important; }
+                .gps-coords-print { display: inline !important; }
+            }
+            @media screen {
+                .gps-coords-print { display: none !important; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    const tbody = document.getElementById('activitiesBody');
+    tbody.innerHTML = '';
+
+    let totalHoras = 0, totalF = 0, totalM = 0, totalBen = 0;
+    // Counters for filial and campo hours
+    let totalHorasFilial = 0, totalHorasCampo = 0;
+
+    activities.forEach((a, idx) => {
+        const tBen = (a.beneficiadas_mujeres || 0) + (a.beneficiados_hombres || 0);
+        totalBen += tBen;
+        totalHoras += a.horas || 0;
+        totalF += a.beneficiadas_mujeres || 0;
+        totalM += a.beneficiados_hombres || 0;
+        
+        // Add hours to appropriate category based on actionType
+        const horas = a.horas || 0;
+        if (a.actionType === 'filial') {
+            totalHorasFilial += horas;
+        } else {
+            totalHorasCampo += horas;
+        }
+
+        const qrId = `qr_${a.id || idx}`;
+        const qrData = getQRCodeData(a);
+
+        // GPS badge with thumbtack (screen) and coordinates (print)
+        let gpsBadge = '';
+        if (a.lat && a.lng) {
+            gpsBadge = `
+                <div class="gps-badge">
+                    <a href="https://maps.google.com/?q=${a.lat},${a.lng}" 
+                       target="_blank" 
+                       class="gps-thumb" 
+                       style="color:var(--success); text-decoration:none;">
+                        📌
+                    </a>
+                    <span class="gps-coords-print" style="font-size:0.75rem;">${a.lat}, ${a.lng}</span>
+                </div>
+            `;
+        }
+
+        // Colaboradores
+        let colaboradoresHtml = '<div class="org-badge-container">';
+        if (a.colaboradores && a.colaboradores.length > 0) {
+            a.colaboradores.forEach(col => {
+                colaboradoresHtml += `<span class="org-badge">${col.org} (${col.cant})</span>`;
+            });
+        } else {
+            colaboradoresHtml += '<span class="org-badge">—</span>';
+        }
+        colaboradoresHtml += '</div>';
+
+        // Links
+        let linksHtml = '';
+        if (a.links && a.links.length > 0) {
+            linksHtml = '<div style="display:flex; flex-wrap:wrap; gap:4px;">';
+            a.links.forEach(link => {
+                let fullLink = link;
+                if (!link.startsWith('http://') && !link.startsWith('https://')) {
+                    fullLink = 'https://' + link;
+                }
+                linksHtml += `
+                    <button onclick="window.open('${fullLink}', '_blank')" 
+                        style="background:var(--accent); color:white; border:none; 
+                               border-radius:4px; padding:2px 8px; font-size:0.7rem;
+                               cursor:pointer;">
+                        🔗 Link
+                    </button>`;
+            });
+            linksHtml += '</div>';
+        } else {
+            linksHtml = '<span style="color:var(--text-light);">—</span>';
+        }
+
+       // QR CELL - Handle multiple links
+        let qrCellHtml = '';
+        const qrDataArray = getQRCodeData(a);
+
+        if (qrDataArray && qrDataArray.length > 0) {
+            // Change outer to ROW, not column
+            qrCellHtml = `<div style="display:flex; flex-direction:row; gap:16px; justify-content:center; flex-wrap:wrap;">`;
+            
+            qrDataArray.forEach((link, linkIndex) => {
+                const qrId = `qr_${a.id || idx}_${linkIndex}`;
+                qrCellHtml += `
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+                        <div id="${qrId}" 
+                            style="width:60px; height:60px; background:white; cursor:pointer;" 
+                            onclick="window.open('${link}', '_blank')" 
+                            title="Abrir enlace ${linkIndex + 1}">
+                        </div>
+                        <span style="font-size:0.65rem; color:var(--text-light);">
+                            Link ${linkIndex + 1}
+                        </span>
+                    </div>`;
+            });
+            
+            qrCellHtml += `</div>`;
+        } else {
+            qrCellHtml = `<span style="color:var(--text-light);">—</span>`;
+        }
+
+        // Build table row
+        tbody.innerHTML += `<tr>
+            <td>${formatDateForDisplay(a.date)}</td>
+            <td style="text-align:left">${a.name}</td>
+            <td>${a.voluntarias || 0}</td>
+            <td>${a.horas || 0}</td>
+            <td>${a.beneficiadas_mujeres || 0}</td>
+            <td>${a.beneficiados_hombres || 0}</td>
+            <td>${tBen}</td>
+            <td>${colaboradoresHtml}</td>
+            <td>${gpsBadge}</td>
+            <td>${qrCellHtml}</td>
+            <td><button onclick="deleteActivity(${idx})" style="border:none;background:none;color:var(--warning);">🗑️</button></td>
+        　`;
+    });
+
+    // Totals - Update all summary displays
+    document.getElementById('totalHoras').innerText = totalHoras;
+    
+    // Update subcategory totals
+    const totalHorasFilialEl = document.getElementById('totalHorasFilial');
+    const totalHorasCampoEl = document.getElementById('totalHorasCampo');
+    
+    if (totalHorasFilialEl) totalHorasFilialEl.innerText = totalHorasFilial;
+    if (totalHorasCampoEl) totalHorasCampoEl.innerText = totalHorasCampo;
+    
+    document.getElementById('totalBeneficiados').innerText = totalBen;
+    document.getElementById('totalMujeresBen').innerText = totalF;
+    document.getElementById('totalHombresBen').innerText = totalM;
+    document.getElementById('totalActividades').innerText = activities.length;
+    document.getElementById('footerDate').innerText = formatDateForDisplay(new Date(), true);
+    updateCharts();
+    // Generate QR codes for activities with links
+    setTimeout(() => {
+        if (typeof QRCode === 'undefined') {
+            console.log('❌ QRCode library not loaded');
+            return;
+        }
+
+        console.log('🔍 Starting QR generation for', activities.length, 'activities');
+        
+        activities.forEach((a, idx) => {
+            const qrDataArray = getQRCodeData(a);
+            if (!qrDataArray || qrDataArray.length === 0) return;
+
+            console.log(`📱 Activity ${idx} has ${qrDataArray.length} links`);
+            
+            qrDataArray.forEach((link, linkIndex) => {
+                const qrId = `qr_${a.id || idx}_${linkIndex}`;
+                console.log(`Looking for element: ${qrId}`);
+                const qrDiv = document.getElementById(qrId);
+
+                if (qrDiv) {
+                    console.log(`✅ Found element ${qrId}`);
+                    // Clear any existing content
+                    qrDiv.innerHTML = '';
+                    
+                    // Ensure the div has dimensions before generating QR
+                    if (qrDiv.offsetWidth > 0 && qrDiv.offsetHeight > 0) {
+                        try {
+                            new QRCode(qrDiv, {
+                                text: link,
+                                width: 60,
+                                height: 60,
+                                colorDark: "#000000",
+                                colorLight: "#ffffff",
+                                correctLevel: QRCode.CorrectLevel.L
+                            });
+                            console.log(`✅ QR generated for ${qrId}`);
+                        } catch (e) {
+                            console.error('QR error for link:', link, e);
+                        }
+                    } else {
+                        console.warn('QR div not ready (dimensions zero):', qrId, 'size:', qrDiv.offsetWidth, 'x', qrDiv.offsetHeight);
+                    }
+                } else {
+                    console.warn('QR div not found:', qrId);
+                }
+            });
+        });
+    }, 500);
+}
+
+
+
 function wizardGoPrev() {
     if (wizardStep > 1) {
         saveCurrentStepData();
@@ -3942,6 +4148,7 @@ function hideWizardLoading() {
 }
 
 async function wizardGoNext() {
+    saveData();
     if (wizardSubmitting) {
         console.log('Wizard already submitting');
         return;
@@ -4825,208 +5032,7 @@ function getQRCodeData(activity) {
     return null;
 }
 
-function renderActivities() {
-    closeGlobalWizard();
-    // Inject print styles if not already present
-    if (!document.getElementById('print-gps-styles')) {
-        const style = document.createElement('style');
-        style.id = 'print-gps-styles';
-        style.textContent = `
-            @media print {
-                .gps-thumb { display: none !important; }
-                .gps-coords-print { display: inline !important; }
-            }
-            @media screen {
-                .gps-coords-print { display: none !important; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
 
-    const tbody = document.getElementById('activitiesBody');
-    tbody.innerHTML = '';
-
-    let totalHoras = 0, totalF = 0, totalM = 0, totalBen = 0;
-    // Counters for filial and campo hours
-    let totalHorasFilial = 0, totalHorasCampo = 0;
-
-    activities.forEach((a, idx) => {
-        const tBen = (a.beneficiadas_mujeres || 0) + (a.beneficiados_hombres || 0);
-        totalBen += tBen;
-        totalHoras += a.horas || 0;
-        totalF += a.beneficiadas_mujeres || 0;
-        totalM += a.beneficiados_hombres || 0;
-        
-        // Add hours to appropriate category based on actionType
-        const horas = a.horas || 0;
-        if (a.actionType === 'filial') {
-            totalHorasFilial += horas;
-        } else {
-            totalHorasCampo += horas;
-        }
-
-        const qrId = `qr_${a.id || idx}`;
-        const qrData = getQRCodeData(a);
-
-        // GPS badge with thumbtack (screen) and coordinates (print)
-        let gpsBadge = '';
-        if (a.lat && a.lng) {
-            gpsBadge = `
-                <div class="gps-badge">
-                    <a href="https://maps.google.com/?q=${a.lat},${a.lng}" 
-                       target="_blank" 
-                       class="gps-thumb" 
-                       style="color:var(--success); text-decoration:none;">
-                        📌
-                    </a>
-                    <span class="gps-coords-print" style="font-size:0.75rem;">${a.lat}, ${a.lng}</span>
-                </div>
-            `;
-        }
-
-        // Colaboradores
-        let colaboradoresHtml = '<div class="org-badge-container">';
-        if (a.colaboradores && a.colaboradores.length > 0) {
-            a.colaboradores.forEach(col => {
-                colaboradoresHtml += `<span class="org-badge">${col.org} (${col.cant})</span>`;
-            });
-        } else {
-            colaboradoresHtml += '<span class="org-badge">—</span>';
-        }
-        colaboradoresHtml += '</div>';
-
-        // Links
-        let linksHtml = '';
-        if (a.links && a.links.length > 0) {
-            linksHtml = '<div style="display:flex; flex-wrap:wrap; gap:4px;">';
-            a.links.forEach(link => {
-                let fullLink = link;
-                if (!link.startsWith('http://') && !link.startsWith('https://')) {
-                    fullLink = 'https://' + link;
-                }
-                linksHtml += `
-                    <button onclick="window.open('${fullLink}', '_blank')" 
-                        style="background:var(--accent); color:white; border:none; 
-                               border-radius:4px; padding:2px 8px; font-size:0.7rem;
-                               cursor:pointer;">
-                        🔗 Link
-                    </button>`;
-            });
-            linksHtml += '</div>';
-        } else {
-            linksHtml = '<span style="color:var(--text-light);">—</span>';
-        }
-
-       // QR CELL - Handle multiple links
-        let qrCellHtml = '';
-        const qrDataArray = getQRCodeData(a);
-
-        if (qrDataArray && qrDataArray.length > 0) {
-            // Change outer to ROW, not column
-            qrCellHtml = `<div style="display:flex; flex-direction:row; gap:16px; justify-content:center; flex-wrap:wrap;">`;
-            
-            qrDataArray.forEach((link, linkIndex) => {
-                const qrId = `qr_${a.id || idx}_${linkIndex}`;
-                qrCellHtml += `
-                    <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-                        <div id="${qrId}" 
-                            style="width:60px; height:60px; background:white; cursor:pointer;" 
-                            onclick="window.open('${link}', '_blank')" 
-                            title="Abrir enlace ${linkIndex + 1}">
-                        </div>
-                        <span style="font-size:0.65rem; color:var(--text-light);">
-                            Link ${linkIndex + 1}
-                        </span>
-                    </div>`;
-            });
-            
-            qrCellHtml += `</div>`;
-        } else {
-            qrCellHtml = `<span style="color:var(--text-light);">—</span>`;
-        }
-
-        // Build table row
-        tbody.innerHTML += `<tr>
-            <td>${formatDateForDisplay(a.date)}</td>
-            <td style="text-align:left">${a.name}</td>
-            <td>${a.voluntarias || 0}</td>
-            <td>${a.horas || 0}</td>
-            <td>${a.beneficiadas_mujeres || 0}</td>
-            <td>${a.beneficiados_hombres || 0}</td>
-            <td>${tBen}</td>
-            <td>${colaboradoresHtml}</td>
-            <td>${gpsBadge}</td>
-            <td>${qrCellHtml}</td>
-            <td><button onclick="deleteActivity(${idx})" style="border:none;background:none;color:var(--warning);">🗑️</button></td>
-        　`;
-    });
-
-    // Totals - Update all summary displays
-    document.getElementById('totalHoras').innerText = totalHoras;
-    
-    // Update subcategory totals
-    const totalHorasFilialEl = document.getElementById('totalHorasFilial');
-    const totalHorasCampoEl = document.getElementById('totalHorasCampo');
-    
-    if (totalHorasFilialEl) totalHorasFilialEl.innerText = totalHorasFilial;
-    if (totalHorasCampoEl) totalHorasCampoEl.innerText = totalHorasCampo;
-    
-    document.getElementById('totalBeneficiados').innerText = totalBen;
-    document.getElementById('totalMujeresBen').innerText = totalF;
-    document.getElementById('totalHombresBen').innerText = totalM;
-    document.getElementById('totalActividades').innerText = activities.length;
-    document.getElementById('footerDate').innerText = formatDateForDisplay(new Date(), true);
-    updateCharts();
-    // Generate QR codes for activities with links
-    setTimeout(() => {
-        if (typeof QRCode === 'undefined') {
-            console.log('❌ QRCode library not loaded');
-            return;
-        }
-
-        console.log('🔍 Starting QR generation for', activities.length, 'activities');
-        
-        activities.forEach((a, idx) => {
-            const qrDataArray = getQRCodeData(a);
-            if (!qrDataArray || qrDataArray.length === 0) return;
-
-            console.log(`📱 Activity ${idx} has ${qrDataArray.length} links`);
-            
-            qrDataArray.forEach((link, linkIndex) => {
-                const qrId = `qr_${a.id || idx}_${linkIndex}`;
-                console.log(`Looking for element: ${qrId}`);
-                const qrDiv = document.getElementById(qrId);
-
-                if (qrDiv) {
-                    console.log(`✅ Found element ${qrId}`);
-                    // Clear any existing content
-                    qrDiv.innerHTML = '';
-                    
-                    // Ensure the div has dimensions before generating QR
-                    if (qrDiv.offsetWidth > 0 && qrDiv.offsetHeight > 0) {
-                        try {
-                            new QRCode(qrDiv, {
-                                text: link,
-                                width: 60,
-                                height: 60,
-                                colorDark: "#000000",
-                                colorLight: "#ffffff",
-                                correctLevel: QRCode.CorrectLevel.L
-                            });
-                            console.log(`✅ QR generated for ${qrId}`);
-                        } catch (e) {
-                            console.error('QR error for link:', link, e);
-                        }
-                    } else {
-                        console.warn('QR div not ready (dimensions zero):', qrId, 'size:', qrDiv.offsetWidth, 'x', qrDiv.offsetHeight);
-                    }
-                } else {
-                    console.warn('QR div not found:', qrId);
-                }
-            });
-        });
-    }, 500);
-}
 
 function deleteActivity(idx) {
     activities.splice(idx, 1);
