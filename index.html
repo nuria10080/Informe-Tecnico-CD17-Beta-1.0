@@ -3836,8 +3836,7 @@ function wizardGoPrev() {
 
 let wizardSubmitting = false;
 
-function wizardGoNext() {
-
+async function wizardGoNext() {
     // Prevent duplicate taps
     if (wizardSubmitting) {
         return;
@@ -3849,9 +3848,8 @@ function wizardGoNext() {
         return;
     }
 
-    // FINAL STEP
+    // FINAL STEP (step 6)
     if (wizardStep === 6) {
-
         wizardSubmitting = true;
 
         const finalizeBtn = document.getElementById('wizardFinalizeBtn');
@@ -3863,7 +3861,7 @@ function wizardGoNext() {
         }
 
         const newActivity = {
-            id: `${wizardData.date}_${wizardData.activityName}_${Date.now()}`,
+            id: crypto.randomUUID(),
             date: wizardData.date || getHondurasDate(),
             name: wizardData.activityName,
             horas: wizardData.horas || 0,
@@ -3879,50 +3877,96 @@ function wizardGoNext() {
             endTime: wizardData.endTime || '',
             voluntariosParticipants: wizardData.voluntariosParticipants || [],
             createdBy: currentUser ? currentUser.id : null,
-            createdByName: currentUser ? currentUser.name : 'Usuario'
+            createdByName: currentUser ? currentUser.name : 'Usuario',
+            synced: false
         };
 
-        // IMMEDIATELY update frontend
+        // ==========================================
+        // IMMEDIATE LOCAL SAVE
+        // ==========================================
         activities.push(newActivity);
-
         saveAllToStorage();
-
         renderActivities();
 
-        // Close wizard immediately
+        // Close wizard immediately (UI feedback)
         closeGlobalWizard();
 
-        // Send to backend in background
+        // ==========================================
+        // BACKEND SYNC (non-blocking for UI)
+        // ==========================================
         const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
 
-        fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(newActivity)
-        })
-        .then(() => {
-            console.log('Activity synced to backend');
-        })
-        .catch(err => {
-            console.error('Backend sync failed:', err);
-        });
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newActivity)
+            });
 
-        // Release lock after short delay
-        setTimeout(() => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (!result.success) {
+                throw new Error(result.error || 'Backend rejected activity');
+            }
+
+            console.log('Activity synced to backend');
+
+            // Mark synced and update storage
+            newActivity.synced = true;
+            saveAllToStorage();
+
+        } catch (err) {
+            console.error('Backend sync failed:', err);
+
+            newActivity.synced = false;
+
+            let pendingQueue = JSON.parse(
+                localStorage.getItem('pendingSyncQueue') || '[]'
+            );
+
+            // Prevent duplicate queue entries
+            const alreadyQueued = pendingQueue.some(
+                a => a.id === newActivity.id
+            );
+
+            if (!alreadyQueued) {
+                pendingQueue.push(newActivity);
+                localStorage.setItem(
+                    'pendingSyncQueue',
+                    JSON.stringify(pendingQueue)
+                );
+            }
+        } finally {
+            // ==========================================
+            // RELEASE LOCK SAFELY (ALWAYS executes)
+            // ==========================================
             wizardSubmitting = false;
-        }, 1500);
+
+            if (finalizeBtn) {
+                finalizeBtn.disabled = false;
+                finalizeBtn.innerText = 'Finalizar';
+            }
+        }
 
         return;
     }
 
-    // Only stop timer if we're on step 2 AND timer is actually running
+    // ==========================================
+    // TIMER CONTROL (for non-final steps)
+    // ==========================================
     if (wizardStep === 2 && wizardTimerInterval) {
         stopWizardTimerGlobal();
     }
 
-    // Next step
+    // ==========================================
+    // NEXT STEP
+    // ==========================================
     if (wizardStep < 6) {
         wizardStep++;
         renderWizardStep();
