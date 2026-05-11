@@ -3839,41 +3839,70 @@ function wizardGoNext() {
         saveCurrentStepData();
         
         const newActivity = {
-        id: `${wizardData.date}_${wizardData.activityName}_${Date.now()}`,
-        date: wizardData.date || getHondurasDate(),
-        name: wizardData.activityName,
-        horas: wizardData.horas || 0,
-        actionType: wizardData.actionType,
-        beneficiadas_mujeres: wizardData.beneficiadas_mujeres || 0,
-        beneficiados_hombres: wizardData.beneficiados_hombres || 0,
-        voluntarias: wizardData.voluntarias || 1,
-        colaboradores: wizardData.colaboradores || [],
-        links: [],
-        lat: wizardData.lat || '',
-        lng: wizardData.lng || '',
-        startTime: wizardData.startTime || '',
-        endTime: wizardData.endTime || '',
-        voluntariosParticipants: wizardData.voluntariosParticipants || [],
-        createdBy: currentUser ? currentUser.id : null,
-        createdByName: currentUser ? currentUser.name : 'Usuario'
-    };
-    
-    // Add to activities array
-    activities.push(newActivity);
-    renderActivities();
-     // Close wizard
-    closeGlobalWizard();
-    // Send to backend
-    const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
-    fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newActivity)
-    }).catch(err => console.error('Backend send failed:', err));
-    
-    // Save to localStorage and render
-    saveAllToStorage();
-    return;
+            id: `${wizardData.date}_${wizardData.activityName}_${Date.now()}`,
+            date: wizardData.date || getHondurasDate(),
+            name: wizardData.activityName,
+            horas: wizardData.horas || 0,
+            actionType: wizardData.actionType,
+            beneficiadas_mujeres: wizardData.beneficiadas_mujeres || 0,
+            beneficiados_hombres: wizardData.beneficiados_hombres || 0,
+            voluntarias: wizardData.voluntarias || 1,
+            colaboradores: wizardData.colaboradores || [],
+            links: [],
+            lat: wizardData.lat || '',
+            lng: wizardData.lng || '',
+            startTime: wizardData.startTime || '',
+            endTime: wizardData.endTime || '',
+            voluntariosParticipants: wizardData.voluntariosParticipants || [],
+            createdBy: currentUser ? currentUser.id : null,
+            createdByName: currentUser ? currentUser.name : 'Usuario'
+        };
+        
+        // Add to activities array FIRST
+        activities.push(newActivity);
+        
+        // Save to localStorage
+        saveAllToStorage();
+        
+        // Render the activity in the UI
+        renderActivities();
+        
+        // Close the wizard (UI feedback first)
+        closeGlobalWizard();
+        
+        // Use sendBeacon for more reliable background sending
+        const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
+        const blob = new Blob([JSON.stringify(newActivity)], { type: 'application/json' });
+        
+        if (navigator.sendBeacon) {
+            // sendBeacon works even after page unload
+            const sent = navigator.sendBeacon(apiUrl, blob);
+            if (sent) {
+                console.log('✅ Activity queued for backend via sendBeacon');
+            } else {
+                console.error('❌ sendBeacon failed, falling back to fetch');
+                // Fallback to fetch
+                fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newActivity)
+                }).catch(err => console.error('Backend send failed:', err));
+            }
+        } else {
+            // Fallback for older browsers
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newActivity)
+            }).catch(err => console.error('Backend send failed:', err));
+        }
+        
+        // Reset wizard data for next activity
+        wizardData = {};
+        wizardStep = 1;
+        wizardCompleted = true;
+        
+        return;
     }
     
     saveCurrentStepData();
@@ -3888,7 +3917,6 @@ function wizardGoNext() {
         wizardStep++;
         renderWizardStep();
     }
-    
 }
 
 
