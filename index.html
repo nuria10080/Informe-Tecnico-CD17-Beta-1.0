@@ -3809,16 +3809,11 @@ function wizardGoPrev() {
     }
 }
 
-if (wizardStep === 6) {
-    saveCurrentStepData();
-    const statusEl = document.getElementById('wizardGpsStatus');
-    if (statusEl && statusEl.innerHTML.includes('Obteniendo ubicación')) {
-        alert('⚠️ Espera a que termine de obtener la ubicación');
-        return;
-    }
-    
-    // Create activity object from wizardData
-    const newActivity = {
+function wizardGoNext() {
+    alert('Sending from: ' + (window.location.origin || 'mobile app'));
+    if (wizardStep === 6) {
+        saveCurrentStepData();
+        const newActivity = {
         id: `${wizardData.date}_${wizardData.activityName}_${Date.now()}`,
         date: wizardData.date || getHondurasDate(),
         name: wizardData.activityName,
@@ -3856,7 +3851,23 @@ if (wizardStep === 6) {
     // Close wizard
     closeGlobalWizard();
     
-    return;
+    
+        return;
+    }
+    
+    saveCurrentStepData();
+    if (!validateCurrentStep()) return;
+    
+    // Only stop timer if we're on step 2 AND timer is actually running
+    if (wizardStep === 2 && wizardTimerInterval) {
+        stopWizardTimerGlobal();
+    }
+    
+    if (wizardStep < 6) {
+        wizardStep++;
+        renderWizardStep();
+    }
+    
 }
 
 
