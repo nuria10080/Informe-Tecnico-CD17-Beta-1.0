@@ -4239,7 +4239,6 @@ function hideWizardLoading() {
         loadingOverlay = null;
     }
 }
-
 async function wizardGoNext() {
     saveData();
 
@@ -4261,12 +4260,12 @@ async function wizardGoNext() {
 
         wizardSubmitting = true;
 
-        const finalizeBtn = document.getElementById('wizardFinalizeBtn');
+        // FIXED: Use the correct button ID
+        const nextBtn = document.getElementById('wizardNextBtn');
 
-        if (finalizeBtn) {
-            finalizeBtn.disabled = true;
-            finalizeBtn.classList.add('btn-loading');
-            finalizeBtn.innerHTML = `
+        if (nextBtn) {
+            nextBtn.disabled = true;
+            nextBtn.innerHTML = `
                 <span class="btn-text">Guardando...</span>
                 <span class="btn-spinner"></span>
             `;
@@ -4289,24 +4288,26 @@ async function wizardGoNext() {
             beneficiadas_mujeres: Number(wizardData.beneficiadas_mujeres) || 0,
             beneficiados_hombres: Number(wizardData.beneficiados_hombres) || 0,
             voluntarias: Number(wizardData.voluntarias) || 1,
-            colaboradores: Array.isArray(wizardData.colaboradores)
-                ? wizardData.colaboradores
-                : [],
-            links: Array.isArray(wizardData.links)
-                ? wizardData.links
-                : [],
+            colaboradores: Array.isArray(wizardData.colaboradores) ? wizardData.colaboradores : [],
+            links: [],
             lat: wizardData.lat || '',
             lng: wizardData.lng || '',
             startTime: wizardData.startTime || '',
             endTime: wizardData.endTime || '',
-            voluntariosParticipants: Array.isArray(wizardData.voluntariosParticipants)
-                ? wizardData.voluntariosParticipants
-                : [],
+            voluntariosParticipants: Array.isArray(wizardData.voluntariosParticipants) ? wizardData.voluntariosParticipants : [],
             createdBy: currentUser ? currentUser.id : null,
             createdByName: currentUser ? currentUser.name : 'Usuario',
             synced: false,
             createdAt: Date.now()
         };
+
+        // Add links from wizardData
+        if (wizardData.link1 && wizardData.link1.trim()) {
+            newActivity.links.push(wizardData.link1.trim());
+        }
+        if (wizardData.link2 && wizardData.link2.trim()) {
+            newActivity.links.push(wizardData.link2.trim());
+        }
 
         console.log('📝 New activity:', newActivity);
 
@@ -4314,16 +4315,11 @@ async function wizardGoNext() {
         // LOCAL SAVE
         // ==========================================
         try {
-
-            // Ensure global array exists
             if (!Array.isArray(window.activities)) {
                 window.activities = [];
             }
 
-            // Ensure global reference
             activities = window.activities;
-
-            // Prevent duplicates
             const exists = activities.some(a => a.id === newActivity.id);
 
             if (!exists) {
@@ -4333,23 +4329,10 @@ async function wizardGoNext() {
             console.log('✅ Activity added locally');
             console.log('📊 Total activities:', activities.length);
 
-            // ==========================================
-            // SAVE TO LOCAL STORAGE
-            // ==========================================
             const monthKey = getCurrentMonthKey();
+            localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
+            localStorage.setItem('activities_backup', JSON.stringify(activities));
 
-            localStorage.setItem(
-                `activities_${monthKey}`,
-                JSON.stringify(activities)
-            );
-
-            // Backup
-            localStorage.setItem(
-                'activities_backup',
-                JSON.stringify(activities)
-            );
-
-            // Optional app save system
             if (typeof saveAllToStorage === 'function') {
                 try {
                     saveAllToStorage();
@@ -4358,76 +4341,45 @@ async function wizardGoNext() {
                 }
             }
 
-            // Ensure references stay synced
             window.activities = activities;
-
             console.log('✅ Local save complete');
 
-            // ==========================================
-            // IMMEDIATE UI REFRESH
-            // ==========================================
             try {
-
                 if (typeof renderActivities === 'function') {
                     renderActivities();
                 }
-
                 if (typeof updateCharts === 'function') {
                     updateCharts();
                 }
-
                 if (typeof updateGlobalKPIs === 'function') {
                     updateGlobalKPIs();
                 }
-
             } catch (uiError) {
                 console.warn('UI refresh warning:', uiError);
             }
 
-            // CLOSE AFTER RENDER
             closeGlobalWizard();
 
         } catch (localError) {
-
             console.error('❌ LOCAL SAVE FAILED:', localError);
-
             hideWizardLoading();
-
-            alert(
-                'Error guardando localmente: ' +
-                localError.message
-            );
-
+            alert('Error guardando localmente: ' + localError.message);
             wizardSubmitting = false;
 
-            if (finalizeBtn) {
-                finalizeBtn.disabled = false;
-                finalizeBtn.classList.remove('btn-loading');
-
-                finalizeBtn.innerHTML = `
-                    <span class="btn-text">Finalizar</span>
-                    <span class="btn-spinner"></span>
-                `;
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                nextBtn.innerHTML = '✅ Finalizar Actividad';
             }
-
             return;
         }
 
         // ==========================================
-        // BACKEND SYNC
+        // BACKEND SYNC (optional - won't block UI)
         // ==========================================
-        const apiUrl =
-            'https://api.contranormdigital.com/api/tecno-civico/activity';
+        const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
 
         try {
-
-            showWizardLoading(
-                'Guardado localmente',
-                'Enviando al servidor...'
-            );
-
             console.log('📡 Syncing to backend...');
-
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
@@ -4437,160 +4389,29 @@ async function wizardGoNext() {
                 body: JSON.stringify(newActivity)
             });
 
-            console.log('📡 Response status:', response.status);
-
-            if (!response.ok) {
-                throw new Error(
-                    `HTTP ${response.status}: ${response.statusText}`
-                );
-            }
-
-            const result = await response.json();
-
-            console.log('📡 Response body:', result);
-
-            if (!result.success) {
-                throw new Error(
-                    result.error || 'Backend rejected activity'
-                );
-            }
-
-            // ==========================================
-            // MARK AS SYNCED
-            // ==========================================
-            newActivity.synced = true;
-
-            // Update local copy
-            const activityIndex = activities.findIndex(
-                a => a.id === newActivity.id
-            );
-
-            if (activityIndex !== -1) {
-                activities[activityIndex].synced = true;
-            }
-
-            // Save updated synced state
-            const monthKey = getCurrentMonthKey();
-
-            localStorage.setItem(
-                `activities_${monthKey}`,
-                JSON.stringify(activities)
-            );
-
-            localStorage.setItem(
-                'activities_backup',
-                JSON.stringify(activities)
-            );
-
-            if (typeof saveAllToStorage === 'function') {
-                try {
-                    saveAllToStorage();
-                } catch (e) {
-                    console.warn(e);
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    newActivity.synced = true;
+                    const activityIndex = activities.findIndex(a => a.id === newActivity.id);
+                    if (activityIndex !== -1) {
+                        activities[activityIndex].synced = true;
+                    }
+                    localStorage.setItem(`activities_${getCurrentMonthKey()}`, JSON.stringify(activities));
+                    console.log('✅ Backend sync success');
                 }
             }
-
-            console.log('✅ Backend sync success');
-
-            showWizardLoading(
-                '¡Completado!',
-                'Actividad sincronizada'
-            );
-
-            await new Promise(resolve =>
-                setTimeout(resolve, 1000)
-            );
-
         } catch (backendError) {
+            console.error('❌ BACKEND SYNC FAILED:', backendError);
+            // Don't show error to user - activity was saved locally
+        }
 
-            console.error(
-                '❌ BACKEND SYNC FAILED:',
-                backendError
-            );
+        hideWizardLoading();
+        wizardSubmitting = false;
 
-            newActivity.synced = false;
-
-            // ==========================================
-            // SAVE TO PENDING QUEUE
-            // ==========================================
-            try {
-
-                let pendingQueue = JSON.parse(
-                    localStorage.getItem('pendingSyncQueue') || '[]'
-                );
-
-                if (!Array.isArray(pendingQueue)) {
-                    pendingQueue = [];
-                }
-
-                const alreadyQueued = pendingQueue.some(
-                    a => a.id === newActivity.id
-                );
-
-                if (!alreadyQueued) {
-
-                    pendingQueue.push(newActivity);
-
-                    localStorage.setItem(
-                        'pendingSyncQueue',
-                        JSON.stringify(pendingQueue)
-                    );
-
-                    console.log(
-                        '📦 Added to pending sync queue'
-                    );
-                }
-
-            } catch (queueError) {
-                console.warn(
-                    'Pending queue warning:',
-                    queueError
-                );
-            }
-
-            let userMessage =
-                'Actividad guardada localmente. ';
-
-            if (
-                backendError.message.includes('Failed to fetch') ||
-                backendError.message.includes('NetworkError')
-            ) {
-
-                userMessage +=
-                    'Sin conexión al servidor. Se sincronizará automáticamente.';
-
-            } else {
-
-                userMessage +=
-                    'Error al sincronizar. Se reintentará más tarde.';
-            }
-
-            showWizardLoading(
-                'Guardado localmente',
-                userMessage
-            );
-
-            await new Promise(resolve =>
-                setTimeout(resolve, 2000)
-            );
-
-        } finally {
-
-            hideWizardLoading();
-
-            wizardSubmitting = false;
-
-            if (finalizeBtn) {
-
-                finalizeBtn.disabled = false;
-
-                finalizeBtn.classList.remove('btn-loading');
-
-                finalizeBtn.innerHTML = `
-                    <span class="btn-text">Finalizar</span>
-                    <span class="btn-spinner"></span>
-                `;
-            }
+        if (nextBtn) {
+            nextBtn.disabled = false;
+            nextBtn.innerHTML = '✅ Finalizar Actividad';
         }
 
         return;
@@ -4608,7 +4429,6 @@ async function wizardGoNext() {
         renderWizardStep();
     }
 }
-
 
 // ==========================================
 // GPS FUNCTIONS
