@@ -3196,63 +3196,6 @@ function renderWizardStep() {
     }
 }
 
-function generateActivityOptions(selectedVal) {
-    const activities = [
-        "-- Seleccionar actividad --",
-        "Mantenimiento y Adecuación", "Abastecimiento o Gestión de Insumos", "Revision & Preparación", "Encuesta y Capacitación", "Encuestas y Observaciones Comunitarias",
-        "Encuesta y Localización", "Trabajo Comunitario", "Jornadas Integración",
-        "Atención a Beneficiarios", "Logística y Distribución", "Planificación",
-        "Visita y Planificación", "Visita y Seguimiento", "Gestión y Coordinación", "Informes", "Elaboracion & Revision",
-        "Gestión y Recuperación", "Gestión de Acuerdos", "Recaudación Fondos",
-        "Capacitación Comunitario", "Capacitación Interna", "Estrategias Digitales",
-        "Reunión por Video Llamada/Whatsapp", "Junta Directiva", "Promoción y Difusión"
-    ];
-    
-    let options = '';
-    activities.forEach(act => {
-        options += `<option value="${act}" ${selectedVal === act ? 'selected' : ''}>${act}</option>`;
-    });
-    return options;
-}
-
-function handleActivityChange() {
-    const select = document.getElementById('mainActivitySelect');
-    if (select) {
-        wizardData.activityName = select.value;
-        renderConditionalDetail();
-        saveWizardState();
-    }
-}
-function renderConditionalDetail() {
-    const container = document.getElementById('conditionalDetailContainer');
-    if (!container) return;
-    
-    const requiresDetail = ['Encuesta y Capacitación', 'Encuesta y Localización', 'Capacitación Comunitario', 'Capacitación Interna', 'Abastecimiento o Gestión de Insumos','Revision & Preparación','Elaboracion & Revision'];
-    
-    if (requiresDetail.includes(wizardData.activityName)) {
-        container.innerHTML = `
-            <div class="dynamic-dropdown">
-                <div class="question-label"> Detalle específico</div>
-                <select id="activityDetailSelect" class="wizard-input">
-                    <option value="">-- Seleccionar enfoque --</option>
-                    <option value="Equipo y/o Accesorios" ${wizardData.detail === 'Equipo y/o Accesorios' ? 'selected' : ''}>Equipo y/o Accesorios</option>
-                    <option value="Revision & Preparación" ${wizardData.detail === 'Observaciones Comunitarias' ? 'selected' : ''}>Observaciones Comunitarias</option>
-                    <option value="Profesionalizacion" ${wizardData.detail === 'Profesionalizacion' ? 'selected' : ''}>Profesionalizacion</option>
-                    <option value="Agua y Saneamiento" ${wizardData.detail === 'Agua y Saneamiento' ? 'selected' : ''}>Agua y Saneamiento</option>
-                    <option value="Manipulacion de Alimentos" ${wizardData.detail === 'Manipulacion de Alimentos' ? 'selected' : ''}>Manipulacion de Alimentos</option>
-                    <option value="Colaboradores y/o Insumos" ${wizardData.detail === 'Colaboradores y/o Insumos' ? 'selected' : ''}>Colaboradores y/o Insumos</option>
-                     <option value="Elaboracion & Revision" ${wizardData.detail === 'Documentos Externos' ? 'selected' : ''}>Documentos Internos</option>
-                </select>
-            </div>
-        `;
-    } else {
-        container.innerHTML = '';
-    }
-}
-
-// ==========================================
-// COLABORADORS FUNCTIONS
-// ==========================================
 function renderColaboratorsDynamic() {
     const colabs = wizardData.colaboradores || [];
     
@@ -3289,58 +3232,35 @@ function renderColaboratorsDynamic() {
     }
     
     wizardShowingNewColabForm = false;
+    const newIndex = 0;
+    const emptyColab = { org: '', cant: 0, personInCharge: { name: '', title: '' } };
     
     return `
-        <div class="colab-row-modern" style="margin-bottom: 16px;">
-            <select class="wizard-input colab-select" style="margin:0" data-index="${index}" onchange="updateColabType(this, ${index})">
-                        <option value="">-- Seleccionar --</option>
-                        <option value="Bomberos" ${currentColab.org === 'Bomberos' ? 'selected' : ''}>Bomberos</option>
-                        <option value="Alcaldía Local" ${currentColab.org === 'Alcaldía Local' ? 'selected' : ''}>Alcaldía Local</option>
-                         <option value="Institucion Academica" ${currentColab.org === 'Institucion Academica' ? 'selected' : ''}>Institucion Academica</option>
-                          <option value="Comité Organizador" ${currentColab.org === 'Comité Organizador' ? 'selected' : ''}>Comité Organizador</option>
-                          <option value="Unidad Operativa" ${currentColab.org === 'Unidad Operativa' ? 'selected' : ''}>Unidad Operativa</option>
-                        <option value="CIS" ${currentColab.org === 'CIS' ? 'selected' : ''}>Departamento de Salud | CIS</option>
-                        <option value="Autoridad Competente" ${currentColab.org === 'Autoridad Competente' ? 'selected' : ''}>Autoridad Competente</option>
-                        <option value="Iglesia Local" ${currentColab.org === 'Iglesia Local' ? 'selected' : ''}>Iglesia Local</option>
-                        <option value="ONG" ${currentColab.org === 'ONG' ? 'selected' : ''}>ONG</option>
-                        <option value="Empresa Privada" ${currentColab.org === 'Empresa Privada' ? 'selected' : ''}>Empresa Privada</option>
-                        <option value="Universidad" ${currentColab.org === 'Universidad' ? 'selected' : ''}>Universidad</option>
-                    </select>
-                    <input type="number" placeholder="Cant." class="wizard-input colab-cant" style="margin:0; width:100px" value="${currentColab.cant}" min="0" oninput="updateColabDetails(this, ${index})">
-                    <button class="remove-colab" onclick="removeColabRow(this)">✖</button>
+        <div class="colab-wrapper" style="margin-bottom: 16px;">
+            <div class="colab-row-modern" style="margin-bottom: 8px;">
+                <select class="wizard-input colab-select" style="margin:0" data-index="${newIndex}" onchange="updateColabType(this, ${newIndex})">
+                    <option value="">-- Seleccionar --</option>
+                    <option value="Bomberos">Bomberos</option>
+                    <option value="Alcaldía Local">Alcaldía Local</option>
+                    <option value="Institucion Academica">Institucion Academica</option>
+                    <option value="Comité Organizador">Comité Organizador</option>
+                    <option value="Unidad Operativa">Unidad Operativa</option>
+                    <option value="CIS">Departamento de Salud | CIS</option>
+                    <option value="Autoridad Competente">Autoridad Competente</option>
+                    <option value="Iglesia Local">Iglesia Local</option>
+                    <option value="ONG">ONG</option>
+                    <option value="Empresa Privada">Empresa Privada</option>
+                    <option value="Universidad">Universidad</option>
+                </select>
+                <input type="number" placeholder="Cant." class="wizard-input colab-cant" style="margin:0; width:100px" value="" min="0" oninput="updateColabDetails(this, ${newIndex})">
+                <button class="remove-colab" onclick="removeColabRow(this)">✖</button>
+            </div>
+            <div id="colabDetails_${newIndex}" class="colab-details-container">
+                ${renderDetailedFields(emptyColab, newIndex)}
+            </div>
         </div>
-        <div id="colabDetails_0" class="colab-details-container"></div>
+        <button class="wiz-btn wiz-btn-secondary" style="width:100%; margin-top:16px;" onclick="addColaboratorRow()">+ Agregar otro colaborador</button>
     `;
-}
-
-function renderDetailedFields(col, index) {
-    const expectedCount = col.cant || 0;
-    
-    // All collaborators are now external
-    if (col.org !== '' && expectedCount > 0) {
-        const personInCharge = col.personInCharge || { name: '', title: '' };
-        return `
-            <div class="detailed-participants" style="margin-left: 20px; margin-bottom: 12px; padding: 12px; background: var(--neutral-light); border-radius: 16px;">
-                <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">👤 Persona a cargo de ${col.org}</div>
-                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                    <input type="text" id="externalPersonName_${index}" class="wizard-input" style="flex:2; margin:0;" placeholder="Nombre completo" value="${escapeHtml(personInCharge.name || '')}" onchange="updateExternalPersonInCharge(${index}, 'name', this.value)">
-                    <input type="text" id="externalPersonTitle_${index}" class="wizard-input" style="flex:1; margin:0;" placeholder="Cargo / Título" value="${escapeHtml(personInCharge.title || '')}" onchange="updateExternalPersonInCharge(${index}, 'title', this.value)">
-                </div>
-                <p style="font-size:0.65rem; color:var(--text-medium); margin-top: 6px;">Registra la persona de contacto de ${col.org}.</p>
-            </div>
-        `;
-    }
-    
-    if (expectedCount === 0) {
-        return `
-            <div class="detailed-participants" style="margin-left: 20px; margin-bottom: 12px; padding: 12px; background: var(--neutral-light); border-radius: 16px;">
-                <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">📋 Detalles de ${col.org || 'colaborador'}</div>
-                <p style="font-size:0.7rem; color:var(--text-medium); text-align:center; padding: 8px;">Ingresa la cantidad para registrar la persona de contacto</p>
-            </div>
-        `;
-    }
-    
-    return '';
 }
 
 function updateColabType(select, index) {
