@@ -3026,6 +3026,29 @@ function getStatusColor(status) {
 // ==========================================
 // MAIN WIZARD FUNCTIONS
 // ==========================================
+// Add this function BEFORE openActivityWizard()
+function resetWizardState() {
+    // Clear all wizard-related localStorage
+    localStorage.removeItem('wizardFullState');
+    localStorage.removeItem('wizardTimerState');
+    
+    // Reset global wizard variables
+    wizardStep = 1;
+    wizardData = {};
+    wizardCompleted = false;
+    wizardSubmitting = false;
+    wizardTimerElapsedMs = 0;
+    wizardTimerStart = null;
+    timerMode = 'manual';
+    
+    // Clear timer if running
+    if (wizardTimerInterval) {
+        clearInterval(wizardTimerInterval);
+        wizardTimerInterval = null;
+    }
+    
+    console.log('✅ Wizard state reset completely');
+}
 
 function openActivityWizard() {
     resetWizardState();
