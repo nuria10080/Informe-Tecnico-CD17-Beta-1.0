@@ -3953,38 +3953,44 @@ function finalizeWizardActivity() {
         if (typeof updateCharts === 'function') updateCharts();
     }
     
+    // Send to backend
+    const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
+    fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newActivity)
+    }).catch(err => console.error('Backend send failed:', err));
+    
     // Stop timer if running
     if (wizardTimerInterval) {
         clearInterval(wizardTimerInterval);
         wizardTimerInterval = null;
     }
     
-    // Store success message info BEFORE clearing wizardData
+    // Store success message info
     const finalMinutes = Math.round(formattedHours * 60);
     const finalHoursDisplay = formattedHours.toFixed(2);
     const locationMsg = (wizardData.lat && wizardData.lng) ? `\n📍 Ubicación registrada` : `\n📍 Sin ubicación (opcional)`;
     const voluntariasCount = wizardData.voluntarias || 0;
     const activityName = finalName;
     
-    // ========== CLEAR STATE ==========
+    // Clear all wizard state
     clearSavedTimerState();
     clearWizardState();
     stopAutoSave();
     
-    // Reset all wizard data
     wizardData = {};
     wizardStep = 1;
     wizardTimerElapsedMs = 0;
     activeWizard = null;
     
-    // Clear localStorage directly
     localStorage.removeItem('wizardState');
     localStorage.removeItem('wizardTimerState');
     localStorage.removeItem('wizardFullState');
     
     wizardCompleted = false;
     
-    // Close the wizard
+    // Close the wizard overlay
     const overlay = document.getElementById('globalWizardOverlay');
     if (overlay) {
         overlay.classList.remove('active');
@@ -3996,6 +4002,7 @@ function finalizeWizardActivity() {
         alert(`✅ ¡Actividad "${activityName}" registrada exitosamente!\n⏱️ Duración: ${finalMinutes} minutos (${finalHoursDisplay} horas)\n👥 ${voluntariasCount} voluntario(s) participaron${locationMsg}`);
     }, 100);
 }
+
 // ==========================================
 // GPS FUNCTIONS
 // ==========================================
