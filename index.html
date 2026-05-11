@@ -3082,14 +3082,19 @@ function closeGlobalWizard() {
     activeWizard = null;
     stopAutoSave();
     
-    // Only save if wizard was NOT completed
-    if (!wizardCompleted && (wizardTimerInterval || Object.keys(wizardData).length > 0)) {
-        saveWizardState();
-        if (wizardTimerInterval) saveTimerState(true);
-    } else {
-        clearWizardState();
-        clearSavedTimerState();
+    // IMPORTANT: Don't clear wizard state if we're still in the middle of submitting/saving
+    // The wizardSubmitting flag tells us if we're actively saving
+    if (!wizardSubmitting) {
+        // Only save if wizard was NOT completed
+        if (!wizardCompleted && (wizardTimerInterval || Object.keys(wizardData).length > 0)) {
+            saveWizardState();
+            if (wizardTimerInterval) saveTimerState(true);
+        } else {
+            clearWizardState();
+            clearSavedTimerState();
+        }
     }
+    // If wizardSubmitting is true, we skip clearing state so the sync can complete
 }
 
 function renderWizardStep() {
@@ -3910,7 +3915,6 @@ let loadingOverlay = null;
 
 // Function to show loading overlay
 function showWizardLoading(message = 'Guardando actividad...', submessage = 'Por favor espera') {
-    // Remove existing overlay if any
     if (loadingOverlay) {
         hideWizardLoading();
     }
@@ -3927,7 +3931,6 @@ function showWizardLoading(message = 'Guardando actividad...', submessage = 'Por
     document.body.appendChild(loadingOverlay);
 }
 
-// Function to hide loading overlay
 function hideWizardLoading() {
     if (loadingOverlay) {
         loadingOverlay.remove();
@@ -3936,9 +3939,8 @@ function hideWizardLoading() {
 }
 
 async function wizardGoNext() {
-    // Prevent duplicate taps
     if (wizardSubmitting) {
-        console.log('Wizard already submitting, ignoring duplicate click');
+        console.log('Wizard already submitting');
         return;
     }
 
@@ -3948,24 +3950,17 @@ async function wizardGoNext() {
         return;
     }
 
-    // FINAL STEP (step 6)
     if (wizardStep === 6) {
         wizardSubmitting = true;
 
         const finalizeBtn = document.getElementById('wizardFinalizeBtn');
-
-        // Disable button and add loading class
         if (finalizeBtn) {
             finalizeBtn.disabled = true;
             finalizeBtn.classList.add('btn-loading');
             finalizeBtn.innerHTML = '<span class="btn-text">Guardando...</span><span class="btn-spinner"></span>';
         }
         
-        // Show loading overlay IMMEDIATELY
-        showWizardLoading(
-            'Guardando actividad...', 
-            'Por favor espera, no cierres esta ventana'
-        );
+        showWizardLoading('Guardando actividad...', 'Por favor espera');
 
         const newActivity = {
             id: crypto.randomUUID(),
@@ -3989,27 +3984,55 @@ async function wizardGoNext() {
         };
 
         // ==========================================
-        // LOCAL SAVE (keep overlay visible)
+        // FIXED: BETTER LOCAL SAVE WITH FALLBACKS
         // ==========================================
+        let localSaveSuccess = false;
+        
         try {
-            // Make sure activities is accessible
-            if (typeof window.activities !== 'undefined') {
-                window.activities.push(newActivity);
-            } else if (typeof activities !== 'undefined') {
+            // Option 1: Use global activities array (most common)
+            if (typeof activities !== 'undefined' && activities !== null) {
                 activities.push(newActivity);
-            } else {
-                console.error('Activities array not found!');
-                throw new Error('Activities storage not available');
+                console.log('✅ Saved to global activities array');
+                localSaveSuccess = true;
+            }
+            // Option 2: Use window.activities
+            else if (typeof window.activities !== 'undefined' && window.activities !== null) {
+                window.activities.push(newActivity);
+                console.log('✅ Saved to window.activities');
+                localSaveSuccess = true;
+            }
+            // Option 3: Initialize activities if it doesn't exist
+            else {
+                console.warn('⚠️ activities array not found, creating it');
+                // Create the global activities array
+                window.activities = [];
+                window.activities.push(newActivity);
+                // Also set the local variable for other functions
+                if (typeof activities === 'undefined') {
+                    var activities = window.activities;
+                }
+                localSaveSuccess = true;
             }
             
-            saveAllToStorage();
+            // Save to localStorage
+            if (typeof saveAllToStorage === 'function') {
+                saveAllToStorage();
+                console.log('✅ Saved to localStorage');
+            } else {
+                // Manual save if saveAllToStorage doesn't exist
+                const monthKey = getCurrentMonthKey();
+                const existingActivities = JSON.parse(localStorage.getItem(`activities_${monthKey}`) || '[]');
+                existingActivities.push(newActivity);
+                localStorage.setItem(`activities_${monthKey}`, JSON.stringify(existingActivities));
+                console.log('✅ Manual save to localStorage');
+            }
             
-            // Update overlay message
-            showWizardLoading('Actividad guardada localmente', 'Sincronizando con el servidor...');
+            showWizardLoading('Actividad guardada', 'Actualizando vista...');
             
-            // Refresh UI
+            // Force UI refresh
             if (typeof renderActivities === 'function') {
                 renderActivities();
+                console.log('✅ renderActivities called');
             }
             if (typeof updateCharts === 'function') {
                 updateCharts();
@@ -4017,11 +4040,17 @@ async function wizardGoNext() {
             if (typeof updateGlobalKPIs === 'function') {
                 updateGlobalKPIs();
             }
+            if (typeof actualizarListavoluntarios === 'function') {
+                actualizarListavoluntarios();
+            }
+            
+            // Small delay to ensure UI updates
+            await new Promise(resolve => setTimeout(resolve, 300));
             
         } catch (localError) {
-            console.error('Local save failed:', localError);
+            console.error('❌ Local save failed:', localError);
             hideWizardLoading();
-            alert('Error al guardar localmente. Por favor intenta de nuevo.');
+            alert('Error al guardar localmente. Por favor intenta de nuevo.\n\nDetalle: ' + localError.message);
             wizardSubmitting = false;
             if (finalizeBtn) {
                 finalizeBtn.disabled = false;
@@ -4031,20 +4060,20 @@ async function wizardGoNext() {
             return;
         }
 
-        // Close wizard AFTER local save (but keep overlay visible)
+        // Close wizard AFTER successful local save
         closeGlobalWizard();
 
         // ==========================================
-        // BACKEND SYNC (keep overlay visible)
+        // BACKEND SYNC
         // ==========================================
         const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
 
         try {
+            showWizardLoading('Sincronizando...', 'Enviando al servidor');
+            
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     id: newActivity.id,
                     date: newActivity.date,
@@ -4076,54 +4105,31 @@ async function wizardGoNext() {
                 throw new Error(result.error || 'Backend rejected activity');
             }
 
-            console.log('✅ Activity synced to backend:', newActivity.id);
-
-            // Mark synced and update storage
+            console.log('✅ Activity synced to backend');
             newActivity.synced = true;
-            saveAllToStorage();
             
-            // Show success
+            if (typeof saveAllToStorage === 'function') {
+                saveAllToStorage();
+            }
+            
             showWizardLoading('¡Completado!', 'Actividad sincronizada correctamente');
-            
-            // Wait 1 second to show success, then hide overlay
             await new Promise(resolve => setTimeout(resolve, 1000));
 
         } catch (err) {
             console.error('❌ Backend sync failed:', err);
-
             newActivity.synced = false;
 
-            let pendingQueue = JSON.parse(
-                localStorage.getItem('pendingSyncQueue') || '[]'
-            );
-
-            // Prevent duplicate queue entries
-            const alreadyQueued = pendingQueue.some(
-                a => a.id === newActivity.id
-            );
-
-            if (!alreadyQueued) {
+            // Queue for later sync
+            let pendingQueue = JSON.parse(localStorage.getItem('pendingSyncQueue') || '[]');
+            if (!pendingQueue.some(a => a.id === newActivity.id)) {
                 pendingQueue.push(newActivity);
-                localStorage.setItem(
-                    'pendingSyncQueue',
-                    JSON.stringify(pendingQueue)
-                );
-                console.log('📦 Activity queued for later sync');
+                localStorage.setItem('pendingSyncQueue', JSON.stringify(pendingQueue));
             }
             
-            // Show warning
-            showWizardLoading(
-                'Guardado localmente', 
-                'Se sincronizará automáticamente cuando haya conexión'
-            );
-            
-            // Wait 1.5 seconds to show message
+            showWizardLoading('Guardado localmente', 'Se sincronizará cuando haya conexión');
             await new Promise(resolve => setTimeout(resolve, 1500));
             
         } finally {
-            // ==========================================
-            // HIDE OVERLAY AND RELEASE LOCK
-            // ==========================================
             hideWizardLoading();
             wizardSubmitting = false;
 
@@ -4137,16 +4143,11 @@ async function wizardGoNext() {
         return;
     }
 
-    // ==========================================
-    // TIMER CONTROL (for non-final steps)
-    // ==========================================
+    // Non-final steps
     if (wizardStep === 2 && wizardTimerInterval) {
         stopWizardTimerGlobal();
     }
 
-    // ==========================================
-    // NEXT STEP
-    // ==========================================
     if (wizardStep < 6) {
         wizardStep++;
         renderWizardStep();
