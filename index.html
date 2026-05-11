@@ -3906,8 +3906,46 @@ function saveCurrentStepData() {
 }
 
 
+
+function deleteActivity(idx) {
+    activities.splice(idx, 1);
+    renderActivities();
+    saveAllToStorage();
+    
+    // Small delay to ensure charts update properly
+    setTimeout(() => {
+        updateCharts();
+    }, 100);
+}
+
+function saveData() {
+    sortActivitiesByDate();
+    saveAllToStorage();
+    alert('✅ Datos guardados para el mes actual.');
+}
+
+function clearData() {
+    if (confirm('Borrar toda la información del mes actual?')) {
+        const monthKey = getCurrentMonthKey();
+        activities = [];
+        voluntariosActivos = [];
+        localStorage.removeItem(`activities_${monthKey}`);
+        localStorage.removeItem(`voluntarios_${monthKey}`);
+        localStorage.removeItem(`desc_${monthKey}`);
+        document.getElementById('scopeText').value = '';
+        document.getElementById('difficultiesText').value = '';
+        document.getElementById('recommendationsText').value = '';
+        document.getElementById('impactText').value = '';
+        updateCharCounts();
+        actualizarListavoluntarios();
+        renderActivities();
+        updateCharts();
+        document.getElementById('monthIndicator').innerText = formatDateForDisplay(new Date());
+        alert('🗑️ Datos del mes actual borrados.');
+    }
+}
 function renderActivities() {
-    closeGlobalWizard();
+    saveData();
     // Inject print styles if not already present
     if (!document.getElementById('print-gps-styles')) {
         const style = document.createElement('style');
@@ -5033,44 +5071,6 @@ function getQRCodeData(activity) {
 }
 
 
-
-function deleteActivity(idx) {
-    activities.splice(idx, 1);
-    renderActivities();
-    saveAllToStorage();
-    
-    // Small delay to ensure charts update properly
-    setTimeout(() => {
-        updateCharts();
-    }, 100);
-}
-
-function saveData() {
-    sortActivitiesByDate();
-    saveAllToStorage();
-    alert('✅ Datos guardados para el mes actual.');
-}
-
-function clearData() {
-    if (confirm('Borrar toda la información del mes actual?')) {
-        const monthKey = getCurrentMonthKey();
-        activities = [];
-        voluntariosActivos = [];
-        localStorage.removeItem(`activities_${monthKey}`);
-        localStorage.removeItem(`voluntarios_${monthKey}`);
-        localStorage.removeItem(`desc_${monthKey}`);
-        document.getElementById('scopeText').value = '';
-        document.getElementById('difficultiesText').value = '';
-        document.getElementById('recommendationsText').value = '';
-        document.getElementById('impactText').value = '';
-        updateCharCounts();
-        actualizarListavoluntarios();
-        renderActivities();
-        updateCharts();
-        document.getElementById('monthIndicator').innerText = formatDateForDisplay(new Date());
-        alert('🗑️ Datos del mes actual borrados.');
-    }
-}
 // ==========================================
 // CHARTS (Simplified) - CORRECTED VERSION
 // All charts now pull from activities array as source of truth
