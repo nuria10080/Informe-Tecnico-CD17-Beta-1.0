@@ -3027,6 +3027,7 @@ function getStatusColor(status) {
 // ==========================================
 
 function openActivityWizard() {
+    resetWizardState();
     if (document.getElementById('globalWizardOverlay')) {
         document.getElementById('globalWizardOverlay').remove();
     }
@@ -5176,20 +5177,24 @@ async function processImportedData(scannedData) {
 
 
 function getQRCodeData(activity) {
-    // ✅ Return ALL valid links as an array
-    if (
-        activity.links &&
-        Array.isArray(activity.links) &&
-        activity.links.length > 0
-    ) {
-        // Filter out empty links
+    // Return ALL valid links as an array
+    if (activity && activity.links && Array.isArray(activity.links) && activity.links.length > 0) {
         const validLinks = activity.links.filter(link => link && link.trim() !== '');
-        return validLinks.length > 0 ? validLinks : null;
+        if (validLinks.length > 0) {
+            console.log(`📱 Activity has ${validLinks.length} valid links`);
+            return validLinks;
+        }
     }
     
+    // Check for single link property (backward compatibility)
+    if (activity && activity.link && activity.link.trim() !== '') {
+        console.log(`📱 Activity has single link`);
+        return [activity.link];
+    }
+    
+    console.log(`📱 No links found for activity`);
     return null;
 }
-
 
 // ==========================================
 // CHARTS (Simplified) - CORRECTED VERSION
@@ -5720,23 +5725,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateGlobalKPIs === 'function') updateGlobalKPIs();
     }
     
-    // Load Voluntario profiles - SIMPLIFIED!
+    // Load Voluntario profiles
     if (typeof initProfileSystem === 'function') {
-        initProfileSystem(); // This handles both existing and new profiles
+        initProfileSystem();
     }
     
-    const identidadInput = document.getElementById("identidad");
-    if (identidadInput) {
-        identidadSuffix = `Voluntario-${Date.now()}-${identidadInput.value}`;
-    }
+    // Clear any stale wizard state on page load
+    localStorage.removeItem('wizardFullState');
+    localStorage.removeItem('wizardTimerState');
+    wizardCompleted = false;
+    wizardSubmitting = false;
     
-    // --- jsQR check ---
+    // jsQR check
     setTimeout(() => {
         if (typeof jsQR !== 'undefined') {
             console.log('🎉 jsQR is loaded and ready!');
             window.jsQRLoaded = true;
         } else {
-            console.error('💥 jsQR failed to load! Check your internet connection.');
+            console.error('💥 jsQR failed to load!');
             const statusDiv = document.getElementById('qrStatus');
             if (statusDiv) {
                 statusDiv.innerHTML = '⚠️ Biblioteca QR no cargada. Verifica tu conexión a internet.';
