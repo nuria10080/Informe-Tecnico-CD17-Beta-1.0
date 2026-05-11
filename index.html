@@ -3292,19 +3292,22 @@ function renderColaboratorsDynamic() {
     
     return `
         <div class="colab-row-modern" style="margin-bottom: 16px;">
-            <select class="wizard-input colab-select" style="margin:0" data-index="0" onchange="updateColabType(this, 0)">
-                <option value="">-- Seleccionar colaborador --</option>
-                <option value="Bomberos">Bomberos</option>
-                <option value="Alcaldía Local">Alcaldía Local</option>
-                <option value="CIS">Departamento de Salud | CIS</option>
-                <option value="Autoridad Competente">Autoridad Competente</option>
-                <option value="Iglesia Local">Iglesia Local</option>
-                <option value="ONG">ONG</option>
-                <option value="Empresa Privada">Empresa Privada</option>
-                <option value="Universidad">Universidad</option>
-            </select>
-            <input type="number" placeholder="Cant." class="wizard-input colab-cant" style="margin:0; width:100px" min="0" oninput="updateColabDetails(this, 0)">
-            <button class="remove-colab" onclick="removeColabRow(this)">✖</button>
+            <select class="wizard-input colab-select" style="margin:0" data-index="${index}" onchange="updateColabType(this, ${index})">
+                        <option value="">-- Seleccionar --</option>
+                        <option value="Bomberos" ${currentColab.org === 'Bomberos' ? 'selected' : ''}>Bomberos</option>
+                        <option value="Alcaldía Local" ${currentColab.org === 'Alcaldía Local' ? 'selected' : ''}>Alcaldía Local</option>
+                         <option value="Institucion Academica" ${currentColab.org === 'Institucion Academica' ? 'selected' : ''}>Institucion Academica</option>
+                          <option value="Comité Organizador" ${currentColab.org === 'Comité Organizador' ? 'selected' : ''}>Comité Organizador</option>
+                          <option value="Unidad Operativa" ${currentColab.org === 'Unidad Operativa' ? 'selected' : ''}>Unidad Operativa</option>
+                        <option value="CIS" ${currentColab.org === 'CIS' ? 'selected' : ''}>Departamento de Salud | CIS</option>
+                        <option value="Autoridad Competente" ${currentColab.org === 'Autoridad Competente' ? 'selected' : ''}>Autoridad Competente</option>
+                        <option value="Iglesia Local" ${currentColab.org === 'Iglesia Local' ? 'selected' : ''}>Iglesia Local</option>
+                        <option value="ONG" ${currentColab.org === 'ONG' ? 'selected' : ''}>ONG</option>
+                        <option value="Empresa Privada" ${currentColab.org === 'Empresa Privada' ? 'selected' : ''}>Empresa Privada</option>
+                        <option value="Universidad" ${currentColab.org === 'Universidad' ? 'selected' : ''}>Universidad</option>
+                    </select>
+                    <input type="number" placeholder="Cant." class="wizard-input colab-cant" style="margin:0; width:100px" value="${currentColab.cant}" min="0" oninput="updateColabDetails(this, ${index})">
+                    <button class="remove-colab" onclick="removeColabRow(this)">✖</button>
         </div>
         <div id="colabDetails_0" class="colab-details-container"></div>
     `;
