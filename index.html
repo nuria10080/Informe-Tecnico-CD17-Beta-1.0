@@ -3858,44 +3858,37 @@ function wizardGoNext() {
             createdByName: currentUser ? currentUser.name : 'Usuario'
         };
         
-        // Add to activities array FIRST
+        // Add to activities array and render IMMEDIATELY
         activities.push(newActivity);
-        
-        // Save to localStorage
         saveAllToStorage();
-        
-        // Render the activity in the UI
         renderActivities();
         
-        // Close the wizard (UI feedback first)
+        // Close wizard IMMEDIATELY (UI feedback)
         closeGlobalWizard();
         
-        // Use sendBeacon for more reliable background sending
+        // Send to backend in the background (don't await)
         const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
-        const blob = new Blob([JSON.stringify(newActivity)], { type: 'application/json' });
         
-        if (navigator.sendBeacon) {
-            // sendBeacon works even after page unload
-            const sent = navigator.sendBeacon(apiUrl, blob);
-            if (sent) {
-                console.log('✅ Activity queued for backend via sendBeacon');
-            } else {
-                console.error('❌ sendBeacon failed, falling back to fetch');
-                // Fallback to fetch
-                fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newActivity)
-                }).catch(err => console.error('Backend send failed:', err));
-            }
-        } else {
-            // Fallback for older browsers
-            fetch(apiUrl, {
+        // Use Promise to ensure it runs even after wizard closes
+        Promise.resolve().then(() => {
+            return fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newActivity)
-            }).catch(err => console.error('Backend send failed:', err));
-        }
+            });
+        }).then(response => {
+            if (response.ok) {
+                console.log('✅ Activity sent to backend successfully');
+            } else {
+                console.error('❌ Backend responded with error:', response.status);
+            }
+        }).catch(err => {
+            console.error('❌ Backend send failed:', err);
+            // Optionally store failed request in localStorage to retry later
+            const failedRequests = JSON.parse(localStorage.getItem('failedBackendRequests') || '[]');
+            failedRequests.push({ activity: newActivity, timestamp: Date.now() });
+            localStorage.setItem('failedBackendRequests', JSON.stringify(failedRequests));
+        });
         
         // Reset wizard data for next activity
         wizardData = {};
@@ -3918,7 +3911,6 @@ function wizardGoNext() {
         renderWizardStep();
     }
 }
-
 
 // ==========================================
 // GPS FUNCTIONS
