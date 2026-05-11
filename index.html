@@ -2515,6 +2515,7 @@ function renderProfileSelector() {
     
     profileSelect.onchange = (e) => {
         if (e.target.value) {
+            clearWizardStateOnUserChange();
             currentUser = VoluntarioProfiles.find(p => p.id === e.target.value);
             saveProfiles();
             renderProfileSelector();
@@ -3100,6 +3101,29 @@ function closeGlobalWizard() {
         }
     }
     // If wizardSubmitting is true, we skip clearing state so the sync can complete
+}
+
+function clearWizardStateOnUserChange() {
+    // Clear all wizard-related localStorage
+    localStorage.removeItem('wizardFullState');
+    localStorage.removeItem('wizardTimerState');
+    
+    // Reset global wizard variables
+    wizardStep = 1;
+    wizardData = {};
+    wizardCompleted = false;
+    wizardSubmitting = false;
+    wizardTimerElapsedMs = 0;
+    wizardTimerStart = null;
+    timerMode = 'manual';
+    
+    // Clear timer if running
+    if (wizardTimerInterval) {
+        clearInterval(wizardTimerInterval);
+        wizardTimerInterval = null;
+    }
+    
+    console.log('✅ Wizard state cleared for user change');
 }
 
 function renderWizardStep() {
