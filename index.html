@@ -3834,7 +3834,7 @@ function wizardGoPrev() {
     }
 }
 
-async function wizardGoNext() {
+function wizardGoNext() {
     if (wizardStep === 6) {
         saveCurrentStepData();
         
@@ -3858,32 +3858,40 @@ async function wizardGoNext() {
             createdByName: currentUser ? currentUser.name : 'Usuario'
         };
         
-        // Add to activities and render
+        // Step 1: Add to activities array
         activities.push(newActivity);
+        
+        // Step 2: Save to localStorage
         saveAllToStorage();
+        
+        // Step 3: Render the activity in the UI
         renderActivities();
         
-        // Send to backend
+        // Step 4: Send to backend (do this BEFORE closing wizard)
         const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
         
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newActivity)
-            });
-            
+        // Use fetch without await - let it run in background
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newActivity)
+        })
+        .then(response => {
             if (response.ok) {
-                console.log('✅ Activity sent to backend');
+                console.log('✅ Activity sent to backend successfully');
             } else {
                 console.error('❌ Backend error:', response.status);
             }
-        } catch (err) {
+        })
+        .catch(err => {
             console.error('❌ Backend send failed:', err);
-        } finally {
-            // Close wizard AFTER backend request completes
+        });
+        
+        // Step 5: Close wizard AFTER fetch is initiated
+        // Use setTimeout to ensure fetch has started
+        setTimeout(() => {
             closeGlobalWizard();
-        }
+        }, 100);
         
         // Reset wizard data
         wizardData = {};
@@ -3896,6 +3904,7 @@ async function wizardGoNext() {
     saveCurrentStepData();
     if (!validateCurrentStep()) return;
     
+    // Only stop timer if we're on step 2 AND timer is actually running
     if (wizardStep === 2 && wizardTimerInterval) {
         stopWizardTimerGlobal();
     }
