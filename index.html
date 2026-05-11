@@ -1592,8 +1592,13 @@ body {
 // ==========================================
 // GLOBAL STATE
 // ==========================================
+// At the very top of your script, right after the opening <script> tag
 let activities = [];
 let voluntariosActivas = [];
+let VoluntarioProfiles = [];
+let currentUser = null;
+let wizardSubmitting = false;
+let loadingOverlay = null;
 let activityFormCount = 0;
 let timers = {};
 let wizardShowingNewColabForm = false;
@@ -2428,8 +2433,7 @@ function stopAutoSave() {
 // ==========================================
 // PROFILE SYSTEM (Complete replacement for voluntariosActivas)
 // ==========================================
-let VoluntarioProfiles = []; // This replaces voluntariosActivas
-let currentUser = null;
+
 
 
 function initProfileSystem() {
@@ -3910,8 +3914,7 @@ function wizardGoPrev() {
     }
 }
 
-let wizardSubmitting = false;
-let loadingOverlay = null;
+
 
 // Function to show loading overlay
 function showWizardLoading(message = 'Guardando actividad...', submessage = 'Por favor espera') {
@@ -3983,42 +3986,69 @@ async function wizardGoNext() {
             synced: false
         };
 
+        console.log('📝 New activity created:', newActivity);
+
         // ==========================================
-        // LOCAL SAVE (This actually works!)
+        // FIXED LOCAL SAVE - Ensuring activities exists
         // ==========================================
         let localSaveSuccess = false;
         
         try {
-            if (typeof activities !== 'undefined' && activities !== null) {
-                activities.push(newActivity);
-                localSaveSuccess = true;
-                console.log('✅ Activity saved locally');
-            } else if (typeof window.activities !== 'undefined') {
-                window.activities.push(newActivity);
-                localSaveSuccess = true;
-            } else {
-                // Initialize activities if needed
-                window.activities = [newActivity];
+            // CRITICAL FIX: Ensure activities is initialized
+            if (typeof activities === 'undefined' || activities === null) {
+                console.log('⚠️ activities was undefined, initializing empty array');
+                window.activities = [];
+                // Use var to make it globally accessible
                 var activities = window.activities;
-                localSaveSuccess = true;
             }
             
+            // Also check window.activities as fallback
+            if (typeof window.activities === 'undefined' || window.activities === null) {
+                console.log('⚠️ window.activities was undefined, initializing');
+                window.activities = [];
+            }
+            
+            // Get the correct reference to the activities array
+            const activitiesRef = (typeof activities !== 'undefined' && activities !== null) ? activities : window.activities;
+            
+            if (!activitiesRef || !Array.isArray(activitiesRef)) {
+                throw new Error('Activities array is not properly initialized');
+            }
+            
+            activitiesRef.push(newActivity);
+            console.log('✅ Activity pushed to array. New length:', activitiesRef.length);
+            
+            // Save to localStorage using multiple methods for redundancy
+            const monthKey = getCurrentMonthKey();
+            
+            // Method 1: Use saveAllToStorage if available
             if (typeof saveAllToStorage === 'function') {
                 saveAllToStorage();
-            } else {
-                // Manual save
-                const monthKey = getCurrentMonthKey();
-                const existing = JSON.parse(localStorage.getItem(`activities_${monthKey}`) || '[]');
-                existing.push(newActivity);
-                localStorage.setItem(`activities_${monthKey}`, JSON.stringify(existing));
+                console.log('✅ saveAllToStorage called');
             }
             
+            // Method 2: Direct localStorage save (redundancy)
+            const existingActivities = JSON.parse(localStorage.getItem(`activities_${monthKey}`) || '[]');
+            existingActivities.push(newActivity);
+            localStorage.setItem(`activities_${monthKey}`, JSON.stringify(existingActivities));
+            console.log('✅ Direct localStorage save complete');
+            
+            // Update the global reference
+            if (typeof activities !== 'undefined') {
+                activities = activitiesRef;
+            }
+            window.activities = activitiesRef;
+            
+            localSaveSuccess = true;
             console.log('✅ Local save COMPLETE');
             
         } catch (localError) {
             console.error('❌ LOCAL save error:', localError);
+            console.error('Error details:', localError.message);
+            console.error('Stack trace:', localError.stack);
+            
             hideWizardLoading();
-            alert('Error crítico: No se pudo guardar localmente. Reinicia la app.');
+            alert('Error crítico: No se pudo guardar localmente. Detalle: ' + localError.message);
             wizardSubmitting = false;
             if (finalizeBtn) {
                 finalizeBtn.disabled = false;
@@ -4031,10 +4061,34 @@ async function wizardGoNext() {
         // Only close wizard if local save succeeded
         if (localSaveSuccess) {
             closeGlobalWizard();
+        } else {
+            hideWizardLoading();
+            wizardSubmitting = false;
+            if (finalizeBtn) {
+                finalizeBtn.disabled = false;
+                finalizeBtn.classList.remove('btn-loading');
+                finalizeBtn.innerHTML = '<span class="btn-text">Finalizar</span><span class="btn-spinner"></span>';
+            }
+            return;
+        }
+
+        // Refresh UI immediately
+        try {
+            if (typeof renderActivities === 'function') {
+                renderActivities();
+            }
+            if (typeof updateCharts === 'function') {
+                updateCharts();
+            }
+            if (typeof updateGlobalKPIs === 'function') {
+                updateGlobalKPIs();
+            }
+        } catch (refreshError) {
+            console.warn('UI refresh error:', refreshError);
         }
 
         // ==========================================
-        // BACKEND SYNC - This is what's failing
+        // BACKEND SYNC (non-blocking)
         // ==========================================
         const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
 
@@ -4095,10 +4149,7 @@ async function wizardGoNext() {
 
         } catch (backendError) {
             console.error('❌ BACKEND sync FAILED:', backendError);
-            console.error('❌ Error name:', backendError.name);
-            console.error('❌ Error message:', backendError.message);
             
-            // This is a BACKEND error - not local save error!
             newActivity.synced = false;
 
             // Queue for later sync
@@ -4109,14 +4160,9 @@ async function wizardGoNext() {
                 console.log('📦 Activity queued for later sync. Queue size:', pendingQueue.length);
             }
             
-            // Show appropriate message based on error type
             let userMessage = 'Actividad guardada localmente. ';
             if (backendError.message.includes('Failed to fetch') || backendError.message.includes('NetworkError')) {
-                userMessage += 'Sin conexión al servidor. Se sincronizará automáticamente cuando recuperes conexión.';
-            } else if (backendError.message.includes('HTTP 500')) {
-                userMessage += 'Error en el servidor. Se reintentará automáticamente.';
-            } else if (backendError.message.includes('HTTP 401') || backendError.message.includes('HTTP 403')) {
-                userMessage += 'Error de autorización. Contacta al administrador.';
+                userMessage += 'Sin conexión al servidor. Se sincronizará automáticamente.';
             } else {
                 userMessage += 'Error al sincronizar. Se reintentará más tarde.';
             }
@@ -4148,6 +4194,9 @@ async function wizardGoNext() {
         renderWizardStep();
     }
 }
+
+
+
 // ==========================================
 // GPS FUNCTIONS
 // ==========================================
