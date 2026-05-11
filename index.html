@@ -3984,73 +3984,41 @@ async function wizardGoNext() {
         };
 
         // ==========================================
-        // FIXED: BETTER LOCAL SAVE WITH FALLBACKS
+        // LOCAL SAVE (This actually works!)
         // ==========================================
         let localSaveSuccess = false;
         
         try {
-            // Option 1: Use global activities array (most common)
             if (typeof activities !== 'undefined' && activities !== null) {
                 activities.push(newActivity);
-                console.log('✅ Saved to global activities array');
                 localSaveSuccess = true;
-            }
-            // Option 2: Use window.activities
-            else if (typeof window.activities !== 'undefined' && window.activities !== null) {
+                console.log('✅ Activity saved locally');
+            } else if (typeof window.activities !== 'undefined') {
                 window.activities.push(newActivity);
-                console.log('✅ Saved to window.activities');
                 localSaveSuccess = true;
-            }
-            // Option 3: Initialize activities if it doesn't exist
-            else {
-                console.warn('⚠️ activities array not found, creating it');
-                // Create the global activities array
-                window.activities = [];
-                window.activities.push(newActivity);
-                // Also set the local variable for other functions
-                if (typeof activities === 'undefined') {
-                    var activities = window.activities;
-                }
+            } else {
+                // Initialize activities if needed
+                window.activities = [newActivity];
+                var activities = window.activities;
                 localSaveSuccess = true;
             }
             
-            // Save to localStorage
             if (typeof saveAllToStorage === 'function') {
                 saveAllToStorage();
-                console.log('✅ Saved to localStorage');
             } else {
-                // Manual save if saveAllToStorage doesn't exist
+                // Manual save
                 const monthKey = getCurrentMonthKey();
-                const existingActivities = JSON.parse(localStorage.getItem(`activities_${monthKey}`) || '[]');
-                existingActivities.push(newActivity);
-                localStorage.setItem(`activities_${monthKey}`, JSON.stringify(existingActivities));
-                console.log('✅ Manual save to localStorage');
+                const existing = JSON.parse(localStorage.getItem(`activities_${monthKey}`) || '[]');
+                existing.push(newActivity);
+                localStorage.setItem(`activities_${monthKey}`, JSON.stringify(existing));
             }
             
-            showWizardLoading('Actividad guardada', 'Actualizando vista...');
-            
-            // Force UI refresh
-            if (typeof renderActivities === 'function') {
-                renderActivities();
-                console.log('✅ renderActivities called');
-            }
-            if (typeof updateCharts === 'function') {
-                updateCharts();
-            }
-            if (typeof updateGlobalKPIs === 'function') {
-                updateGlobalKPIs();
-            }
-            if (typeof actualizarListavoluntarios === 'function') {
-                actualizarListavoluntarios();
-            }
-            
-            // Small delay to ensure UI updates
-            await new Promise(resolve => setTimeout(resolve, 300));
+            console.log('✅ Local save COMPLETE');
             
         } catch (localError) {
-            console.error('❌ Local save failed:', localError);
+            console.error('❌ LOCAL save error:', localError);
             hideWizardLoading();
-            alert('Error al guardar localmente. Por favor intenta de nuevo.\n\nDetalle: ' + localError.message);
+            alert('Error crítico: No se pudo guardar localmente. Reinicia la app.');
             wizardSubmitting = false;
             if (finalizeBtn) {
                 finalizeBtn.disabled = false;
@@ -4060,20 +4028,27 @@ async function wizardGoNext() {
             return;
         }
 
-        // Close wizard AFTER successful local save
-        closeGlobalWizard();
+        // Only close wizard if local save succeeded
+        if (localSaveSuccess) {
+            closeGlobalWizard();
+        }
 
         // ==========================================
-        // BACKEND SYNC
+        // BACKEND SYNC - This is what's failing
         // ==========================================
         const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
 
         try {
-            showWizardLoading('Sincronizando...', 'Enviando al servidor');
+            showWizardLoading('Local guardado', 'Enviando al servidor...');
+            
+            console.log('📡 Attempting backend sync to:', apiUrl);
             
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
                 body: JSON.stringify({
                     id: newActivity.id,
                     date: newActivity.date,
@@ -4095,28 +4070,35 @@ async function wizardGoNext() {
                 })
             });
 
+            console.log('📡 Response status:', response.status);
+
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const result = await response.json();
+            console.log('📡 Response body:', result);
 
             if (!result.success) {
                 throw new Error(result.error || 'Backend rejected activity');
             }
 
-            console.log('✅ Activity synced to backend');
+            console.log('✅ Backend sync SUCCESS');
             newActivity.synced = true;
             
             if (typeof saveAllToStorage === 'function') {
                 saveAllToStorage();
             }
             
-            showWizardLoading('¡Completado!', 'Actividad sincronizada correctamente');
+            showWizardLoading('¡Completado!', 'Actividad sincronizada');
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-        } catch (err) {
-            console.error('❌ Backend sync failed:', err);
+        } catch (backendError) {
+            console.error('❌ BACKEND sync FAILED:', backendError);
+            console.error('❌ Error name:', backendError.name);
+            console.error('❌ Error message:', backendError.message);
+            
+            // This is a BACKEND error - not local save error!
             newActivity.synced = false;
 
             // Queue for later sync
@@ -4124,10 +4106,23 @@ async function wizardGoNext() {
             if (!pendingQueue.some(a => a.id === newActivity.id)) {
                 pendingQueue.push(newActivity);
                 localStorage.setItem('pendingSyncQueue', JSON.stringify(pendingQueue));
+                console.log('📦 Activity queued for later sync. Queue size:', pendingQueue.length);
             }
             
-            showWizardLoading('Guardado localmente', 'Se sincronizará cuando haya conexión');
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Show appropriate message based on error type
+            let userMessage = 'Actividad guardada localmente. ';
+            if (backendError.message.includes('Failed to fetch') || backendError.message.includes('NetworkError')) {
+                userMessage += 'Sin conexión al servidor. Se sincronizará automáticamente cuando recuperes conexión.';
+            } else if (backendError.message.includes('HTTP 500')) {
+                userMessage += 'Error en el servidor. Se reintentará automáticamente.';
+            } else if (backendError.message.includes('HTTP 401') || backendError.message.includes('HTTP 403')) {
+                userMessage += 'Error de autorización. Contacta al administrador.';
+            } else {
+                userMessage += 'Error al sincronizar. Se reintentará más tarde.';
+            }
+            
+            showWizardLoading('Guardado localmente', userMessage);
+            await new Promise(resolve => setTimeout(resolve, 2000));
             
         } finally {
             hideWizardLoading();
