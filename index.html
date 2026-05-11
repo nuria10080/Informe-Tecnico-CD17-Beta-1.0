@@ -3100,6 +3100,7 @@ function renderWizardStep() {
                 </div>
             `;
             break;
+            break;
             
         case 4:
             html = `
@@ -3115,7 +3116,7 @@ function renderWizardStep() {
         case 5:
             html = `
                 <div class="dynamic-question">
-                    <div class="question-label">🤝 Colaboradores (Aliados / Instituciones)</div>
+                    <div class="question-label"> Colaboradores (Aliados / Instituciones)</div>
                     <div id="colabsDynamicContainer">${renderColaboratorsDynamic()}</div>
                 </div>
             `;
@@ -3150,55 +3151,108 @@ function renderWizardStep() {
     
     // Fix for step 2 - ensure timer elements are properly initialized
     if (wizardStep === 2) {
+        // Small delay to ensure DOM is ready
         setTimeout(() => {
             attachHoursInputListener();
+            
+            // Re-calculate time range if we have saved data
             if (timerMode === 'timeRange' && wizardData.startHour && wizardData.startMinute) {
                 calculateTimeRangeFromNumbers();
             }
         }, 50);
     }
     
-    // Initialize step 5 with proper button state and event listeners
+    // Set button state for step 5 based on current data
     if (wizardStep === 5) {
-        setTimeout(() => {
-            const nextBtn = document.getElementById('wizardNextBtn');
-            const colabs = wizardData.colaboradores || [];
-            
-            if (colabs.length === 0 || (colabs.length === 1 && !colabs[0].org)) {
-                if (nextBtn) {
-                    nextBtn.disabled = false;
-                    nextBtn.style.opacity = '1';
-                    nextBtn.style.cursor = 'pointer';
-                }
+        const colabs = wizardData.colaboradores || [];
+        if (nextBtn) {
+            if (colabs.length === 0) {
+                nextBtn.disabled = false;
+                nextBtn.style.opacity = '1';
+                nextBtn.style.cursor = 'pointer';
             } else {
                 const lastColab = colabs[colabs.length - 1];
-                if (nextBtn) {
-                    if (!lastColab.org || !lastColab.cant || lastColab.cant <= 0) {
-                        nextBtn.disabled = true;
-                        nextBtn.style.opacity = '0.5';
-                        nextBtn.style.cursor = 'not-allowed';
+                if (!lastColab.org || !lastColab.cant || lastColab.cant <= 0) {
+                    nextBtn.disabled = true;
+                    nextBtn.style.opacity = '0.5';
+                    nextBtn.style.cursor = 'not-allowed';
+                } else {
+                    const needsDetails = ['Voluntariado', 'Activo', 'Activo con Observaciones'].includes(lastColab.org);
+                    if (needsDetails) {
+                        const allFilled = lastColab.participants && 
+                                        lastColab.participants.length === lastColab.cant &&
+                                        lastColab.participants.every(p => p.name && p.name.trim() !== '');
+                        nextBtn.disabled = !allFilled;
+                        nextBtn.style.opacity = allFilled ? '1' : '0.5';
+                        nextBtn.style.cursor = allFilled ? 'pointer' : 'not-allowed';
                     } else {
-                        const needsDetails = ['Voluntariado', 'Activo', 'Activo con Observaciones'].includes(lastColab.org);
-                        if (needsDetails) {
-                            const allFilled = lastColab.participants && 
-                                            lastColab.participants.length === lastColab.cant &&
-                                            lastColab.participants.every(p => p.name && p.name.trim() !== '');
-                            nextBtn.disabled = !allFilled;
-                            nextBtn.style.opacity = allFilled ? '1' : '0.5';
-                            nextBtn.style.cursor = allFilled ? 'pointer' : 'not-allowed';
-                        } else {
-                            const hasPersonInCharge = lastColab.personInCharge?.name && lastColab.personInCharge.name.trim() !== '';
-                            nextBtn.disabled = !hasPersonInCharge;
-                            nextBtn.style.opacity = hasPersonInCharge ? '1' : '0.5';
-                            nextBtn.style.cursor = hasPersonInCharge ? 'pointer' : 'not-allowed';
-                        }
+                        nextBtn.disabled = false;
+                        nextBtn.style.opacity = '1';
+                        nextBtn.style.cursor = 'pointer';
                     }
                 }
             }
-        }, 50);
+        }
     }
 }
 
+function generateActivityOptions(selectedVal) {
+    const activities = [
+        "-- Seleccionar actividad --",
+        "Mantenimiento y Adecuación", "Abastecimiento o Gestión de Insumos", "Revision & Preparación", "Encuesta y Capacitación", "Encuestas y Observaciones Comunitarias",
+        "Encuesta y Localización", "Trabajo Comunitario", "Jornadas Integración",
+        "Atención a Beneficiarios", "Logística y Distribución", "Planificación",
+        "Visita y Planificación", "Visita y Seguimiento", "Gestión y Coordinación", "Informes", "Elaboracion & Revision",
+        "Gestión y Recuperación", "Gestión de Acuerdos", "Recaudación Fondos",
+        "Capacitación Comunitario", "Capacitación Interna", "Estrategias Digitales",
+        "Reunión por Video Llamada/Whatsapp", "Junta Directiva", "Promoción y Difusión"
+    ];
+    
+    let options = '';
+    activities.forEach(act => {
+        options += `<option value="${act}" ${selectedVal === act ? 'selected' : ''}>${act}</option>`;
+    });
+    return options;
+}
+
+function handleActivityChange() {
+    const select = document.getElementById('mainActivitySelect');
+    if (select) {
+        wizardData.activityName = select.value;
+        renderConditionalDetail();
+        saveWizardState();
+    }
+}
+function renderConditionalDetail() {
+    const container = document.getElementById('conditionalDetailContainer');
+    if (!container) return;
+    
+    const requiresDetail = ['Encuesta y Capacitación', 'Encuesta y Localización', 'Capacitación Comunitario', 'Capacitación Interna', 'Abastecimiento o Gestión de Insumos','Revision & Preparación','Elaboracion & Revision'];
+    
+    if (requiresDetail.includes(wizardData.activityName)) {
+        container.innerHTML = `
+            <div class="dynamic-dropdown">
+                <div class="question-label"> Detalle específico</div>
+                <select id="activityDetailSelect" class="wizard-input">
+                    <option value="">-- Seleccionar enfoque --</option>
+                    <option value="Equipo y/o Accesorios" ${wizardData.detail === 'Equipo y/o Accesorios' ? 'selected' : ''}>Equipo y/o Accesorios</option>
+                    <option value="Salud Comunitaria" ${wizardData.detail === 'Salud Comunitaria' ? 'selected' : ''}>Salud Comunitaria</option>
+                    <option value="Profesionalizacion" ${wizardData.detail === 'Profesionalizacion' ? 'selected' : ''}>Profesionalizacion</option>
+                    <option value="Agua y Saneamiento" ${wizardData.detail === 'Agua y Saneamiento' ? 'selected' : ''}>Agua y Saneamiento</option>
+                    <option value="Manipulacion de Alimentos" ${wizardData.detail === 'Manipulacion de Alimentos' ? 'selected' : ''}>Manipulacion de Alimentos</option>
+                    <option value="Colaboradores y/o Insumos" ${wizardData.detail === 'Colaboradores y/o Insumos' ? 'selected' : ''}>Colaboradores y/o Insumos</option>
+                     <option value="Elaboracion & Revision" ${wizardData.detail === 'Documentos Externos' ? 'selected' : ''}>Documentos Internos</option>
+                </select>
+            </div>
+        `;
+    } else {
+        container.innerHTML = '';
+    }
+}
+
+// ==========================================
+// COLABORADORS FUNCTIONS
+// ==========================================
 function renderColaboratorsDynamic() {
     const colabs = wizardData.colaboradores || [];
     
@@ -3212,12 +3266,7 @@ function renderColaboratorsDynamic() {
                     <select class="wizard-input colab-select" style="margin:0" data-index="${index}" onchange="updateColabType(this, ${index})">
                         <option value="">-- Seleccionar --</option>
                         <option value="Bomberos" ${currentColab.org === 'Bomberos' ? 'selected' : ''}>Bomberos</option>
-                        <option value="Departmento de Educacion" ${currentColab.org === 'Departamento de Educacion' ? 'selected' : ''}>Departamento de Educacion</option>
-                        <option value="Departmento Municipal de Educacion" ${currentColab.org === 'Departamento Municipal de Educacion' ? 'selected' : ''}>Departamento Municipal de Educacion</option>
                         <option value="Alcaldía Local" ${currentColab.org === 'Alcaldía Local' ? 'selected' : ''}>Alcaldía Local</option>
-                        <option value="Institucion Academica" ${currentColab.org === 'Institucion Academica' ? 'selected' : ''}>Institucion Academica</option>
-                        <option value="Comité Organizador" ${currentColab.org === 'Comité Organizador' ? 'selected' : ''}>Comité Organizador</option>
-                        <option value="Unidad Operativa" ${currentColab.org === 'Unidad Operativa' ? 'selected' : ''}>Unidad Operativa</option>
                         <option value="CIS" ${currentColab.org === 'CIS' ? 'selected' : ''}>Departamento de Salud | CIS</option>
                         <option value="Autoridad Competente" ${currentColab.org === 'Autoridad Competente' ? 'selected' : ''}>Autoridad Competente</option>
                         <option value="Iglesia Local" ${currentColab.org === 'Iglesia Local' ? 'selected' : ''}>Iglesia Local</option>
@@ -3225,7 +3274,7 @@ function renderColaboratorsDynamic() {
                         <option value="Empresa Privada" ${currentColab.org === 'Empresa Privada' ? 'selected' : ''}>Empresa Privada</option>
                         <option value="Universidad" ${currentColab.org === 'Universidad' ? 'selected' : ''}>Universidad</option>
                     </select>
-                    <input type="number" placeholder="Cant." class="wizard-input colab-cant" style="margin:0; width:100px" value="${currentColab.cant || 0}" min="0" oninput="updateColabDetails(this, ${index})">
+                    <input type="number" placeholder="Cant." class="wizard-input colab-cant" style="margin:0; width:100px" value="${currentColab.cant}" min="0" oninput="updateColabDetails(this, ${index})">
                     <button class="remove-colab" onclick="removeColabRow(this)">✖</button>
                 </div>
                 <div id="colabDetails_${index}" class="colab-details-container">
@@ -3238,41 +3287,23 @@ function renderColaboratorsDynamic() {
     
     wizardShowingNewColabForm = false;
     
-    // Initialize colaboradores array if empty
-    if (!wizardData.colaboradores || wizardData.colaboradores.length === 0) {
-        wizardData.colaboradores = [{ org: '', cant: 0, personInCharge: { name: '', title: '' } }];
-    }
-    
-    const currentColab = wizardData.colaboradores[0];
-    const index = 0;
-    
     return `
-        <div class="colab-wrapper" style="margin-bottom: 16px;">
-            <div class="colab-row-modern" style="margin-bottom: 8px;">
-                <select class="wizard-input colab-select" style="margin:0" data-index="${index}" onchange="updateColabType(this, ${index})">
-                    <option value="">-- Seleccionar --</option>
-                    <option value="Bomberos" ${currentColab.org === 'Bomberos' ? 'selected' : ''}>Bomberos</option>
-                    <option value="Departmento de Educacion" ${currentColab.org === 'Departamento de Educacion' ? 'selected' : ''}>Departamento de Educacion</option>
-                    <option value="Departmento Municipal de Educacion" ${currentColab.org === 'Departamento Municipal de Educacion' ? 'selected' : ''}>Departamento Municipal de Educacion</option>
-                    <option value="Alcaldía Local" ${currentColab.org === 'Alcaldía Local' ? 'selected' : ''}>Alcaldía Local</option>
-                    <option value="Institucion Academica" ${currentColab.org === 'Institucion Academica' ? 'selected' : ''}>Institucion Academica</option>
-                    <option value="Comité Organizador" ${currentColab.org === 'Comité Organizador' ? 'selected' : ''}>Comité Organizador</option>
-                    <option value="Unidad Operativa" ${currentColab.org === 'Unidad Operativa' ? 'selected' : ''}>Unidad Operativa</option>
-                    <option value="CIS" ${currentColab.org === 'CIS' ? 'selected' : ''}>Departamento de Salud | CIS</option>
-                    <option value="Autoridad Competente" ${currentColab.org === 'Autoridad Competente' ? 'selected' : ''}>Autoridad Competente</option>
-                    <option value="Iglesia Local" ${currentColab.org === 'Iglesia Local' ? 'selected' : ''}>Iglesia Local</option>
-                    <option value="ONG" ${currentColab.org === 'ONG' ? 'selected' : ''}>ONG</option>
-                    <option value="Empresa Privada" ${currentColab.org === 'Empresa Privada' ? 'selected' : ''}>Empresa Privada</option>
-                    <option value="Universidad" ${currentColab.org === 'Universidad' ? 'selected' : ''}>Universidad</option>
-                </select>
-                <input type="number" placeholder="Cant." class="wizard-input colab-cant" style="margin:0; width:100px" value="${currentColab.cant || 0}" min="0" oninput="updateColabDetails(this, ${index})">
-                <button class="remove-colab" onclick="removeColabRow(this)">✖</button>
-            </div>
-            <div id="colabDetails_${index}" class="colab-details-container">
-                ${renderDetailedFields(currentColab, index)}
-            </div>
+        <div class="colab-row-modern" style="margin-bottom: 16px;">
+            <select class="wizard-input colab-select" style="margin:0" data-index="0" onchange="updateColabType(this, 0)">
+                <option value="">-- Seleccionar colaborador --</option>
+                <option value="Bomberos">Bomberos</option>
+                <option value="Alcaldía Local">Alcaldía Local</option>
+                <option value="CIS">Departamento de Salud | CIS</option>
+                <option value="Autoridad Competente">Autoridad Competente</option>
+                <option value="Iglesia Local">Iglesia Local</option>
+                <option value="ONG">ONG</option>
+                <option value="Empresa Privada">Empresa Privada</option>
+                <option value="Universidad">Universidad</option>
+            </select>
+            <input type="number" placeholder="Cant." class="wizard-input colab-cant" style="margin:0; width:100px" min="0" oninput="updateColabDetails(this, 0)">
+            <button class="remove-colab" onclick="removeColabRow(this)">✖</button>
         </div>
-        <button class="wiz-btn wiz-btn-secondary" style="width:100%; margin-top:16px;" onclick="addColaboratorRow()">+ Agregar otro colaborador</button>
+        <div id="colabDetails_0" class="colab-details-container"></div>
     `;
 }
 
@@ -3338,6 +3369,7 @@ function updateColabType(select, index) {
         nextBtn.style.opacity = '0.5';
         nextBtn.style.cursor = 'not-allowed';
     }
+    
 }
 
 function updateExternalPersonInCharge(index, field, value) {
@@ -3401,12 +3433,30 @@ function updateColabDetails(input, index) {
             nextBtn.style.opacity = '0.5';
             nextBtn.style.cursor = 'not-allowed';
         } else {
-            // For external collaborators, check if person in charge is filled
-            const hasPersonInCharge = wizardData.colaboradores[index].personInCharge?.name && wizardData.colaboradores[index].personInCharge.name.trim() !== '';
-            nextBtn.disabled = !hasPersonInCharge;
-            nextBtn.style.opacity = hasPersonInCharge ? '1' : '0.5';
-            nextBtn.style.cursor = hasPersonInCharge ? 'pointer' : 'not-allowed';
+            const needsDetails = ['Voluntariado', 'Activo', 'Activo con Observaciones'].includes(org);
+            if (!needsDetails && newCant > 0) {
+                // For external, check if person in charge is filled
+                const hasPersonInCharge = wizardData.colaboradores[index].personInCharge?.name && wizardData.colaboradores[index].personInCharge.name.trim() !== '';
+                nextBtn.disabled = !hasPersonInCharge;
+                nextBtn.style.opacity = hasPersonInCharge ? '1' : '0.5';
+                nextBtn.style.cursor = hasPersonInCharge ? 'pointer' : 'not-allowed';
+            } else if (needsDetails && newCant > 0) {
+                // For internal, check if all participants are filled
+                const allFilled = wizardData.colaboradores[index].participants?.every(p => p.name && p.name.trim() !== '') || false;
+                nextBtn.disabled = !allFilled;
+                nextBtn.style.opacity = allFilled ? '1' : '0.5';
+                nextBtn.style.cursor = allFilled ? 'pointer' : 'not-allowed';
+            }
         }
+    }
+    
+}
+function updateParticipant(colabIndex, participantIndex, field, value) {
+    if (wizardData.colaboradores && wizardData.colaboradores[colabIndex] && 
+        wizardData.colaboradores[colabIndex].participants && 
+        wizardData.colaboradores[colabIndex].participants[participantIndex]) {
+        wizardData.colaboradores[colabIndex].participants[participantIndex][field] = value;
+        saveWizardState();
     }
 }
 
@@ -3436,7 +3486,7 @@ function addColaboratorRow() {
     wizardData.colaboradores.push({
         org: '',
         cant: 0,
-        personInCharge: { name: '', title: '' }
+        participants: []
     });
     
     // Re-render to show the new blank form
@@ -3446,26 +3496,25 @@ function addColaboratorRow() {
 function removeColabRow(button) {
     const row = button.closest('.colab-row-modern');
     const container = row.parentElement;
+    const rows = container.querySelectorAll('.colab-row-modern');
+    const index = Array.from(rows).indexOf(row);
     
-    if (wizardData.colaboradores && wizardData.colaboradores.length > 1) {
-        // Find which collaborator to remove
-        const wrapper = row.closest('.colab-wrapper');
-        const wrappers = document.querySelectorAll('.colab-wrapper');
-        const index = Array.from(wrappers).indexOf(wrapper);
-        
-        if (index >= 0 && index < wizardData.colaboradores.length) {
-            wizardData.colaboradores.splice(index, 1);
-            saveWizardState();
-            renderWizardStep();
-        }
-    } else {
-        // If only one collaborator, just clear it instead of removing
-        if (wizardData.colaboradores && wizardData.colaboradores[0]) {
-            wizardData.colaboradores[0] = { org: '', cant: 0, personInCharge: { name: '', title: '' } };
-            saveWizardState();
-            renderWizardStep();
-        }
+    if (wizardData.colaboradores && wizardData.colaboradores[index]) {
+        wizardData.colaboradores.splice(index, 1);
+        saveWizardState();
+        renderWizardStep();
+        updatePersonInChargeVisibility();
     }
+}
+
+function updateColaboratorData() {
+    // Save person in charge info
+    const personName = document.getElementById('personInChargeName');
+    const personTitle = document.getElementById('personInChargeTitle');
+    if (personName) wizardData.personInChargeName = personName.value;
+    if (personTitle) wizardData.personInChargeTitle = personTitle.value;
+    
+    saveWizardState();
 }
 
 
