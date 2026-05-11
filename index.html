@@ -3836,7 +3836,7 @@ function wizardGoPrev() {
 
 let wizardSubmitting = false;
 
-async function wizardGoNext() {
+function wizardGoNext() {
 
     // Prevent duplicate taps
     if (wizardSubmitting) {
@@ -3845,7 +3845,6 @@ async function wizardGoNext() {
 
     saveCurrentStepData();
 
-    // Validate current step
     if (!validateCurrentStep()) {
         return;
     }
@@ -3857,7 +3856,7 @@ async function wizardGoNext() {
 
         const finalizeBtn = document.getElementById('wizardFinalizeBtn');
 
-        // Disable button while saving
+        // Disable button immediately
         if (finalizeBtn) {
             finalizeBtn.disabled = true;
             finalizeBtn.innerText = 'Guardando...';
@@ -3883,50 +3882,38 @@ async function wizardGoNext() {
             createdByName: currentUser ? currentUser.name : 'Usuario'
         };
 
-        try {
+        // IMMEDIATELY update frontend
+        activities.push(newActivity);
 
-            // Send to backend FIRST
-            const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
+        saveAllToStorage();
 
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(newActivity)
-            });
+        renderActivities();
 
-            if (!response.ok) {
-                throw new Error(`Backend error: ${response.status}`);
-            }
+        // Close wizard immediately
+        closeGlobalWizard();
 
-            // Only update UI after backend success
-            activities.push(newActivity);
+        // Send to backend in background
+        const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
 
-            saveAllToStorage();
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newActivity)
+        })
+        .then(() => {
+            console.log('Activity synced to backend');
+        })
+        .catch(err => {
+            console.error('Backend sync failed:', err);
+        });
 
-            renderActivities();
-
-            // Close wizard after success
-            closeGlobalWizard();
-
-        } catch (err) {
-
-            console.error('Backend send failed:', err);
-
-            alert('No se pudo guardar la actividad. Intente nuevamente.');
-
-            // Re-enable button
-            if (finalizeBtn) {
-                finalizeBtn.disabled = false;
-                finalizeBtn.innerText = 'Finalizar';
-            }
-
+        // Release lock after short delay
+        setTimeout(() => {
             wizardSubmitting = false;
-            return;
-        }
+        }, 1500);
 
-        wizardSubmitting = false;
         return;
     }
 
@@ -3935,12 +3922,13 @@ async function wizardGoNext() {
         stopWizardTimerGlobal();
     }
 
-    // Move to next step
+    // Next step
     if (wizardStep < 6) {
         wizardStep++;
         renderWizardStep();
     }
 }
+
 // ==========================================
 // GPS FUNCTIONS
 // ==========================================
