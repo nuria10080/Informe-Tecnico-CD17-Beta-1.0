@@ -3991,16 +3991,17 @@ function finalizeWizardActivity() {
     wizardCompleted = false;
     
     // Close the wizard overlay
+        // Close the wizard overlay immediately
     const overlay = document.getElementById('globalWizardOverlay');
     if (overlay) {
         overlay.classList.remove('active');
-        setTimeout(() => overlay.remove(), 300);
+        overlay.remove(); // Remove immediately, no timeout
     }
     
-    // Show success message
+    // Show success message after close
     setTimeout(() => {
         alert(`✅ ¡Actividad "${activityName}" registrada exitosamente!\n⏱️ Duración: ${finalMinutes} minutos (${finalHoursDisplay} horas)\n👥 ${voluntariasCount} voluntario(s) participaron${locationMsg}`);
-    }, 100);
+    }, 50);
 }
 
 // ==========================================
