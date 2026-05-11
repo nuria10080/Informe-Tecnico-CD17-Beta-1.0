@@ -2372,7 +2372,7 @@ function initProfileSystem() {
         const subdirectorId = `Voluntario-${Date.now()}-subdirector`;
         VoluntarioProfiles = [{
             id: subdirectorId,
-            identidadSuffix: 'subdirector',
+            identidadSuffix: '800744',
             name: 'Subdirector',
             rolNombre: 'Subdirectora',
             totalHoras: 0,
@@ -2429,7 +2429,7 @@ function renderProfileSelector() {
         const option = document.createElement('option');
         option.value = profile.id;
         const hoursDisplay = (profile.totalHoras || 0).toFixed(2);
-        option.textContent = `${profile.name} (${profile.rolNombre}) - ${hoursDisplay} hrs`;
+        option.textContent = `${profile.identidadSuffix} (${profile.rolNombre}) - ${hoursDisplay} hrs`;
         
         // Set selected based on currentUser
         if (currentUser && currentUser.id === profile.id) {
@@ -2477,7 +2477,7 @@ function calculateProfileHoursFromActivities(profile) {
         // Check if profile is in voluntariosParticipants
         else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
             const matched = activity.voluntariosParticipants.some(p => 
-                p.name && normalizeName(p.name) === normalizeName(profile.name)
+                p.identidadSuffix && normalizeName(p.identidadSuffix) === normalizeName(profile.identidadSuffix)
             );
             if (matched) total += activity.horas || 0;
         }
@@ -2502,7 +2502,7 @@ function calculateProfileActivityCount(profile) {
         }
         else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
             const matched = activity.voluntariosParticipants.some(p => 
-                p.name && normalizeName(p.name) === normalizeName(profile.name)
+                p.identidadSuffix && normalizeName(p.identidadSuffix) === normalizeName(profile.identidadSuffix)
             );
             if (matched) count++;
         }
@@ -2569,7 +2569,7 @@ function actualizarListavoluntarios() {
             }
             else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
                 const matched = activity.voluntariosParticipants.some(p => 
-                    p.name && normalizeName(p.name) === normalizeName(profile.name)
+                    p.identidadSuffix && normalizeName(p.identidadSuffix) === normalizeName(profile.identidadSuffix)
                 );
                 if (matched) total += activity.horas || 0;
             }
@@ -2590,7 +2590,7 @@ function actualizarListavoluntarios() {
             }
             else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
                 const matched = activity.voluntariosParticipants.some(p => 
-                    p.name && normalizeName(p.name) === normalizeName(profile.name)
+                    p.identidadSuffix && normalizeName(p.identidadSuffix) === normalizeName(profile.identidadSuffix)
                 );
                 if (matched) count++;
             }
@@ -2626,7 +2626,7 @@ function actualizarListavoluntarios() {
         div.innerHTML = `
             <div class="voluntario-info">
                 <div class="voluntario-name-row">
-                    <strong class="voluntario-nombre">${escapeHtml(voluntario.name)}</strong>
+                    <strong class="voluntario-nombre">${escapeHtml(voluntario.identidadSuffix)}</strong>
                     ${idBadge}
                 </div>
                 <div class="voluntario-details">
@@ -2665,7 +2665,7 @@ function checkForDuplicateProfiles() {
     
     VoluntarioProfiles.forEach(profile => {
         // Use the GLOBAL function
-        const normalizedName = normalizeName(profile.name);
+        const normalizedName = normalizeName(profile.identidadSuffix);
         
         if (normalized.has(normalizedName)) {
             const existing = normalized.get(normalizedName);
@@ -2726,7 +2726,7 @@ function agregarVoluntario() {
     // Check if profile already exists
     const inputNormalized = normalizeString(nameInput.value);
     const existing = VoluntarioProfiles.find(
-        p => normalizeString(p.name) === inputNormalized
+        p => normalizeString(p.identidadSuffix) === inputNormalized
     );
     
     if (existing) {
@@ -4919,7 +4919,7 @@ function updateActivevoluntariosChart() {
     // Calculate real hours from activities for each profile
     const active = VoluntarioProfiles
         .map(p => ({ 
-            name: p.name, 
+            name: p.identidadSuffix, 
             horas: getRealHoursFromActivities(p)
         }))
         .sort((a, b) => b.horas - a.horas)
@@ -4930,7 +4930,7 @@ function updateActivevoluntariosChart() {
     window.activevoluntariosChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: active.map(d => d.name.length > 20 ? d.name.substring(0, 17) + '...' : d.name),
+            labels: active.map(d => d.identidadSuffix.length > 20 ? d.identidadSuffix.substring(0, 17) + '...' : d.identidadSuffix),
             datasets: [{
                 data: active.map(d => d.horas),
                 backgroundColor: '#E34A2F',
