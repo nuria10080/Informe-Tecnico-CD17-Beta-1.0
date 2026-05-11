@@ -3834,113 +3834,63 @@ function wizardGoPrev() {
     }
 }
 
-let wizardSubmitting = false;
-
-async function wizardGoNext() {
-
-    // Prevent duplicate taps
-    if (wizardSubmitting) {
-        return;
-    }
-
-    saveCurrentStepData();
-
-    // Validate current step
-    if (!validateCurrentStep()) {
-        return;
-    }
-
-    // FINAL STEP
+function wizardGoNext() {
     if (wizardStep === 6) {
-
-        wizardSubmitting = true;
-
-        const finalizeBtn = document.getElementById('wizardFinalizeBtn');
-
-        // Disable button while saving
-        if (finalizeBtn) {
-            finalizeBtn.disabled = true;
-            finalizeBtn.innerText = 'Guardando...';
-        }
-
+        saveCurrentStepData();
+        
         const newActivity = {
-            id: `${wizardData.date}_${wizardData.activityName}_${Date.now()}`,
-            date: wizardData.date || getHondurasDate(),
-            name: wizardData.activityName,
-            horas: wizardData.horas || 0,
-            actionType: wizardData.actionType,
-            beneficiadas_mujeres: wizardData.beneficiadas_mujeres || 0,
-            beneficiados_hombres: wizardData.beneficiados_hombres || 0,
-            voluntarias: wizardData.voluntarias || 1,
-            colaboradores: wizardData.colaboradores || [],
-            links: [],
-            lat: wizardData.lat || '',
-            lng: wizardData.lng || '',
-            startTime: wizardData.startTime || '',
-            endTime: wizardData.endTime || '',
-            voluntariosParticipants: wizardData.voluntariosParticipants || [],
-            createdBy: currentUser ? currentUser.id : null,
-            createdByName: currentUser ? currentUser.name : 'Usuario'
-        };
-
-        try {
-
-            // Send to backend FIRST
-            const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
-
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(newActivity)
-            });
-
-            if (!response.ok) {
-                throw new Error(`Backend error: ${response.status}`);
-            }
-
-            // Only update UI after backend success
-            activities.push(newActivity);
-
-            saveAllToStorage();
-
-            renderActivities();
-
-            // Close wizard after success
-            closeGlobalWizard();
-
-        } catch (err) {
-
-            console.error('Backend send failed:', err);
-
-            alert('No se pudo guardar la actividad. Intente nuevamente.');
-
-            // Re-enable button
-            if (finalizeBtn) {
-                finalizeBtn.disabled = false;
-                finalizeBtn.innerText = 'Finalizar';
-            }
-
-            wizardSubmitting = false;
-            return;
-        }
-
-        wizardSubmitting = false;
-        return;
+        id: `${wizardData.date}_${wizardData.activityName}_${Date.now()}`,
+        date: wizardData.date || getHondurasDate(),
+        name: wizardData.activityName,
+        horas: wizardData.horas || 0,
+        actionType: wizardData.actionType,
+        beneficiadas_mujeres: wizardData.beneficiadas_mujeres || 0,
+        beneficiados_hombres: wizardData.beneficiados_hombres || 0,
+        voluntarias: wizardData.voluntarias || 1,
+        colaboradores: wizardData.colaboradores || [],
+        links: [],
+        lat: wizardData.lat || '',
+        lng: wizardData.lng || '',
+        startTime: wizardData.startTime || '',
+        endTime: wizardData.endTime || '',
+        voluntariosParticipants: wizardData.voluntariosParticipants || [],
+        createdBy: currentUser ? currentUser.id : null,
+        createdByName: currentUser ? currentUser.name : 'Usuario'
+    };
+    
+    // Add to activities array
+    activities.push(newActivity);
+    renderActivities();
+     // Close wizard
+    closeGlobalWizard();
+    // Send to backend
+    const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
+    fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newActivity)
+    }).catch(err => console.error('Backend send failed:', err));
+    
+    // Save to localStorage and render
+    saveAllToStorage();
+    return;
     }
-
+    
+    saveCurrentStepData();
+    if (!validateCurrentStep()) return;
+    
     // Only stop timer if we're on step 2 AND timer is actually running
     if (wizardStep === 2 && wizardTimerInterval) {
         stopWizardTimerGlobal();
     }
-
-    // Move to next step
+    
     if (wizardStep < 6) {
         wizardStep++;
         renderWizardStep();
     }
+    
 }
+
 
 // ==========================================
 // GPS FUNCTIONS
