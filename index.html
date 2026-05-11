@@ -3227,7 +3227,7 @@ function renderConditionalDetail() {
     const container = document.getElementById('conditionalDetailContainer');
     if (!container) return;
     
-    const requiresDetail = ['Encuesta y Capacitación', 'Encuesta y Localización', 'Capacitación Comunitario', 'Capacitación Interna', 'Abastecimiento o Gestión de Insumos','Elaboracion & Revision'];
+    const requiresDetail = ['Encuesta y Capacitación', 'Encuesta y Localización', 'Capacitación Comunitario', 'Capacitación Interna', 'Abastecimiento o Gestión de Insumos','Revision & Preparación','Elaboracion & Revision'];
     
     if (requiresDetail.includes(wizardData.activityName)) {
         container.innerHTML = `
@@ -3236,7 +3236,7 @@ function renderConditionalDetail() {
                 <select id="activityDetailSelect" class="wizard-input">
                     <option value="">-- Seleccionar enfoque --</option>
                     <option value="Equipo y/o Accesorios" ${wizardData.detail === 'Equipo y/o Accesorios' ? 'selected' : ''}>Equipo y/o Accesorios</option>
-                    <option value="Salud Comunitaria" ${wizardData.detail === 'Salud Comunitaria' ? 'selected' : ''}>Salud Comunitaria</option>
+                    <option value="Revision & Preparación" ${wizardData.detail === 'Observaciones Comunitarias' ? 'selected' : ''}>Observaciones Comunitarias</option>
                     <option value="Profesionalizacion" ${wizardData.detail === 'Profesionalizacion' ? 'selected' : ''}>Profesionalizacion</option>
                     <option value="Agua y Saneamiento" ${wizardData.detail === 'Agua y Saneamiento' ? 'selected' : ''}>Agua y Saneamiento</option>
                     <option value="Manipulacion de Alimentos" ${wizardData.detail === 'Manipulacion de Alimentos' ? 'selected' : ''}>Manipulacion de Alimentos</option>
