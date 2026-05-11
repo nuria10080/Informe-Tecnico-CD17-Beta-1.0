@@ -3809,150 +3809,38 @@ function wizardGoPrev() {
     }
 }
 
-function wizardGoNext() {
-    if (wizardStep === 6) {
-        saveCurrentStepData();
-        const statusEl = document.getElementById('wizardGpsStatus');
-        if (statusEl && statusEl.innerHTML.includes('Obteniendo ubicación')) {
-            alert('⚠️ Espera a que termine de obtener la ubicación');
-            return;
-        }
-        finalizeWizardActivity();
+if (wizardStep === 6) {
+    saveCurrentStepData();
+    const statusEl = document.getElementById('wizardGpsStatus');
+    if (statusEl && statusEl.innerHTML.includes('Obteniendo ubicación')) {
+        alert('⚠️ Espera a que termine de obtener la ubicación');
         return;
     }
     
-    saveCurrentStepData();
-    if (!validateCurrentStep()) return;
-    
-    // Only stop timer if we're on step 2 AND timer is actually running
-    if (wizardStep === 2 && wizardTimerInterval) {
-        stopWizardTimerGlobal();
-    }
-    
-    if (wizardStep < 6) {
-        wizardStep++;
-        renderWizardStep();
-    }
-}
-// ==========================================
-// FINALIZE ACTIVITY - FIXED VERSION
-// Preserves persistence, fixes decimal formatting and state clearing
-// ==========================================
-function finalizeWizardActivity() {
-    wizardCompleted = true;
-    
-    // Get final GPS data
-    const latInput = document.getElementById('wizardLat');
-    const lngInput = document.getElementById('wizardLng');
-    if (latInput && latInput.value) wizardData.lat = latInput.value;
-    if (lngInput && lngInput.value) wizardData.lng = lngInput.value;
-    
-    // Build activity name with detail
-    let finalName = wizardData.activityName;
-    if (wizardData.detail && wizardData.detail !== '') {
-        finalName = `${wizardData.activityName} - ${wizardData.detail}`;
-    }
-     
-    // Collect links
-    const links = [];
-    if (wizardData.link1 && wizardData.link1.trim()) links.push(wizardData.link1.trim());
-    if (wizardData.link2 && wizardData.link2.trim()) links.push(wizardData.link2.trim());
-    
-    // Format hours to 2 decimal places
-    const formattedHours = Math.round((wizardData.horas || 0) * 100) / 100;
-    
-    // ========== ADD HOURS TO PROFILES ==========
-    const voluntariosParticipants = wizardData.voluntariosParticipants || [];
-    function normalizeName(str) {
-        return str
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9]/g, '_')
-            .replace(/_+/g, '_')
-            .replace(/^_|_$/g, '');
-    }
-    
-    // STEP 1: Add hours to reporting user
-    if (typeof currentUser !== 'undefined' && currentUser && formattedHours > 0) {
-        currentUser.totalHoras = (currentUser.totalHoras || 0) + formattedHours;
-        currentUser.actividadesCount = (currentUser.actividadesCount || 0) + 1;
-    }
-    
-    // STEP 2: Add hours to other participants
-    if (voluntariosParticipants.length > 0) {
-        voluntariosParticipants.forEach(voluntario => {
-            if (voluntario.name && voluntario.name.trim() !== '') {
-                if (currentUser && normalizeName(voluntario.name) === normalizeName(currentUser.name)) {
-                    return;
-                }
-                
-                const existingProfile = VoluntarioProfiles.find(p => 
-                    normalizeName(p.name) === normalizeName(voluntario.name)
-                );
-                
-                if (!existingProfile) {
-                    const newProfile = {
-                        id: `voluntario-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                        name: voluntario.name.trim(),
-                        identidadSuffix: '',
-                        rolNombre: 'voluntaria',
-                        totalHoras: formattedHours,
-                        actividadesCount: 1,
-                        isPlaceholder: true,
-                        mergedFrom: []
-                    };
-                    VoluntarioProfiles.push(newProfile);
-                } else {
-                    existingProfile.totalHoras = (existingProfile.totalHoras || 0) + formattedHours;
-                    existingProfile.actividadesCount = (existingProfile.actividadesCount || 0) + 1;
-                }
-            }
-        });
-    }
-    
-    // Save profiles
-    if (typeof saveProfiles === 'function') saveProfiles();
-    if (typeof renderProfileSelector === 'function') renderProfileSelector();
-    if (typeof actualizarListavoluntarios === 'function') actualizarListavoluntarios();
-    
-    // Create activity object
-    const generateActivityId = `${wizardData.date}_${finalName}_${Date.now()}`;
-    
+    // Create activity object from wizardData
     const newActivity = {
-        id: generateActivityId,
-        date: wizardData.date,
-        name: finalName,
-        horas: formattedHours,
-        startTime: wizardData.startTime || '',
-        endTime: wizardData.endTime || '',
-        actionType: wizardData.actionType || 'filial',
+        id: `${wizardData.date}_${wizardData.activityName}_${Date.now()}`,
+        date: wizardData.date || getHondurasDate(),
+        name: wizardData.activityName,
+        horas: wizardData.horas || 0,
+        actionType: wizardData.actionType,
         beneficiadas_mujeres: wizardData.beneficiadas_mujeres || 0,
         beneficiados_hombres: wizardData.beneficiados_hombres || 0,
+        voluntarias: wizardData.voluntarias || 1,
         colaboradores: wizardData.colaboradores || [],
-        links: links,
+        links: [],
         lat: wizardData.lat || '',
         lng: wizardData.lng || '',
-        personInCharge: {
-            name: wizardData.personInChargeName || '',
-            title: wizardData.personInChargeTitle || ''
-        },
-        voluntariosParticipants: wizardData.voluntariosParticipants || [], 
-        voluntarias: wizardData.voluntarias || 0,
-        createdBy: typeof currentUser !== 'undefined' && currentUser ? currentUser.id : null,
-        createdByName: typeof currentUser !== 'undefined' && currentUser ? currentUser.name : 'Usuario'
+        startTime: wizardData.startTime || '',
+        endTime: wizardData.endTime || '',
+        voluntariosParticipants: wizardData.voluntariosParticipants || [],
+        createdBy: currentUser ? currentUser.id : null,
+        createdByName: currentUser ? currentUser.name : 'Usuario'
     };
     
-    // Add to global activities array
-    if (typeof activities !== 'undefined') {
-        activities.push(newActivity);
-        if (typeof sortActivitiesByDate === 'function') sortActivitiesByDate();
-        if (typeof renderActivities === 'function') renderActivities();
-        if (typeof saveAllToStorage === 'function') saveAllToStorage();
-        if (typeof updateGlobalKPIs === 'function') updateGlobalKPIs();
-        if (typeof updateCharts === 'function') updateCharts();
-    }
-    alert('Origin: ' + (window.location.origin || 'no origin (native app)'));
+    // Add to activities array
+    activities.push(newActivity);
+    
     // Send to backend
     const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
     fetch(apiUrl, {
@@ -3961,48 +3849,16 @@ function finalizeWizardActivity() {
         body: JSON.stringify(newActivity)
     }).catch(err => console.error('Backend send failed:', err));
     
-    // Stop timer if running
-    if (wizardTimerInterval) {
-        clearInterval(wizardTimerInterval);
-        wizardTimerInterval = null;
-    }
+    // Save to localStorage and render
+    saveAllToStorage();
+    renderActivities();
     
-    // Store success message info
-    const finalMinutes = Math.round(formattedHours * 60);
-    const finalHoursDisplay = formattedHours.toFixed(2);
-    const locationMsg = (wizardData.lat && wizardData.lng) ? `\n📍 Ubicación registrada` : `\n📍 Sin ubicación (opcional)`;
-    const voluntariasCount = wizardData.voluntarias || 0;
-    const activityName = finalName;
-    
-    // Clear all wizard state
-    clearSavedTimerState();
-    clearWizardState();
-    stopAutoSave();
-    
-    wizardData = {};
-    wizardStep = 1;
-    wizardTimerElapsedMs = 0;
-    activeWizard = null;
-    
-    localStorage.removeItem('wizardState');
-    localStorage.removeItem('wizardTimerState');
-    localStorage.removeItem('wizardFullState');
-    
-    wizardCompleted = false;
-    
-    // Close the wizard overlay
-        // Close the wizard overlay immediately
-    const overlay = document.getElementById('globalWizardOverlay');
-    if (overlay) {
-        overlay.classList.remove('active');
-        overlay.remove(); // Remove immediately, no timeout
-    }
+    // Close wizard
     closeGlobalWizard();
-    // Show success message after close
-    setTimeout(() => {
-        alert(`✅ ¡Actividad "${activityName}" registrada exitosamente!\n⏱️ Duración: ${finalMinutes} minutos (${finalHoursDisplay} horas)\n👥 ${voluntariasCount} voluntario(s) participaron${locationMsg}`);
-    }, 50);
+    
+    return;
 }
+
 
 // ==========================================
 // GPS FUNCTIONS
@@ -4633,6 +4489,7 @@ function getQRCodeData(activity) {
 }
 
 function renderActivities() {
+    closeGlobalWizard();
     // Inject print styles if not already present
     if (!document.getElementById('print-gps-styles')) {
         const style = document.createElement('style');
