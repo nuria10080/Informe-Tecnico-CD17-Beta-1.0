@@ -3810,7 +3810,6 @@ function wizardGoPrev() {
 }
 
 function wizardGoNext() {
-    alert('Sending from: ' + (window.location.origin || 'mobile app'));
     if (wizardStep === 6) {
         saveCurrentStepData();
         const newActivity = {
