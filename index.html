@@ -3952,7 +3952,7 @@ function finalizeWizardActivity() {
         if (typeof updateGlobalKPIs === 'function') updateGlobalKPIs();
         if (typeof updateCharts === 'function') updateCharts();
     }
-    
+    alert('Origin: ' + (window.location.origin || 'no origin (native app)'));
     // Send to backend
     const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
     fetch(apiUrl, {
@@ -3997,7 +3997,7 @@ function finalizeWizardActivity() {
         overlay.classList.remove('active');
         overlay.remove(); // Remove immediately, no timeout
     }
-    
+    closeGlobalWizard();
     // Show success message after close
     setTimeout(() => {
         alert(`✅ ¡Actividad "${activityName}" registrada exitosamente!\n⏱️ Duración: ${finalMinutes} minutos (${finalHoursDisplay} horas)\n👥 ${voluntariasCount} voluntario(s) participaron${locationMsg}`);
