@@ -3858,42 +3858,46 @@ function wizardGoNext() {
             createdByName: currentUser ? currentUser.name : 'Usuario'
         };
         
-        // Step 1: Add to activities array
+        // Add to activities array FIRST
         activities.push(newActivity);
         
-        // Step 2: Save to localStorage
+        // Save to localStorage
         saveAllToStorage();
         
-        // Step 3: Render the activity in the UI
+        // Render the activity in the UI
         renderActivities();
         
-        // Step 4: Send to backend (do this BEFORE closing wizard)
+        // Close the wizard (UI feedback first)
+        closeGlobalWizard();
+        
+        // Use sendBeacon for more reliable background sending
         const apiUrl = 'https://api.contranormdigital.com/api/tecno-civico/activity';
+        const blob = new Blob([JSON.stringify(newActivity)], { type: 'application/json' });
         
-        // Use fetch without await - let it run in background
-        fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newActivity)
-        })
-        .then(response => {
-            if (response.ok) {
-                console.log('✅ Activity sent to backend successfully');
+        if (navigator.sendBeacon) {
+            // sendBeacon works even after page unload
+            const sent = navigator.sendBeacon(apiUrl, blob);
+            if (sent) {
+                console.log('✅ Activity queued for backend via sendBeacon');
             } else {
-                console.error('❌ Backend error:', response.status);
+                console.error('❌ sendBeacon failed, falling back to fetch');
+                // Fallback to fetch
+                fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newActivity)
+                }).catch(err => console.error('Backend send failed:', err));
             }
-        })
-        .catch(err => {
-            console.error('❌ Backend send failed:', err);
-        });
+        } else {
+            // Fallback for older browsers
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newActivity)
+            }).catch(err => console.error('Backend send failed:', err));
+        }
         
-        // Step 5: Close wizard AFTER fetch is initiated
-        // Use setTimeout to ensure fetch has started
-        setTimeout(() => {
-            closeGlobalWizard();
-        }, 100);
-        
-        // Reset wizard data
+        // Reset wizard data for next activity
         wizardData = {};
         wizardStep = 1;
         wizardCompleted = true;
@@ -3914,6 +3918,7 @@ function wizardGoNext() {
         renderWizardStep();
     }
 }
+
 
 // ==========================================
 // GPS FUNCTIONS
