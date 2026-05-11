@@ -1,6 +1,6 @@
 // sw.js - Service Worker for offline support
 
-const CACHE_NAME = 'Informe-Tecnico-v1.3.23'; // 🔥 CHANGE THIS on every deploy// sw.js - Complete offline support with external CDNs
+const CACHE_NAME = 'Informe-Tecnico-v1.3.24'; // 🔥 CHANGE THIS on every deploy// sw.js - Complete offline support with external CDNs
 
 const urlsToCache = [
     './',
