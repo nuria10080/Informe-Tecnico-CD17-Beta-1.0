@@ -3239,6 +3239,108 @@ function clearWizardStateOnUserChange() {
     console.log('✅ Wizard state cleared for user change');
 }
 
+
+function saveCurrentStepData() {
+    switch(wizardStep) {
+        case 1:
+            // Save date
+            const dateInput = document.getElementById('activityDate');
+            if (dateInput && dateInput.value) {
+                let dateValue = dateInput.value;
+                if (dateValue && dateValue.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+                    const parts = dateValue.split('-');
+                    dateValue = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                }
+                wizardData.date = dateValue;
+            }
+            // Save detail if it exists
+            const detailSelect = document.getElementById('activityDetailSelect');
+            if (detailSelect && detailSelect.value) {
+                wizardData.detail = detailSelect.value;
+            }
+            // actionType is already saved via selectWizardRadio
+            break;
+            
+        case 2:
+            const hoursInput = document.getElementById('hoursInput');
+            if (hoursInput) {
+                const decimalValue = hoursInput.getAttribute('data-decimal-hours');
+                if (decimalValue) {
+                    wizardData.horas = parseFloat(decimalValue);
+                } else {
+                    const match = hoursInput.value.match(/(\d+)/);
+                    if (match) {
+                        let minutes = parseInt(match[1]);
+                        wizardData.horas = minutes / 60;
+                    }
+                }
+            }
+            // Save time range if in timeRange mode
+            if (timerMode === 'timeRange') {
+                const startHour = document.getElementById('startHour')?.value;
+                const startMinute = document.getElementById('startMinute')?.value;
+                const endHour = document.getElementById('endHour')?.value;
+                const endMinute = document.getElementById('endMinute')?.value;
+                if (startHour && startMinute && endHour && endMinute) {
+                    wizardData.startHour = startHour;
+                    wizardData.startMinute = startMinute;
+                    wizardData.endHour = endHour;
+                    wizardData.endMinute = endMinute;
+                    wizardData.startTime = `${startHour.padStart(2,'0')}:${startMinute.padStart(2,'0')}`;
+                    wizardData.endTime = `${endHour.padStart(2,'0')}:${endMinute.padStart(2,'0')}`;
+                }
+            }
+            break;
+            
+        case 3:
+            const voluntarias = document.getElementById('voluntariasInput');
+            const mujeres = document.getElementById('mujeresInput');
+            const hombres = document.getElementById('hombresInput');
+            if (voluntarias) wizardData.voluntarias = parseInt(voluntarias.value) || 0;
+            if (mujeres) wizardData.beneficiadas_mujeres = parseInt(mujeres.value) || 0;
+            if (hombres) wizardData.beneficiados_hombres = parseInt(hombres.value) || 0;
+            break;
+            
+        case 4:
+            // Photos are already saved via wizardPhotos and wizardData.links
+            // No additional saving needed here
+            break;
+            
+        case 5:
+            const colabRows = document.querySelectorAll('.colab-row-modern');
+            if (colabRows.length > 0 && wizardData.colaboradores && wizardData.colaboradores.length > 0) {
+                const index = wizardData.colaboradores.length - 1;
+                const select = document.querySelector('.colab-select');
+                const cantInput = document.querySelector('.colab-cant');
+                if (select && select.value) wizardData.colaboradores[index].org = select.value;
+                if (cantInput) wizardData.colaboradores[index].cant = parseInt(cantInput.value) || 0;
+                
+                const externalPersonName = document.getElementById(`externalPersonName_${index}`);
+                const externalPersonTitle = document.getElementById(`externalPersonTitle_${index}`);
+                if (externalPersonName) {
+                    if (!wizardData.colaboradores[index].personInCharge) wizardData.colaboradores[index].personInCharge = {};
+                    wizardData.colaboradores[index].personInCharge.name = externalPersonName.value;
+                    wizardData.colaboradores[index].personInCharge.title = externalPersonTitle ? externalPersonTitle.value : '';
+                }
+            }
+            break;
+            
+        case 6:
+            // For filial, ensure default coordinates are set
+            if (wizardData.actionType === 'filial' && (!wizardData.lat || !wizardData.lng)) {
+                wizardData.lat = '14.3234';
+                wizardData.lng = '-88.1848';
+            }
+            
+            const lat = document.getElementById('wizardLat');
+            const lng = document.getElementById('wizardLng');
+            if (lat && lat.value) wizardData.lat = lat.value;
+            if (lng && lng.value) wizardData.lng = lng.value;
+            break;
+    }
+    saveWizardState();
+}
+
 function renderWizardStep() {
     const body = document.getElementById('wizardDynamicBody');
     if (!body) return;
@@ -4268,105 +4370,6 @@ function selectWizardRadio(field, value) {
     saveWizardState();
 }
 
-
-function saveCurrentStepData() {
-    switch(wizardStep) {
-        case 1:
-            // Save date
-            const dateInput = document.getElementById('activityDate');
-            if (dateInput && dateInput.value) {
-                let dateValue = dateInput.value;
-                if (dateValue && dateValue.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
-                    const parts = dateValue.split('-');
-                    dateValue = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-                }
-                wizardData.date = dateValue;
-            }
-            // Save detail if it exists
-            const detailSelect = document.getElementById('activityDetailSelect');
-            if (detailSelect && detailSelect.value) {
-                wizardData.detail = detailSelect.value;
-            }
-            // actionType is already saved via selectWizardRadio
-            break;
-            
-        case 2:
-            const hoursInput = document.getElementById('hoursInput');
-            if (hoursInput) {
-                const decimalValue = hoursInput.getAttribute('data-decimal-hours');
-                if (decimalValue) {
-                    wizardData.horas = parseFloat(decimalValue);
-                } else {
-                    const match = hoursInput.value.match(/(\d+)/);
-                    if (match) {
-                        let minutes = parseInt(match[1]);
-                        wizardData.horas = minutes / 60;
-                    }
-                }
-            }
-            // Save time range if in timeRange mode
-            if (timerMode === 'timeRange') {
-                const startHour = document.getElementById('startHour')?.value;
-                const startMinute = document.getElementById('startMinute')?.value;
-                const endHour = document.getElementById('endHour')?.value;
-                const endMinute = document.getElementById('endMinute')?.value;
-                if (startHour && startMinute && endHour && endMinute) {
-                    wizardData.startHour = startHour;
-                    wizardData.startMinute = startMinute;
-                    wizardData.endHour = endHour;
-                    wizardData.endMinute = endMinute;
-                    wizardData.startTime = `${startHour.padStart(2,'0')}:${startMinute.padStart(2,'0')}`;
-                    wizardData.endTime = `${endHour.padStart(2,'0')}:${endMinute.padStart(2,'0')}`;
-                }
-            }
-            break;
-            
-        case 3:
-            const voluntarias = document.getElementById('voluntariasInput');
-            const mujeres = document.getElementById('mujeresInput');
-            const hombres = document.getElementById('hombresInput');
-            if (voluntarias) wizardData.voluntarias = parseInt(voluntarias.value) || 0;
-            if (mujeres) wizardData.beneficiadas_mujeres = parseInt(mujeres.value) || 0;
-            if (hombres) wizardData.beneficiados_hombres = parseInt(hombres.value) || 0;
-            break;
-            
-        case 4:
-            // Photos are already saved via wizardPhotos and wizardData.links
-            // No additional saving needed here
-            break;
-            
-        case 5:
-            const colabRows = document.querySelectorAll('.colab-row-modern');
-            if (colabRows.length > 0 && wizardData.colaboradores && wizardData.colaboradores.length > 0) {
-                const index = wizardData.colaboradores.length - 1;
-                const select = document.querySelector('.colab-select');
-                const cantInput = document.querySelector('.colab-cant');
-                if (select && select.value) wizardData.colaboradores[index].org = select.value;
-                if (cantInput) wizardData.colaboradores[index].cant = parseInt(cantInput.value) || 0;
-                
-                const externalPersonName = document.getElementById(`externalPersonName_${index}`);
-                const externalPersonTitle = document.getElementById(`externalPersonTitle_${index}`);
-                if (externalPersonName) {
-                    if (!wizardData.colaboradores[index].personInCharge) wizardData.colaboradores[index].personInCharge = {};
-                    wizardData.colaboradores[index].personInCharge.name = externalPersonName.value;
-                    wizardData.colaboradores[index].personInCharge.title = externalPersonTitle ? externalPersonTitle.value : '';
-                }
-            }
-            break;
-            
-         if (wizardData.actionType === 'filial' && (!wizardData.lat || !wizardData.lng)) {
-        wizardData.lat = '14.3234';
-        wizardData.lng = '-88.1848';
-    }
-    
-    const lat = document.getElementById('wizardLat');
-    const lng = document.getElementById('wizardLng');
-    if (lat && lat.value) wizardData.lat = lat.value;
-    if (lng && lng.value) wizardData.lng = lng.value;
-    break;
-    }
-    saveWizardState();
-}
 
 // Jump to a specific step (only allowed for completed steps)
 function jumpToStep(targetStep) {
