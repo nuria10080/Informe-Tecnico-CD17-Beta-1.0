@@ -2369,7 +2369,6 @@ function stopAutoSave() {
 // ==========================================
 // PROFILE SYSTEM (Complete replacement for voluntariosActivos)
 // ==========================================
-
 function initProfileSystem() {
     const monthKey = getCurrentMonthKey();
     const savedProfiles = localStorage.getItem(`VoluntarioProfiles_${monthKey}`);
@@ -2377,7 +2376,7 @@ function initProfileSystem() {
     if (savedProfiles && JSON.parse(savedProfiles).length > 0) {
         VoluntarioProfiles = JSON.parse(savedProfiles);
     } else {
-        // Start with empty profiles - NO DEFAULT
+        // START WITH EMPTY ARRAY - NO DEFAULT PROFILES
         VoluntarioProfiles = [];
     }
     
@@ -2404,35 +2403,35 @@ function initProfileSystem() {
     actualizarListavoluntarios();
     updateActivevoluntariosChart();
     
-    // If no profiles, don't allow activity creation
+    // If no profiles, show welcome and disable buttons
     if (VoluntarioProfiles.length === 0) {
         const addActivityBtn = document.getElementById('addActivityBtn');
         const importQrBtn = document.getElementById('importQrBtn');
+        
         if (addActivityBtn) {
             addActivityBtn.disabled = true;
             addActivityBtn.style.opacity = '0.5';
             addActivityBtn.style.cursor = 'not-allowed';
-            addActivityBtn.title = 'Crea un perfil primero';
+            addActivityBtn.title = 'Crea tu perfil primero';
         }
         if (importQrBtn) {
             importQrBtn.disabled = true;
             importQrBtn.style.opacity = '0.5';
             importQrBtn.style.cursor = 'not-allowed';
-            importQrBtn.title = 'Crea un perfil primero';
+            importQrBtn.title = 'Crea tu perfil primero';
         }
         
-        // Show welcome message after a short delay
+        // Show profile creation prompt after a short delay
         setTimeout(() => {
             if (VoluntarioProfiles.length === 0) {
-                const createProfile = confirm('👋 ¡Bienvenido! No hay perfiles creados.\n\n¿Deseas crear tu perfil de voluntaria ahora?\n\n(Necesitarás tus últimos 6 dígitos de identidad)');
-                if (createProfile) {
+                const wantsToCreate = confirm('👋 ¡Bienvenido al sistema!\n\nNo hay perfiles creados aún.\n\n¿Deseas crear tu perfil de voluntaria ahora?\n\n(Necesitarás tus últimos 6 dígitos de identidad)');
+                if (wantsToCreate) {
                     showAddVoluntarioModal();
                 }
             }
         }, 500);
     }
 }
-
 function saveProfiles() {
     const monthKey = getCurrentMonthKey();
     localStorage.setItem(`VoluntarioProfiles_${monthKey}`, JSON.stringify(VoluntarioProfiles));
@@ -2765,29 +2764,6 @@ function calculateProfileActivityCount(profile) {
     return count;
 }
 
-function showAddVoluntarioModal() {
-    const name = prompt('Nombre completo de la Voluntario:');
-    if (!name) return;
-    const rol = prompt('Rol (Directora, Subdirectora, Voluntaria, etc.):', 'Voluntaria');
-    const identidad = prompt('Últimos 6 dígitos de identidad (requirido):', '');
-    const newProfile = {
-        id: `Voluntario-${Date.now()}-${identidad}`,
-        name: name.trim(),
-        identidadSuffix: identidad || '000000',
-        rolNombre: rol || 'Voluntaria',
-        totalHoras: 0,
-        actividadesCount: 0,
-        isPlaceholder: identidad === '000000',
-        mergedFrom: []
-    };
-    VoluntarioProfiles.push(newProfile);
-    saveProfiles();
-    renderProfileSelector();
-    actualizarListavoluntarios();
-    updateActivevoluntariosChart();
-    alert(`✅ Voluntario ${name} agregada`);
-}
-
 function showManagevoluntarios() {
     if (!currentUser) {
         alert('❌ No hay un usuario seleccionado');
@@ -2910,104 +2886,38 @@ function actualizarListavoluntarios() {
     checkForDuplicateProfiles();
 }
 
-// Auto-detect and suggest merge for duplicate profiles
+// Auto-detect and suggest merge for duplicate profiles (simplified)
 function checkForDuplicateProfiles() {
-    const normalized = new Map();
+    const seen = new Map();
     const duplicates = [];
     
     VoluntarioProfiles.forEach(profile => {
-        // Use the GLOBAL function
-        const normalizedName = normalizeName(profile.identidadSuffix);
-        
-        if (normalized.has(normalizedName)) {
-            const existing = normalized.get(normalizedName);
-            if (!duplicates.includes(existing)) duplicates.push(existing);
-            if (!duplicates.includes(profile)) duplicates.push(profile);
-        } else {
-            normalized.set(normalizedName, profile);
+        const suffix = profile.identidadSuffix;
+        if (suffix && suffix !== '000000') {
+            if (seen.has(suffix)) {
+                if (!duplicates.includes(seen.get(suffix))) duplicates.push(seen.get(suffix));
+                if (!duplicates.includes(profile)) duplicates.push(profile);
+            } else {
+                seen.set(suffix, profile);
+            }
         }
     });
     
-    if (duplicates.length >= 2) {
-        const notification = document.createElement('div');
-        notification.className = 'duplicate-notification';
-        notification.innerHTML = `
-            ⚠️ Se detectaron perfiles duplicados. 
-            <button onclick="showMergeDialog(${JSON.stringify(duplicates.map(d => d.id))})" 
-                    style="background:var(--warning); border:none; padding:4px 12px; border-radius:20px; margin-left:10px;">
-                Fusionar Ahora
-            </button>
-        `;
-        
-        const container = document.getElementById('rolesActivosContainer');
-        if (container && !document.querySelector('.duplicate-notification')) {
-            container.insertBefore(notification, container.firstChild);
-        }
+    // Only show notification if there are actual duplicates (not on every load)
+    if (duplicates.length >= 2 && !window.duplicateNotified) {
+        window.duplicateNotified = true;
+        setTimeout(() => {
+            const shouldMerge = confirm(`⚠️ Se detectaron ${duplicates.length} perfiles con el mismo código de identidad.\n\n¿Deseas fusionarlos ahora?`);
+            if (shouldMerge) {
+                showMergeDialog(duplicates.map(d => d.id));
+            }
+            setTimeout(() => { window.duplicateNotified = false; }, 5000);
+        }, 1000);
     }
 }
-
-
 function agregarVoluntario() {
-    const rolSelect = document.getElementById('voluntariosRoles');
-    const nameInput = document.getElementById('nuevaVoluntarioNombre');
-    const identidadInput = document.getElementById('identidadVoluntario');
-    
-    if (!rolSelect?.value || !nameInput?.value.trim()) {
-        alert('Selecciona un rol y escribe un nombre');
-        return;
-    }
-    
-    const rol = rolesDisponibles.find(r => r.id === rolSelect.value);
-    const identidadSuffix = identidadInput?.value?.trim() || '000000';
-    
-    // Add status selection for new volunteer
-    const statusOptions = ['V - Voluntariado', 'A - Activo', 'ACO - Activo con Observaciones', 'I - Inactivo', 'JD - Junta Directiva'];
-    const statusPrompt = `Selecciona el estado (código para el reporte):\n\n${statusOptions.join('\n')}\n\nIngresa la letra (V, A, ACO, I, JD):`;
-    const selectedStatus = prompt(statusPrompt, 'V');
-    
-    let finalStatus = 'V';
-    if (selectedStatus) {
-        const upperStatus = selectedStatus.toUpperCase();
-        if (upperStatus === 'V' || upperStatus === 'VOLUNTARIADO') finalStatus = 'V';
-        else if (upperStatus === 'A' || upperStatus === 'ACTIVO') finalStatus = 'A';
-        else if (upperStatus === 'ACO' || upperStatus === 'ACTIVO CON OBSERVACIONES') finalStatus = 'ACO';
-        else if (upperStatus === 'I' || upperStatus === 'INACTIVO') finalStatus = 'I';
-        else if (upperStatus === 'JD' || upperStatus === 'JUNTA DIRECTIVA') finalStatus = 'JD';
-    }
-    
-    // Check if profile already exists
-    const inputNormalized = normalizeString(nameInput.value);
-    const existing = VoluntarioProfiles.find(
-        p => normalizeString(p.identidadSuffix) === inputNormalized
-    );
-    
-    if (existing) {
-        alert('Esta Voluntario ya existe en el sistema');
-        return;
-    }
-    
-    const tempId = `Voluntario-${Date.now()}-${identidadSuffix}`;
-    
-    VoluntarioProfiles.push({
-        id: tempId,
-        identidadSuffix: identidadSuffix,
-        name: nameInput.value.trim(),
-        rolId: rol.id,
-        rolNombre: rol.nombre,
-        totalHoras: 0,
-        actividadesCount: 0,
-        isPlaceholder: identidadSuffix === '000000',
-        mergedFrom: [],
-        status: finalStatus
-    });
-    
-    nameInput.value = '';
-    if (identidadInput) identidadInput.value = '';
-    saveProfiles();
-    renderProfileSelector();
-    actualizarListavoluntarios();
-    updateActivevoluntariosChart();
-    alert(`✅ Voluntario agregada: ${nameInput.value.trim()} (Estado: ${finalStatus})`);
+    // Just call the modal instead
+    showAddVoluntarioModal();
 }
 
 function eliminarVoluntario(id) {
