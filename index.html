@@ -3354,17 +3354,44 @@ function renderWizardStep() {
             break;
             
         case 6:
-            html = `
-                <div class="dynamic-question">
-                    <div class="question-label">📌 Ubicación de la actividad (Opcional)</div>
-                    <button class="wiz-btn wiz-btn-secondary" style="width:100%; margin-bottom:16px;" onclick="captureWizardLocation()">📌 Registrar ubicación GPS</button>
-                    <div class="gps-status-badge" id="wizardGpsStatus">⚡ No se ha registrado ubicación</div>
-                    <input type="hidden" id="wizardLat" value="${wizardData.lat || ''}">
-                    <input type="hidden" id="wizardLng" value="${wizardData.lng || ''}">
-                    <p style="font-size:0.7rem; margin-top:12px;">✨ La ubicación ayuda a mapear el impacto territorial</p>
+    const isCampo = wizardData.actionType === 'campo';
+    const isFilial = wizardData.actionType === 'filial';
+    const defaultLat = '14.3234';
+    const defaultLng = '-88.1848';
+    
+    // For filial, auto-set to default coordinates silently
+    if (isFilial && (!wizardData.lat || !wizardData.lng)) {
+        wizardData.lat = defaultLat;
+        wizardData.lng = defaultLng;
+        saveWizardState();
+    }
+    
+    // Show different UI based on activity type
+    if (isFilial) {
+        html = `
+            <div class="dynamic-question">
+                <div class="question-label">📌 Ubicación de la actividad</div>
+                <div class="gps-status-badge" id="wizardGpsStatus" style="background: var(--success-light, #e8f5e9); color: var(--success, #2e7d32);">
+                     Intibucá, Intibucá Honduras (${wizardData.lat || defaultLat}, ${wizardData.lng || defaultLng})
                 </div>
-            `;
-            break;
+                <input type="hidden" id="wizardLat" value="${wizardData.lat || defaultLat}">
+                <input type="hidden" id="wizardLng" value="${wizardData.lng || defaultLng}">
+                <p style="font-size:0.7rem; margin-top:12px;">✨ Ubicación predeterminada para actividades en domicilio/filial</p>
+            </div>
+        `;
+    } else {
+        html = `
+            <div class="dynamic-question">
+                <div class="question-label">📌 Ubicación de la actividad (Opcional)</div>
+                <button class="wiz-btn wiz-btn-secondary" style="width:100%; margin-bottom:16px;" onclick="captureWizardLocation()">📌 Registrar ubicación GPS</button>
+                <div class="gps-status-badge" id="wizardGpsStatus">⚡ No se ha registrado ubicación</div>
+                <input type="hidden" id="wizardLat" value="${wizardData.lat || ''}">
+                <input type="hidden" id="wizardLng" value="${wizardData.lng || ''}">
+                <p style="font-size:0.7rem; margin-top:12px;">✨ La ubicación ayuda a mapear el impacto territorial</p>
+            </div>
+        `;
+    }
+    break;
     }
     
     body.innerHTML = html;
@@ -4327,12 +4354,16 @@ function saveCurrentStepData() {
             }
             break;
             
-        case 6:
-            const lat = document.getElementById('wizardLat');
-            const lng = document.getElementById('wizardLng');
-            if (lat && lat.value) wizardData.lat = lat.value;
-            if (lng && lng.value) wizardData.lng = lng.value;
-            break;
+         if (wizardData.actionType === 'filial' && (!wizardData.lat || !wizardData.lng)) {
+        wizardData.lat = '14.3234';
+        wizardData.lng = '-88.1848';
+    }
+    
+    const lat = document.getElementById('wizardLat');
+    const lng = document.getElementById('wizardLng');
+    if (lat && lat.value) wizardData.lat = lat.value;
+    if (lng && lng.value) wizardData.lng = lng.value;
+    break;
     }
     saveWizardState();
 }
