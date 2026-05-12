@@ -2370,8 +2370,6 @@ function stopAutoSave() {
 // PROFILE SYSTEM (Complete replacement for voluntariosActivos)
 // ==========================================
 
-
-
 function initProfileSystem() {
     const monthKey = getCurrentMonthKey();
     const savedProfiles = localStorage.getItem(`VoluntarioProfiles_${monthKey}`);
@@ -2379,18 +2377,8 @@ function initProfileSystem() {
     if (savedProfiles && JSON.parse(savedProfiles).length > 0) {
         VoluntarioProfiles = JSON.parse(savedProfiles);
     } else {
-        // Create Subdirector as the only profile
-        const subdirectorId = `Voluntario-${Date.now()}-800744`; 
-        VoluntarioProfiles = [{
-            id: subdirectorId,
-            identidadSuffix: '800744',
-            name: 'Subdirector',
-            rolNombre: 'Subdirectora',
-            totalHoras: 0,
-            actividadesCount: 0,
-            isPlaceholder: false,
-            mergedFrom: []
-        }];
+        // Start with empty profiles - NO DEFAULT
+        VoluntarioProfiles = [];
     }
     
     // Recalculate hours from activities
@@ -2403,20 +2391,56 @@ function initProfileSystem() {
         });
     }
     
-    // Set currentUser to Subdirector
-    currentUser = VoluntarioProfiles.find(p => p.rolNombre === 'Subdirectora') || VoluntarioProfiles[0];
+    // Try to load saved currentUser from localStorage
+    const savedUserId = localStorage.getItem(`currentUser_${monthKey}`);
+    if (savedUserId && VoluntarioProfiles.length > 0) {
+        currentUser = VoluntarioProfiles.find(p => p.id === savedUserId);
+    } else {
+        currentUser = null;
+    }
     
     saveProfiles();
     renderProfileSelector();
     actualizarListavoluntarios();
     updateActivevoluntariosChart();
+    
+    // If no profiles, don't allow activity creation
+    if (VoluntarioProfiles.length === 0) {
+        const addActivityBtn = document.getElementById('addActivityBtn');
+        const importQrBtn = document.getElementById('importQrBtn');
+        if (addActivityBtn) {
+            addActivityBtn.disabled = true;
+            addActivityBtn.style.opacity = '0.5';
+            addActivityBtn.style.cursor = 'not-allowed';
+            addActivityBtn.title = 'Crea un perfil primero';
+        }
+        if (importQrBtn) {
+            importQrBtn.disabled = true;
+            importQrBtn.style.opacity = '0.5';
+            importQrBtn.style.cursor = 'not-allowed';
+            importQrBtn.title = 'Crea un perfil primero';
+        }
+        
+        // Show welcome message after a short delay
+        setTimeout(() => {
+            if (VoluntarioProfiles.length === 0) {
+                const createProfile = confirm('👋 ¡Bienvenido! No hay perfiles creados.\n\n¿Deseas crear tu perfil de voluntaria ahora?\n\n(Necesitarás tus últimos 6 dígitos de identidad)');
+                if (createProfile) {
+                    showAddVoluntarioModal();
+                }
+            }
+        }, 500);
+    }
 }
-
-
 
 function saveProfiles() {
     const monthKey = getCurrentMonthKey();
     localStorage.setItem(`VoluntarioProfiles_${monthKey}`, JSON.stringify(VoluntarioProfiles));
+    if (currentUser) {
+        localStorage.setItem(`currentUser_${monthKey}`, currentUser.id);
+    } else {
+        localStorage.removeItem(`currentUser_${monthKey}`);
+    }
 }
 
 
@@ -2440,7 +2464,25 @@ function renderProfileSelector() {
         const option = document.createElement('option');
         option.value = profile.id;
         const hoursDisplay = (profile.totalHoras || 0).toFixed(2);
-        option.textContent = `${profile.identidadSuffix} (${profile.rolNombre}) - ${hoursDisplay} hrs`;
+        
+        // Extract suffix directly from profile or ID
+        let displaySuffix = profile.identidadSuffix;
+        if (!displaySuffix || displaySuffix === '000000') {
+            // Extract from ID if needed
+            if (profile.id && profile.id.includes('-')) {
+                const parts = profile.id.split('-');
+                // Look for numeric part
+                for (let i = 0; i < parts.length; i++) {
+                    if (/^\d+$/.test(parts[i])) {
+                        displaySuffix = parts[i].slice(-6);
+                        break;
+                    }
+                }
+            }
+            if (!displaySuffix) displaySuffix = profile.id ? profile.id.slice(-6) : '---';
+        }
+        
+        option.textContent = `${displaySuffix} (${profile.rolNombre}) - ${hoursDisplay} hrs`;
         
         // Set selected based on currentUser
         if (currentUser && currentUser.id === profile.id) {
@@ -2464,6 +2506,38 @@ function renderProfileSelector() {
             window.dispatchEvent(new CustomEvent('currentUserChanged', { detail: { currentUser } }));
         }
     };
+    
+    // Disable activity buttons if no user is selected
+    const addActivityBtn = document.getElementById('addActivityBtn');
+    const importQrBtn = document.getElementById('importQrBtn');
+    
+    if (!currentUser || VoluntarioProfiles.length === 0) {
+        if (addActivityBtn) {
+            addActivityBtn.disabled = true;
+            addActivityBtn.style.opacity = '0.5';
+            addActivityBtn.style.cursor = 'not-allowed';
+            addActivityBtn.title = 'Debes seleccionar un usuario primero';
+        }
+        if (importQrBtn) {
+            importQrBtn.disabled = true;
+            importQrBtn.style.opacity = '0.5';
+            importQrBtn.style.cursor = 'not-allowed';
+            importQrBtn.title = 'Debes seleccionar un usuario primero';
+        }
+    } else {
+        if (addActivityBtn) {
+            addActivityBtn.disabled = false;
+            addActivityBtn.style.opacity = '1';
+            addActivityBtn.style.cursor = 'pointer';
+            addActivityBtn.title = '';
+        }
+        if (importQrBtn) {
+            importQrBtn.disabled = false;
+            importQrBtn.style.opacity = '1';
+            importQrBtn.style.cursor = 'pointer';
+            importQrBtn.title = '';
+        }
+    }
 }
 
 // Helper function to get rol ID by nombre
@@ -2475,7 +2549,173 @@ function getRolIdByNombre(rolNombre) {
     return null;
 }
 
-
+function showAddVoluntarioModal() {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+    
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 24px; padding: 24px; width: 90%; max-width: 400px;">
+            <h3 style="margin: 0 0 20px 0; color: var(--primary);">📝 Crear Perfil de Voluntaria</h3>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Nombre completo</label>
+                <input type="text" id="modalVolunteerName" class="wizard-input" placeholder="Ej: María González" style="width: 100%;">
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Últimos 6 dígitos de identidad</label>
+                <input type="text" id="modalVolunteerId" class="wizard-input" placeholder="Ej: 123456" maxlength="6" style="width: 100%;">
+                <small style="color: var(--text-medium);">Si tienes un código especial, se asignará automáticamente</small>
+            </div>
+            
+            <div style="margin-bottom: 16px;" id="roleSelectContainer">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Rol</label>
+                <select id="modalRoleSelect" class="wizard-input" style="width: 100%;">
+                    <option value="">-- Seleccionar rol --</option>
+                    ${rolesDisponibles.map(r => `<option value="${r.id}">${r.nombre}</option>`).join('')}
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Estado</label>
+                <select id="modalStatusSelect" class="wizard-input" style="width: 100%;">
+                    <option value="V">V - Voluntariado</option>
+                    <option value="A">A - Activo</option>
+                    <option value="ACO">ACO - Activo con Observaciones</option>
+                    <option value="I">I - Inactivo</option>
+                    <option value="JD">JD - Junta Directiva</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button id="modalCancelBtn" style="flex:1; padding: 12px; border: 2px solid var(--neutral-border); background: white; border-radius: 12px; cursor: pointer;">Cancelar</button>
+                <button id="modalCreateBtn" style="flex:1; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600;">Crear Perfil</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    const nameInput = modal.querySelector('#modalVolunteerName');
+    const idInput = modal.querySelector('#modalVolunteerId');
+    const roleSelect = modal.querySelector('#modalRoleSelect');
+    const roleContainer = modal.querySelector('#roleSelectContainer');
+    const statusSelect = modal.querySelector('#modalStatusSelect');
+    const createBtn = modal.querySelector('#modalCreateBtn');
+    const cancelBtn = modal.querySelector('#modalCancelBtn');
+    
+    // Hide role dropdown for special IDs
+    idInput.addEventListener('input', () => {
+        const id = idInput.value;
+        if (id === '800744' || id === '900331' || id === '300281') {
+            roleContainer.style.display = 'none';
+        } else {
+            roleContainer.style.display = 'block';
+        }
+    });
+    
+    createBtn.onclick = () => {
+        const name = nameInput.value.trim();
+        const identidad = idInput.value.trim();
+        
+        if (!name) {
+            alert('❌ Por favor ingresa tu nombre completo');
+            return;
+        }
+        if (!identidad || identidad.length !== 6) {
+            alert('❌ Por favor ingresa los 6 dígitos de identidad');
+            return;
+        }
+        
+        // Check if profile already exists
+        const existing = VoluntarioProfiles.find(p => p.identidadSuffix === identidad);
+        if (existing) {
+            alert(`❌ Ya existe un perfil con el código ${identidad}`);
+            return;
+        }
+        
+        let rolNombre = '';
+        let rolId = '';
+        
+        // Auto-assign for special IDs
+        if (identidad === '800744') {
+            rolNombre = 'Subdirectora';
+            rolId = 'subdirectora';
+        } else if (identidad === '900331') {
+            rolNombre = 'Coordinadora Ferias Cívicas';
+            rolId = 'coord_eventos';
+        } else if (identidad === '300281') {
+            rolNombre = 'Técnico Auxiliar';
+            rolId = 'coord_observacion';
+        } else {
+            // Get selected role from dropdown
+            const selectedRoleId = roleSelect.value;
+            if (!selectedRoleId) {
+                alert('❌ Por favor selecciona un rol');
+                return;
+            }
+            const selectedRole = rolesDisponibles.find(r => r.id === selectedRoleId);
+            rolNombre = selectedRole.nombre;
+            rolId = selectedRole.id;
+        }
+        
+        const finalStatus = statusSelect.value;
+        
+        const newProfile = {
+            id: `Voluntario-${Date.now()}-${identidad}`,
+            name: name,
+            identidadSuffix: identidad,
+            rolNombre: rolNombre,
+            rolId: rolId,
+            totalHoras: 0,
+            actividadesCount: 0,
+            isPlaceholder: false,
+            mergedFrom: [],
+            status: finalStatus
+        };
+        
+        VoluntarioProfiles.push(newProfile);
+        saveProfiles();
+        renderProfileSelector();
+        actualizarListavoluntarios();
+        updateActivevoluntariosChart();
+        
+        // Auto-select this new user as current user
+        currentUser = newProfile;
+        renderProfileSelector();
+        
+        // Save current user to localStorage
+        const monthKey = getCurrentMonthKey();
+        localStorage.setItem(`currentUser_${monthKey}`, currentUser.id);
+        
+        alert(`✅ Perfil creado: ${name}\n🎭 Rol: ${rolNombre}\n🆔 ID: ${identidad}\n📊 Estado: ${finalStatus}`);
+        
+        modal.remove();
+    };
+    
+    cancelBtn.onclick = () => {
+        modal.remove();
+    };
+    
+    // Close modal when clicking outside
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    };
+}
 
 function calculateProfileHoursFromActivities(profile) {
     if (typeof activities === 'undefined' || !activities.length) return 0;
