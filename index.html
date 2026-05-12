@@ -3341,6 +3341,7 @@ function saveCurrentStepData() {
     saveWizardState();
 }
 
+
 function renderWizardStep() {
     const body = document.getElementById('wizardDynamicBody');
     if (!body) return;
@@ -3456,43 +3457,43 @@ function renderWizardStep() {
             break;
             
         case 6:
-    const isCampo = wizardData.actionType === 'campo';
-    const isFilial = wizardData.actionType === 'filial';
-    const defaultLat = '14.3234';
-    const defaultLng = '-88.1848';
-    
-    // For filial, auto-set to default coordinates silently
-    if (isFilial && (!wizardData.lat || !wizardData.lng)) {
-        wizardData.lat = defaultLat;
-        wizardData.lng = defaultLng;
-        saveWizardState();
-    }
-    
-    // Show different UI based on activity type
-    if (isFilial) {
-        html = `
-            <div class="dynamic-question">
-                <div class="question-label">📌 Ubicación de la actividad</div>
-                <div class="gps-status-badge" id="wizardGpsStatus" style="background: var(--success-light, #e8f5e9); color: var(--success, #2e7d32);">
-                     Intibucá, Intibucá Honduras (${wizardData.lat || defaultLat}, ${wizardData.lng || defaultLng})
+        const isCampo = wizardData.actionType === 'campo';
+        const isFilial = wizardData.actionType === 'filial';
+        const defaultLat = '14.3234';
+        const defaultLng = '-88.1848';
+        
+        // For filial, auto-set to default coordinates silently
+        if (isFilial && (!wizardData.lat || !wizardData.lng)) {
+            wizardData.lat = defaultLat;
+            wizardData.lng = defaultLng;
+            saveWizardState();
+        }
+        
+        // Show different UI based on activity type
+        if (isFilial) {
+            html = `
+                <div class="dynamic-question">
+                    <div class="question-label">📌 Ubicación de la actividad</div>
+                    <div class="gps-status-badge" id="wizardGpsStatus" style="background: var(--success-light, #e8f5e9); color: var(--success, #2e7d32);">
+                        Intibucá, Intibucá Honduras (${wizardData.lat || defaultLat}, ${wizardData.lng || defaultLng})
+                    </div>
+                    <input type="hidden" id="wizardLat" value="${wizardData.lat || defaultLat}">
+                    <input type="hidden" id="wizardLng" value="${wizardData.lng || defaultLng}">
+                    <p style="font-size:0.7rem; margin-top:12px;">✨ Ubicación predeterminada para actividades en domicilio/filial</p>
                 </div>
-                <input type="hidden" id="wizardLat" value="${wizardData.lat || defaultLat}">
-                <input type="hidden" id="wizardLng" value="${wizardData.lng || defaultLng}">
-                <p style="font-size:0.7rem; margin-top:12px;">✨ Ubicación predeterminada para actividades en domicilio/filial</p>
-            </div>
-        `;
-    } else {
-        html = `
-            <div class="dynamic-question">
-                <div class="question-label">📌 Ubicación de la actividad (Opcional)</div>
-                <button class="wiz-btn wiz-btn-secondary" style="width:100%; margin-bottom:16px;" onclick="captureWizardLocation()">📌 Registrar ubicación GPS</button>
-                <div class="gps-status-badge" id="wizardGpsStatus">⚡ No se ha registrado ubicación</div>
-                <input type="hidden" id="wizardLat" value="${wizardData.lat || ''}">
-                <input type="hidden" id="wizardLng" value="${wizardData.lng || ''}">
-                <p style="font-size:0.7rem; margin-top:12px;">✨ La ubicación ayuda a mapear el impacto territorial</p>
-            </div>
-        `;
-    }
+            `;
+        } else {
+            html = `
+                <div class="dynamic-question">
+                    <div class="question-label">📌 Ubicación de la actividad (Opcional)</div>
+                    <button class="wiz-btn wiz-btn-secondary" style="width:100%; margin-bottom:16px;" onclick="captureWizardLocation()">📌 Registrar ubicación GPS</button>
+                    <div class="gps-status-badge" id="wizardGpsStatus">⚡ No se ha registrado ubicación</div>
+                    <input type="hidden" id="wizardLat" value="${wizardData.lat || ''}">
+                    <input type="hidden" id="wizardLng" value="${wizardData.lng || ''}">
+                    <p style="font-size:0.7rem; margin-top:12px;">✨ La ubicación ayuda a mapear el impacto territorial</p>
+                </div>
+            `;
+        }
     break;
     }
     
@@ -4878,11 +4879,9 @@ async function wizardGoNext() {
         };
 
         // Add links from wizardData
-        if (wizardData.link1 && wizardData.link1.trim()) {
-            newActivity.links.push(wizardData.link1.trim());
-        }
-        if (wizardData.link2 && wizardData.link2.trim()) {
-            newActivity.links.push(wizardData.link2.trim());
+        
+        if (wizardData.links && Array.isArray(wizardData.links) && wizardData.links.length > 0) {
+            newActivity.links = wizardData.links.filter(link => link && link.trim() !== '');
         }
 
         console.log('📝 New activity:', newActivity);
