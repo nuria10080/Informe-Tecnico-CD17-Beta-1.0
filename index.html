@@ -1689,13 +1689,6 @@ function updateGlobalKPIs() {
 // ==========================================
 // UTILITY FUNCTIONS
 // ==========================================
-function getHondurasDate() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
 
 function getCurrentMonthKey() {
     const now = new Date();
@@ -1839,7 +1832,15 @@ function formatMonthYearForDisplay(d) {
     
     return `${spanishMonths[month]} ${year}`;
 }
-
+// Sort activities by date (oldest to newest)
+function sortActivitiesByDate() {
+    if (!activities || activities.length === 0) return;
+    activities.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateA - dateB;
+    });
+}
 // ==========================================
 // ENHANCED TIMER SYSTEM WITH DUAL MODE
 // ==========================================
@@ -2175,32 +2176,7 @@ function stopWizardTimerGlobal() {
     }
 }
 
-function updateWizardStep2() {
-    const body = document.getElementById('wizardDynamicBody');
-    if (body && wizardStep === 2) {
-        body.innerHTML = renderEnhancedTimerStep();
-        setTimeout(() => attachHoursInputListener(), 50);
-    }
-}
 
-function updateFooterDates() {
-    const now = new Date();
-    
-    let lastModifiedDate = formatDateForDisplay(now, true);
-    if (activities.length > 0) {
-        const sortedActivities = [...activities].sort((a, b) => new Date(b.date) - new Date(a.date));
-        const mostRecentActivity = sortedActivities[0];
-        if (mostRecentActivity && mostRecentActivity.date) {
-            lastModifiedDate = formatDateForDisplay(mostRecentActivity.date, true);
-        }
-    }
-    
-    const lastModifiedEl = document.getElementById('lastModifiedDate');
-    const deliveryDateEl = document.getElementById('deliveryDate');
-    
-    if (lastModifiedEl) lastModifiedEl.innerText = lastModifiedDate;
-    if (deliveryDateEl) deliveryDateEl.innerText = formatDateForDisplay(now, true);
-}
 
 // ==========================================
 // STORAGE
@@ -2219,29 +2195,6 @@ function saveAllToStorage() {
     localStorage.setItem(`desc_${monthKey}`, JSON.stringify(desc));
 }
 
-function loadCurrentMonthData() {
-    const monthKey = getCurrentMonthKey();
-    const savedActivities = localStorage.getItem(`activities_${monthKey}`);
-    if (savedActivities) {
-        activities = JSON.parse(savedActivities);
-        sortActivitiesByDate();
-    }
-    const savedvoluntarios = localStorage.getItem(`voluntarios_${monthKey}`);
-    if (savedvoluntarios) voluntariosActivos = JSON.parse(savedvoluntarios);
-    const savedDesc = localStorage.getItem(`desc_${monthKey}`);
-    if (savedDesc) {
-        const d = JSON.parse(savedDesc);
-        if(document.getElementById('scopeText')) document.getElementById('scopeText').value = d.scope || '';
-        if(document.getElementById('difficultiesText')) document.getElementById('difficultiesText').value = d.difficulties || '';
-        if(document.getElementById('recommendationsText')) document.getElementById('recommendationsText').value = d.recommendations || '';
-        if(document.getElementById('impactText')) document.getElementById('impactText').value = d.impact || '';
-    }
-    initProfileSystem();
-    actualizarListavoluntarios();
-    renderActivities();
-    updateCharts();
-    updateFooterDates();
-}
 
 // ==========================================
 // COMPLETE WIZARD SYSTEM
@@ -2397,24 +2350,7 @@ function saveWizardState() {
     localStorage.setItem('wizardFullState', JSON.stringify(wizardState));
 }
 
-function loadWizardState() {
-    const savedState = localStorage.getItem('wizardFullState');
-    if (savedState) {
-        try {
-            const state = JSON.parse(savedState);
-            wizardStep = state.step || 1;
-            wizardData = state.data || {};
-            return true;
-        } catch (e) {
-            console.error('Failed to load wizard state:', e);
-        }
-    }
-    return false;
-}
 
-function clearWizardState() {
-    localStorage.removeItem('wizardFullState');
-}
 
 function startAutoSave() {
     if (autoSaveInterval) clearInterval(autoSaveInterval);
@@ -3518,7 +3454,7 @@ function initWizardPhotosStep() {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.capture = 'environment'; // Opens camera on mobile
+            input.capture = 'environment';
             input.onchange = async (e) => {
                 if (e.target.files && e.target.files[0]) {
                     const file = e.target.files[0];
@@ -3530,26 +3466,31 @@ function initWizardPhotosStep() {
                     }
                     
                     try {
-                        const link = await uploadPhotoToImgBB(file);
+                        // ✅ CHANGED THIS LINE - using queued version
+                        const link = await uploadPhotoToImgBBWithQueue(file);
                         
-                        wizardPhotos.push({ 
-                            name: file.name || `foto_${Date.now()}.jpg`,
-                            link: link
-                        });
-                        
-                        // Save links to wizardData
-                        wizardData.links = wizardPhotos.map(p => p.link);
-                        saveWizardState();
-                        
-                        if (statusSpan) {
-                            statusSpan.innerHTML = `✅ Foto ${wizardPhotos.length} subida correctamente`;
-                            statusSpan.style.color = 'var(--success)';
-                            setTimeout(() => {
-                                if (statusSpan) statusSpan.innerHTML = '';
-                            }, 2000);
+                        // Only add if upload succeeded (not queued)
+                        if (link) {
+                            wizardPhotos.push({ 
+                                name: file.name || `foto_${Date.now()}.jpg`,
+                                link: link
+                            });
+                            
+                            // Save links to wizardData
+                            wizardData.links = wizardPhotos.map(p => p.link);
+                            saveWizardState();
+                            
+                            if (statusSpan) {
+                                statusSpan.innerHTML = `✅ Foto ${wizardPhotos.length} subida correctamente`;
+                                statusSpan.style.color = 'var(--success)';
+                                setTimeout(() => {
+                                    if (statusSpan) statusSpan.innerHTML = '';
+                                }, 2000);
+                            }
+                            
+                            renderWizardPhotosList();
                         }
-                        
-                        renderWizardPhotosList();
+                        // If link is null (queued), don't add to wizardPhotos yet
                         
                     } catch (error) {
                         console.error('Upload error:', error);
@@ -3634,6 +3575,204 @@ async function uploadPhotoToImgBB(file) {
         reader.readAsDataURL(file);
     });
 }
+
+// ==========================================
+// OFFLINE PHOTO QUEUE SYSTEM
+// ==========================================
+
+// Convert file to base64 for storing in localStorage
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+// Save photo to pending queue when offline
+async function queuePhotoForLater(file) {
+    const pendingPhotos = JSON.parse(localStorage.getItem('pendingPhotos') || '[]');
+    
+    // Limit pending photos to 10 to avoid storage issues
+    if (pendingPhotos.length >= 10) {
+        alert('📸 Demasiadas fotos pendientes. Conéctate a internet para subirlas.');
+        return null;
+    }
+    
+    try {
+        const base64Data = await fileToBase64(file);
+        pendingPhotos.push({
+            id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+            base64: base64Data,
+            name: file.name,
+            timestamp: Date.now()
+        });
+        localStorage.setItem('pendingPhotos', JSON.stringify(pendingPhotos));
+        
+        // Show queue status
+        updatePendingPhotoStatus();
+        
+        return `📸 Foto guardada localmente (pendiente: ${pendingPhotos.length})`;
+    } catch (error) {
+        console.error('Failed to queue photo:', error);
+        return null;
+    }
+}
+
+// Process pending photos when back online
+async function processPendingPhotos() {
+    const pendingPhotos = JSON.parse(localStorage.getItem('pendingPhotos') || '[]');
+    
+    if (pendingPhotos.length === 0) return;
+    
+    console.log(`📸 Processing ${pendingPhotos.length} pending photos...`);
+    
+    // Show status to user
+    const statusDiv = document.getElementById('wizardUploadStatus');
+    if (statusDiv) {
+        statusDiv.innerHTML = `📤 Subiendo ${pendingPhotos.length} fotos pendientes...`;
+        statusDiv.style.color = 'var(--accent)';
+    }
+    
+    let uploaded = 0;
+    let failed = 0;
+    const uploadedLinks = [];
+    
+    for (const photo of pendingPhotos) {
+        try {
+            // Convert base64 back to blob
+            const blob = await fetch(photo.base64).then(r => r.blob());
+            const file = new File([blob], photo.name, { type: 'image/jpeg' });
+            
+            // Upload to ImgBB
+            const link = await uploadPhotoToImgBB(file);
+            uploadedLinks.push(link);
+            uploaded++;
+            
+            // Remove from queue
+            const updatedQueue = JSON.parse(localStorage.getItem('pendingPhotos') || '[]');
+            const newQueue = updatedQueue.filter(p => p.id !== photo.id);
+            localStorage.setItem('pendingPhotos', JSON.stringify(newQueue));
+            
+        } catch (error) {
+            console.error('Failed to upload pending photo:', error);
+            failed++;
+        }
+    }
+    
+    // Update UI
+    if (statusDiv) {
+        if (failed === 0) {
+            statusDiv.innerHTML = `✅ ${uploaded} fotos subidas correctamente`;
+            statusDiv.style.color = 'var(--success)';
+        } else {
+            statusDiv.innerHTML = `⚠️ ${uploaded} subidas, ${failed} fallaron`;
+            statusDiv.style.color = 'var(--warning)';
+        }
+        
+        setTimeout(() => {
+            if (statusDiv) statusDiv.innerHTML = '';
+        }, 3000);
+    }
+    
+    // If we have uploaded links, add them to current wizard
+    if (uploadedLinks.length > 0 && window.wizardPhotos) {
+        for (const link of uploadedLinks) {
+            if (wizardPhotos.length < 2) {
+                wizardPhotos.push({ name: `foto_${Date.now()}`, link: link });
+            }
+        }
+        wizardData.links = wizardPhotos.map(p => p.link);
+        saveWizardState();
+        if (typeof renderWizardPhotosList === 'function') {
+            renderWizardPhotosList();
+        }
+    }
+    
+    updatePendingPhotoStatus();
+}
+
+// Show pending photo count in UI
+function updatePendingPhotoStatus() {
+    const pendingPhotos = JSON.parse(localStorage.getItem('pendingPhotos') || '[]');
+    const pendingCount = pendingPhotos.length;
+    
+    // Update status badge (add to your UI somewhere)
+    let statusBadge = document.getElementById('pendingPhotoStatus');
+    if (!statusBadge && pendingCount > 0) {
+        const badge = document.createElement('div');
+        badge.id = 'pendingPhotoStatus';
+        badge.style.cssText = 'position:fixed; bottom:70px; right:10px; background:#ff9800; color:white; padding:6px 12px; border-radius:20px; font-size:11px; z-index:1000; cursor:pointer;';
+        badge.onclick = () => {
+            if (navigator.onLine) {
+                processPendingPhotos();
+            } else {
+                alert('📸 Conéctate a internet para subir las fotos pendientes.');
+            }
+        };
+        document.body.appendChild(badge);
+    }
+    
+    const badgeElement = document.getElementById('pendingPhotoStatus');
+    if (badgeElement) {
+        if (pendingCount > 0) {
+            badgeElement.innerHTML = `📸 ${pendingCount} foto(s) pendiente(s) - Click para subir`;
+            badgeElement.style.display = 'block';
+        } else {
+            badgeElement.style.display = 'none';
+        }
+    }
+}
+
+// Modified upload function that queues when offline
+async function uploadPhotoToImgBBWithQueue(file) {
+    // Check if online
+    if (!navigator.onLine) {
+        const result = await queuePhotoForLater(file);
+        if (result) {
+            alert(`📸 Foto guardada localmente. Se subirá automáticamente cuando tengas internet.`);
+            return null; // Return null indicates queued
+        }
+        throw new Error('No hay conexión y no se pudo guardar localmente');
+    }
+    
+    // Online - upload normally
+    try {
+        const link = await uploadPhotoToImgBB(file);
+        return link;
+    } catch (error) {
+        console.error('Upload failed, queuing...', error);
+        // If upload fails, queue it
+        const result = await queuePhotoForLater(file);
+        if (result) {
+            alert(`⚠️ No se pudo subir la foto. Se guardó localmente y se subirá cuando haya conexión.`);
+            return null;
+        }
+        throw error;
+    }
+}
+
+// Listen for coming back online
+window.addEventListener('online', () => {
+    console.log('🌐 Back online! Processing pending photos...');
+    const pendingPhotos = JSON.parse(localStorage.getItem('pendingPhotos') || '[]');
+    if (pendingPhotos.length > 0) {
+        alert(`📸 Se detectaron ${pendingPhotos.length} foto(s) pendientes. ¿Deseas subirlas ahora?`);
+        processPendingPhotos();
+    }
+});
+
+// Also check online status periodically (every 30 seconds)
+setInterval(() => {
+    if (navigator.onLine) {
+        const pendingPhotos = JSON.parse(localStorage.getItem('pendingPhotos') || '[]');
+        if (pendingPhotos.length > 0) {
+            processPendingPhotos();
+        }
+    }
+}, 30000);
+
 // ==========================================
 // COLABORADORS FUNCTIONS
 // ==========================================
@@ -4271,32 +4410,6 @@ function deleteActivity(idx) {
     }, 100);
 }
 
-function saveData() {
-    sortActivitiesByDate();
-    saveAllToStorage();
-  
-}
-
-function clearData() {
-    if (confirm('Borrar toda la información del mes actual?')) {
-        const monthKey = getCurrentMonthKey();
-        activities = [];
-        voluntariosActivos = [];
-        localStorage.removeItem(`activities_${monthKey}`);
-        localStorage.removeItem(`voluntarios_${monthKey}`);
-        localStorage.removeItem(`desc_${monthKey}`);
-        document.getElementById('scopeText').value = '';
-        document.getElementById('difficultiesText').value = '';
-        document.getElementById('recommendationsText').value = '';
-        document.getElementById('impactText').value = '';
-        updateCharCounts();
-        actualizarListavoluntarios();
-        renderActivities();
-        updateCharts();
-        document.getElementById('monthIndicator').innerText = formatDateForDisplay(new Date());
-        alert('🗑️ Datos del mes actual borrados.');
-    }
-}
 
 
 function renderActivities() {
@@ -5503,75 +5616,77 @@ function updateCollaboratorsBarChart() {
 
 function updateActivevoluntariosChart() {
     const ctx = document.getElementById('chartActivevoluntarios')?.getContext('2d');
-    if (!ctx) return;
-    
-    if (typeof VoluntarioProfiles === 'undefined' || !VoluntarioProfiles.length) {
-        if (window.activevoluntariosChart) window.activevoluntariosChart.destroy();
+    if (!ctx) {
+        console.log('Chart canvas not found');
         return;
     }
     
-    // Calculate real hours from activities for each profile
-    const active = VoluntarioProfiles
-        .map(p => ({ 
-            name: p.identidadSuffix, 
-            horas: getRealHoursFromActivities(p)
-        }))
-        .sort((a, b) => b.horas - a.horas)
-        .slice(0, 8);
+    if (typeof activities === 'undefined' || !activities || activities.length === 0) {
+        if (window.activevoluntariosChart) window.activevoluntariosChart.destroy();
+        window.activevoluntariosChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: ['Sin datos'], datasets: [{ data: [0], backgroundColor: '#E34A2F', label: 'Horas Totales' }] },
+            options: { responsive: true, maintainAspectRatio: true }
+        });
+        return;
+    }
+    
+    // Calculate hours per volunteer from activities
+    const volunteerHours = {};
+    
+    activities.forEach(activity => {
+        const volunteerId = activity.createdBy;
+        const hours = activity.horas || 0;
+        
+        if (volunteerId) {
+            if (!volunteerHours[volunteerId]) {
+                volunteerHours[volunteerId] = 0;
+            }
+            volunteerHours[volunteerId] += hours;
+        }
+    });
+    
+    // Convert to array and sort
+    const volunteersArray = Object.entries(volunteerHours).map(([id, hours]) => ({ id, hours }));
+    const sortedVolunteers = volunteersArray.sort((a, b) => b.hours - a.hours).slice(0, 5);
+    
+    // Extract suffix for labels
+    const labels = sortedVolunteers.map(v => {
+        if (v.id && typeof v.id === 'string') {
+            const parts = v.id.split('-');
+            const lastPart = parts[parts.length - 1];
+            if (lastPart && lastPart !== 'subdirector' && lastPart !== 'Voluntario') {
+                if (lastPart.length <= 6 && /^\d+$/.test(lastPart)) {
+                    return lastPart;
+                }
+                return lastPart.length > 6 ? lastPart.substring(0, 6) : lastPart;
+            }
+        }
+        return v.id ? v.id.substring(0, 6) : '---';
+    });
+    
+    const data = sortedVolunteers.map(v => v.hours);
     
     if (window.activevoluntariosChart) window.activevoluntariosChart.destroy();
     
     window.activevoluntariosChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: active.map(d => d.identidadSuffix.length > 20 ? d.identidadSuffix.substring(0, 17) + '...' : d.identidadSuffix),
+            labels: labels,
             datasets: [{
-                data: active.map(d => d.horas),
+                data: data,
                 backgroundColor: '#E34A2F',
                 label: 'Horas Totales'
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: true,
             plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `Horas: ${context.raw.toFixed(2)}`;
-                        }
-                    }
-                },
-                legend: {
-                    position: 'top',
-                    labels: { font: { size: 10 } }
-                },
-                title: {
-                    display: true,
-                    text: 'voluntarios Más Activas',
-                    font: { size: 14, weight: 'bold' },
-                    padding: { bottom: 15 }
-                }
+                legend: { position: 'top', labels: { font: { size: 10 } } }
             },
             scales: {
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Horas'
-                    },
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return value.toFixed(1);
-                        }
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'voluntarios'
-                    }
-                }
+                y: { beginAtZero: true, title: { display: true, text: 'Horas' } }
             }
         }
     });
@@ -5774,7 +5889,7 @@ function updateCharts() {
 // ==========================================
 // OTHER FUNCTIONS
 // ==========================================
-function exportPDF() { window.print(); }
+
 function saveData() { saveAllToStorage();  }
 function clearData() {
     if (confirm('Borrar todo?')) {
@@ -5801,9 +5916,6 @@ function syncPrintText() {
 
 window.addEventListener('beforeprint', syncPrintText);
 
-function loadSavedData() {
-    loadCurrentMonthData();
-}
 
 function updateCharCounts() {
     const scopeCount = document.getElementById('scopeCount');
@@ -5834,22 +5946,12 @@ document.getElementById('impactText').addEventListener('input', function() {
     saveAllToStorage();
 });
 
-function getHondurasToday() {
-    const now = new Date();
-    // Formatear directamente en la zona horaria de Honduras
-    const formatter = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'America/Tegucigalpa',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    });
-    return formatter.format(now);
-}
 
 // ============Single DOMContentLoaded event - everything combined===============
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize data from localStorage
     const monthKey = getCurrentMonthKey();
+    updatePendingPhotoStatus();
     
     // Load activities
     const savedActivities = localStorage.getItem(`activities_${monthKey}`);
@@ -5872,6 +5974,12 @@ document.addEventListener('DOMContentLoaded', () => {
     wizardCompleted = false;
     wizardSubmitting = false;
     
+    // UPDATE DATE DISPLAY - moved inside DOMContentLoaded
+    const dateDisplay = document.getElementById('currentDateDisplay');
+    if (dateDisplay) {
+        dateDisplay.textContent = formatDateForDisplay(new Date());
+    }
+    
     // jsQR check
     setTimeout(() => {
         if (typeof jsQR !== 'undefined') {
@@ -5886,17 +5994,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 3000);
 });
-
-
-// Update date display badge
-const dateDisplay = document.getElementById('currentDateDisplay');
-if (dateDisplay) {
-    const todayDate = getHondurasToday(); // Esto te da "2026-04-05"
-    dateDisplay.textContent = formatDateForDisplay(todayDate);
-}
 // ==========================================
 // STATE MANAGEMENT - Aligned with your storage system
 // ==========================================
+window.addEventListener('online', () => {
+    const pendingPhotos = JSON.parse(localStorage.getItem('pendingPhotos') || '[]');
+    if (pendingPhotos.length > 0) {
+        alert(`📸 Subiendo ${pendingPhotos.length} fotos pendientes...`);
+        // Process pending uploads
+    }
+});
+
 const state = {
     save: () => {
         const monthKey = getCurrentMonthKey();
