@@ -1611,11 +1611,12 @@ const identidadSuffix = identidad
 
 const rolesDisponibles = [
     { id:'directora', nombre:'Directora' },
+    { id:'junta', nombre:'Junta Directiva' },
     { id:'subdirectora', nombre:'Subdirectora' },
     { id:'coord_fondos', nombre:'Coordinadora Recaudación' },
-    { id:'coord_encuestas_local', nombre:'Coordinadora Encuestas y Localizaciones' },
-    { id:'coord_encuestas_capacitacion', nombre:'Coordinadora Encuestas y Capacitaciones' },
-    { id:'coord_gestion_voluntarios', nombre:'Gestión y Recuperacion Voluntarios' },{ id:'coord_eventos', nombre:'Ferias & Excursiones' },
+    { id:'coord_encuestas_local', nombre:'Coordinadora Logistica y Localizacion' },
+    { id:'docente', nombre:'Instructor/a' },
+    { id:'coord_gestion_voluntarios', nombre:'Gestión y Recuperacion Voluntarios' },{ id:'coord_eventos', nombre:'Coordinadora Ferias Civicas' },
     { id:'coord_comunicacion', nombre:'Técnico Comunicación' },
     { id:'coord_observacion', nombre:'Técnico Auxiliar' }
 ];
@@ -3444,7 +3445,8 @@ function generateActivityOptions(selectedVal) {
         "Observación & Estudios",
         "Planificación",
         "Revisión & Preparación",
-        "Visita y Seguimiento"
+        "Visita y Seguimiento",
+        "Estrategias Digitales"
     ];
     
     let options = '';
@@ -3502,6 +3504,16 @@ function renderConditionalDetail() {
         "Visita y Seguimiento": [
             "Agendada",
             "No Agendada"
+        ],
+        "Estrategias Digitales": [
+            "Creación de App",
+            "Mantenimiento de App",
+            "Actualización de App",
+            "Campaña en Redes Sociales",
+            "Difusión de Anuncios de Servicio Público",
+            "Material Promocional Digital",
+            "Boletín Informativo Digital",
+            "Gestiones Digitales"
         ]
     };
     
