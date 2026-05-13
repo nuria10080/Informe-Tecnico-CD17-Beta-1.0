@@ -1549,7 +1549,9 @@ body {
     <button class="action-button" onclick="showImportQRModal()" style="background:var(--info);">📷 Importar QR</button>
     <button class="action-button" onclick="exportToExcel(event)" style="background:var(--success);">📊 Exportar Excel</button>
     <button class="action-button print" onclick="exportPDF()">📄 Imprimir</button>
-    <button class="action-button save" onclick="saveData()">💾 Guardar</button>
+    <button class="action-button save" onclick="unifiedSave(); this.textContent='✅ Guardado!'; setTimeout(() => this.textContent='💾 Guardar', 2000)">
+        💾 Guardar
+    </button>
     <button class="action-button clear" onclick="clearData()">🗑️ Borrar</button>
 </div>
 <!-- QR Import Modal -->
