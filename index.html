@@ -3741,10 +3741,12 @@ function initWizardPhotosStep() {
                 return;
             }
             
+            // FIXED: Remove capture attribute to allow file picker
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.capture = 'environment';
+            // No 'capture' attribute - this gives file picker option
+            
             input.onchange = async (e) => {
                 if (e.target.files && e.target.files[0]) {
                     const file = e.target.files[0];
@@ -3756,17 +3758,14 @@ function initWizardPhotosStep() {
                     }
                     
                     try {
-                        // ✅ CHANGED THIS LINE - using queued version
                         const link = await uploadPhotoToImgBBWithQueue(file);
                         
-                        // Only add if upload succeeded (not queued)
                         if (link) {
                             wizardPhotos.push({ 
                                 name: file.name || `foto_${Date.now()}.jpg`,
                                 link: link
                             });
                             
-                            // Save links to wizardData
                             wizardData.links = wizardPhotos.map(p => p.link);
                             saveWizardState();
                             
@@ -3780,7 +3779,6 @@ function initWizardPhotosStep() {
                             
                             renderWizardPhotosList();
                         }
-                        // If link is null (queued), don't add to wizardPhotos yet
                         
                     } catch (error) {
                         console.error('Upload error:', error);
