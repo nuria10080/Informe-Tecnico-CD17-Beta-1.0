@@ -1602,6 +1602,8 @@ let activityFormCount = 0;
 let timers = {};
 let wizardShowingNewColabForm = false;
 let wizardCompleted = false;
+let autoSaveInterval = null;     
+let wizardSubmitting = false;     
 const identidad = null;
 const identidadSuffix = identidad
   ? `Voluntario-${Date.now()}-${identidad}`
