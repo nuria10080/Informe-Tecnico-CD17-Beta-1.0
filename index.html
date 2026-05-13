@@ -4611,7 +4611,30 @@ function deleteActivity(idx) {
     }, 100);
 }
 
-
+// Helper function to get the display name for activity
+function getActivityDisplayName() {
+    const activityName = wizardData.activityName || '';
+    const detail = wizardData.detail || '';
+    
+    // List of activities that have details (where detail should replace the general name)
+    const activitiesWithDetails = [
+        "Mantenimiento y Adecuación",
+        "Abastecimiento o Gestión de Insumos",
+        "Observación & Estudios",
+        "Gestión y Coordinación",
+        "Visita y Seguimiento",
+        "Estrategias Digitales",
+        "Revisión & Preparación"
+    ];
+    
+    // If there's a detail and this activity type has details, use the detail as the name
+    if (detail && detail.trim() !== '' && activitiesWithDetails.includes(activityName)) {
+        return detail;
+    }
+    
+    // Otherwise, use the general activity name
+    return activityName;
+}
 
 function renderActivities() {
     saveData();
@@ -4865,7 +4888,7 @@ async function wizardGoNext() {
         const newActivity = {
             id: crypto.randomUUID(),
             date: wizardData.date || getHondurasDate(),
-            name: wizardData.activityName || '',
+            name: getActivityDisplayName(),
             horas: Number(wizardData.horas) || 0,
             actionType: wizardData.actionType || 'campo',
             beneficiadas_mujeres: Number(wizardData.beneficiadas_mujeres) || 0,
