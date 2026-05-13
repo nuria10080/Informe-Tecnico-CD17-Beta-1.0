@@ -1457,7 +1457,7 @@ body {
     <div class="kpi-item"><div class="kpi-label">⏱️ Total Horas</div><div class="kpi-value" id="totalHoras">0</div>
     <div style="display: flex; gap: 15px; margin-top: 5px; font-size: 0.9rem; align-items: center; justify-content: center;">
         <div>
-            <span style="color: var(--text-medium);">🏢 Domicilio:</span>
+            <span style="color: var(--text-medium);">🏢 Virtual:</span>
             <span id="totalHorasFilial" style="font-weight: 600; color: var(--primary-dark);">0</span>
         </div>
         <div>
@@ -1597,7 +1597,6 @@ let activities = [];
 let voluntariosActivos = [];
 let VoluntarioProfiles = [];
 let currentUser = null;
-let wizardSubmitting = false;
 let loadingOverlay = null;
 let activityFormCount = 0;
 let timers = {};
@@ -2183,18 +2182,6 @@ function stopWizardTimerGlobal() {
 // STORAGE
 // ==========================================
 
-function saveAllToStorage() {
-    const monthKey = getCurrentMonthKey();
-    localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
-    localStorage.setItem(`voluntarios_${monthKey}`, JSON.stringify(voluntariosActivos));
-    const desc = {
-        scope: document.getElementById('scopeText')?.value || '',
-        difficulties: document.getElementById('difficultiesText')?.value || '',
-        recommendations: document.getElementById('recommendationsText')?.value || '',
-        impact: document.getElementById('impactText')?.value || ''
-    };
-    localStorage.setItem(`desc_${monthKey}`, JSON.stringify(desc));
-}
 
 
 // ==========================================
@@ -2204,7 +2191,6 @@ function saveAllToStorage() {
 let activeWizard = null;
 let wizardStep = 1;
 let wizardData = {};
-let autoSaveInterval = null;
 let wizardTimerInterval = null;
 let wizardTimerStart = null;
 let wizardTimerElapsedMs = 0;
@@ -2237,15 +2223,6 @@ function loadSavedTimerState() {
     }
 }
 
-function saveTimerState(isRunning) {
-    const timerState = {
-        elapsedMs: wizardTimerElapsedMs,
-        isRunning: isRunning,
-        startTime: isRunning ? Date.now() : null,
-        lastUpdated: new Date().toISOString()
-    };
-    localStorage.setItem('wizardTimerState', JSON.stringify(timerState));
-}
 
 function clearSavedTimerState() {
     localStorage.removeItem('wizardTimerState');
@@ -2346,11 +2323,6 @@ function attachHoursInputListener() {
 // WIZARD STATE MANAGEMENT
 // ==========================================
 
-function saveWizardState() {
-    const wizardState = { step: wizardStep, data: wizardData, timestamp: Date.now() };
-    localStorage.setItem('wizardFullState', JSON.stringify(wizardState));
-}
-
 
 
 function startAutoSave() {
@@ -2377,8 +2349,13 @@ function initProfileSystem() {
     if (savedProfiles && JSON.parse(savedProfiles).length > 0) {
         VoluntarioProfiles = JSON.parse(savedProfiles);
     } else {
-        // START WITH EMPTY ARRAY - NO DEFAULT PROFILES
-        VoluntarioProfiles = [];
+        // Check backup
+        const backupProfiles = localStorage.getItem('profiles_backup');
+        if (backupProfiles && JSON.parse(backupProfiles).length > 0) {
+            VoluntarioProfiles = JSON.parse(backupProfiles);
+        } else {
+            VoluntarioProfiles = [];
+        }
     }
     
     // Recalculate hours from activities
@@ -2399,7 +2376,8 @@ function initProfileSystem() {
         currentUser = null;
     }
     
-    saveProfiles();
+    // Use unified save instead of saveProfiles()
+    unifiedSave();
     renderProfileSelector();
     actualizarListavoluntarios();
     updateActivevoluntariosChart();
@@ -2433,17 +2411,6 @@ function initProfileSystem() {
         }, 500);
     }
 }
-function saveProfiles() {
-    const monthKey = getCurrentMonthKey();
-    localStorage.setItem(`VoluntarioProfiles_${monthKey}`, JSON.stringify(VoluntarioProfiles));
-    if (currentUser) {
-        localStorage.setItem(`currentUser_${monthKey}`, currentUser.id);
-    } else {
-        localStorage.removeItem(`currentUser_${monthKey}`);
-    }
-}
-
-
 function renderProfileSelector() {
     const profileSelect = document.getElementById('currentUserSelect');
     if (!profileSelect) return;
@@ -2456,7 +2423,8 @@ function renderProfileSelector() {
             profile.totalHoras = calculatedHours;
             profile.actividadesCount = calculatedCount;
         });
-        if (typeof saveProfiles === 'function') saveProfiles();
+        // Use unified save instead of saveProfiles()
+        unifiedSave();
     }
     
     profileSelect.innerHTML = '<option value="">-- Seleccionar Usuario --</option>';
@@ -2495,7 +2463,8 @@ function renderProfileSelector() {
         if (e.target.value) {
             clearWizardStateOnUserChange();
             currentUser = VoluntarioProfiles.find(p => p.id === e.target.value);
-            saveProfiles();
+            // Use unified save instead of saveProfiles()
+            unifiedSave();
             renderProfileSelector();
             
             if (typeof updateActivevoluntariosChart === 'function') {
@@ -2539,7 +2508,6 @@ function renderProfileSelector() {
         }
     }
 }
-
 // Helper function to get rol ID by nombre
 function getRolIdByNombre(rolNombre) {
     if (typeof rolesDisponibles !== 'undefined') {
@@ -2685,7 +2653,7 @@ function showAddVoluntarioModal() {
         };
         
         VoluntarioProfiles.push(newProfile);
-        saveProfiles();
+        unifiedSave();
         renderProfileSelector();
         actualizarListavoluntarios();
         updateActivevoluntariosChart();
@@ -2696,7 +2664,7 @@ function showAddVoluntarioModal() {
         
         // Save current user to localStorage
         const monthKey = getCurrentMonthKey();
-        localStorage.setItem(`currentUser_${monthKey}`, currentUser.id);
+        
         
         alert(`✅ Perfil creado: ${name}\n🎭 Rol: ${rolNombre}\n🆔 ID: ${identidad}\n📊 Estado: ${finalStatus}`);
         
@@ -2772,10 +2740,6 @@ function showManagevoluntarios() {
     exportUserReport(currentUser);
 }
 
-// ==========================================
-// CORRECTED: actualizarListavoluntarios()
-// Calculates hours from activities array for accuracy
-// ==========================================
 
 function actualizarListavoluntarios() {
     const totalEl = document.getElementById('totalvoluntariosActivos');
@@ -2876,7 +2840,7 @@ function actualizarListavoluntarios() {
         VoluntarioProfiles[idx].totalHoras = updated.totalHoras;
         VoluntarioProfiles[idx].actividadesCount = updated.actividadesCount;
     });
-    if (typeof saveProfiles === 'function') saveProfiles();
+    if (typeof unifiedSave === 'function') unifiedSave();;
     
     // Also update profile selector dropdown
     if (typeof renderProfileSelector === 'function') renderProfileSelector();
@@ -2927,7 +2891,7 @@ function eliminarVoluntario(id) {
         if (currentUser && currentUser.id === id) {
             currentUser = VoluntarioProfiles[0] || null;
         }
-        saveProfiles();
+        unifiedSave();
         renderProfileSelector();
         actualizarListavoluntarios();
         updateActivevoluntariosChart();
@@ -2970,7 +2934,7 @@ function editVoluntarioProfile(id) {
     voluntario.isPlaceholder = (!newIdentidad || newIdentidad === '000000');
     voluntario.status = finalStatus;
     
-    saveProfiles();
+    unifiedSave();
     renderProfileSelector();
     actualizarListavoluntarios();
     updateActivevoluntariosChart();
@@ -3007,7 +2971,7 @@ function mergeVoluntarioProfiles(sourceId, targetId) {
         currentUser = target;
     }
     
-    saveProfiles();
+    unifiedSave();
     renderProfileSelector();
     actualizarListavoluntarios();
     updateActivevoluntariosChart();
@@ -4600,16 +4564,6 @@ function renderEnhancedTimerStep() {
 
 
 
-function deleteActivity(idx) {
-    activities.splice(idx, 1);
-    renderActivities();
-    saveAllToStorage();
-    
-    // Small delay to ensure charts update properly
-    setTimeout(() => {
-        updateCharts();
-    }, 100);
-}
 
 // Helper function to get the display name for activity
 function getActivityDisplayName() {
@@ -4934,14 +4888,14 @@ async function wizardGoNext() {
             console.log('📊 Total activities:', activities.length);
 
             const monthKey = getCurrentMonthKey();
-            localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
+            
             localStorage.setItem('activities_backup', JSON.stringify(activities));
 
-            if (typeof saveAllToStorage === 'function') {
+            if (typeof unifiedSave === 'function') {
                 try {
-                    saveAllToStorage();
+                    unifiedSave();
                 } catch (e) {
-                    console.warn('saveAllToStorage warning:', e);
+                    console.warn('unifiedSave warning:', e);
                 }
             }
 
@@ -5456,7 +5410,7 @@ async function processImportedData(scannedData) {
                 mergedFrom: []
             };
             VoluntarioProfiles.push(VoluntarioProfile);
-            saveProfiles();
+            unifiedSave();
             renderProfileSelector();
         } else {
             // Profile exists - upgrade placeholder info if needed
@@ -5464,7 +5418,7 @@ async function processImportedData(scannedData) {
                 importData.Voluntario.identidadSuffix && importData.Voluntario.identidadSuffix !== '000000') {
                 VoluntarioProfile.identidadSuffix = importData.Voluntario.identidadSuffix;
                 VoluntarioProfile.isPlaceholder = false;
-                saveProfiles();
+                unifiedSave();
                 renderProfileSelector();
             }
             
@@ -5477,7 +5431,7 @@ async function processImportedData(scannedData) {
                     const shouldUpdate = confirm(`⚠️ El nombre importado (${importData.Voluntario.nombre}) es diferente al perfil existente (${Voluntarioprofile.name}).\n\n¿Quieres actualizar el nombre del perfil a "${importData.Voluntario.nombre}"?`);
                     if (shouldUpdate) {
                         Voluntarioprofile.name = importData.Voluntario.nombre;
-                        saveProfiles();
+                        unifiedSave();
                         renderProfileSelector();
                         actualizarListavoluntarios();
                     }
@@ -5615,11 +5569,10 @@ async function processImportedData(scannedData) {
         VoluntarioProfile.actividadesCount = (VoluntarioProfile.actividadesCount || 0) + importedCount;
         
         // Save everything
-        saveProfiles();
+        unifiedSave();
         sortActivitiesByDate();
         renderActivities();
         actualizarListavoluntarios();
-        saveAllToStorage();
         updateCharts();
         renderProfileSelector();
         
@@ -6112,12 +6065,12 @@ function updateCharts() {
 // OTHER FUNCTIONS
 // ==========================================
 
-function saveData() { saveAllToStorage();  }
+
 function clearData() {
     if (confirm('Borrar todo?')) {
         activities = [];
         voluntariosActivos = [];
-        saveAllToStorage();
+        unifiedSave();
         actualizarListavoluntarios();
         renderActivities();
         updateCharts();
@@ -6279,69 +6232,22 @@ async function checkAndHandleMonthChange() {
 
 document.getElementById('scopeText').addEventListener('input', function() {
     updateCharCounts();
-    saveAllToStorage();
+    unifiedSave();
 });
 document.getElementById('difficultiesText').addEventListener('input', function() {
     updateCharCounts();
-    saveAllToStorage();
+    unifiedSave();
 });
 document.getElementById('recommendationsText').addEventListener('input', function() {
     updateCharCounts();
-    saveAllToStorage();
+    unifiedSave();
 });
 document.getElementById('impactText').addEventListener('input', function() {
     updateCharCounts();
-    saveAllToStorage();
+    unifiedSave();
 });
 
 
-document.addEventListener('DOMContentLoaded', async () => {
-    // First, check if we need to handle month change
-    await checkAndHandleMonthChange();
-    const monthKey = getCurrentMonthKey();
-    updatePendingPhotoStatus();
-    
-    // Load activities
-    const savedActivities = localStorage.getItem(`activities_${monthKey}`);
-    if (savedActivities && typeof activities !== 'undefined') {
-        activities = JSON.parse(savedActivities);
-        if (typeof sortActivitiesByDate === 'function') sortActivitiesByDate();
-        if (typeof renderActivities === 'function') renderActivities();
-        if (typeof updateCharts === 'function') updateCharts();
-        if (typeof updateGlobalKPIs === 'function') updateGlobalKPIs();
-    }
-    
-    // Load Voluntario profiles
-    if (typeof initProfileSystem === 'function') {
-        initProfileSystem();
-    }
-    
-    // Clear any stale wizard state on page load
-    localStorage.removeItem('wizardFullState');
-    localStorage.removeItem('wizardTimerState');
-    wizardCompleted = false;
-    wizardSubmitting = false;
-    
-    // UPDATE DATE DISPLAY - moved inside DOMContentLoaded
-    const dateDisplay = document.getElementById('currentDateDisplay');
-    if (dateDisplay) {
-        dateDisplay.textContent = formatDateForDisplay(new Date());
-    }
-    
-    // jsQR check
-    setTimeout(() => {
-        if (typeof jsQR !== 'undefined') {
-            console.log('🎉 jsQR is loaded and ready!');
-            window.jsQRLoaded = true;
-        } else {
-            console.error('💥 jsQR failed to load!');
-            const statusDiv = document.getElementById('qrStatus');
-            if (statusDiv) {
-                statusDiv.innerHTML = '⚠️ Biblioteca QR no cargada. Verifica tu conexión a internet.';
-            }
-        }
-    }, 3000);
-});
 // ==========================================
 // STATE MANAGEMENT - Aligned with your storage system
 // ==========================================
@@ -6353,157 +6259,11 @@ window.addEventListener('online', () => {
     }
 });
 
-const state = {
-    save: () => {
-        const monthKey = getCurrentMonthKey();
-        
-        // Save activities
-        if (typeof activities !== 'undefined') {
-            localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
-        }
-        
-        // Save Voluntario profiles (with recalculated hours - inline calculation)
-        if (typeof VoluntarioProfiles !== 'undefined') {
-            // Inline calculation function to avoid dependency issues
-            const calcHours = (profile) => {
-                if (typeof activities === 'undefined' || !activities || !activities.length) return profile.totalHoras || 0;
-                let total = 0;
-                activities.forEach(activity => {
-                    if (activity.createdBy === profile.id) {
-                        total += activity.horas || 0;
-                    } else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
-                        const matched = activity.voluntariosParticipants.some(p => 
-                            p.name && p.name.toLowerCase().trim() === profile.name.toLowerCase().trim()
-                        );
-                        if (matched) total += activity.horas || 0;
-                    } else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.voluntariosParticipants?.length) {
-                        total += activity.horas || 0;
-                    }
-                });
-                return total;
-            };
-            
-            const calcCount = (profile) => {
-                if (typeof activities === 'undefined' || !activities || !activities.length) return profile.actividadesCount || 0;
-                let count = 0;
-                activities.forEach(activity => {
-                    if (activity.createdBy === profile.id) {
-                        count++;
-                    } else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
-                        const matched = activity.voluntariosParticipants.some(p => 
-                            p.name && p.name.toLowerCase().trim() === profile.name.toLowerCase().trim()
-                        );
-                        if (matched) count++;
-                    } else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.voluntariosParticipants?.length) {
-                        count++;
-                    }
-                });
-                return count;
-            };
-            
-            VoluntarioProfiles.forEach(profile => {
-                profile.totalHoras = calcHours(profile);
-                profile.actividadesCount = calcCount(profile);
-            });
-            localStorage.setItem(`VoluntarioProfiles_${monthKey}`, JSON.stringify(VoluntarioProfiles));
-        }
-        
-        // Save description fields (scope, difficulties, recommendations, impact)
-        const desc = {
-            scope: document.getElementById('scopeText')?.value || '',
-            difficulties: document.getElementById('difficultiesText')?.value || '',
-            recommendations: document.getElementById('recommendationsText')?.value || '',
-            impact: document.getElementById('impactText')?.value || ''
-        };
-        localStorage.setItem(`desc_${monthKey}`, JSON.stringify(desc));
-        
-        // Save wizard state separately (temporary draft)
-        if (activeWizard) {
-            const wizardState = { step: wizardStep, data: wizardData, timestamp: Date.now() };
-            localStorage.setItem('wizardFullState', JSON.stringify(wizardState));
-        }
-        
-        console.log('✅ All data saved to localStorage');
-    },
-    
-    load: () => {
-        const monthKey = getCurrentMonthKey();
-        
-        // Load activities
-        const savedActivities = localStorage.getItem(`activities_${monthKey}`);
-        if (savedActivities && typeof activities !== 'undefined') {
-            activities = JSON.parse(savedActivities);
-            if (typeof sortActivitiesByDate === 'function') sortActivitiesByDate();
-            if (typeof renderActivities === 'function') renderActivities();
-            if (typeof updateCharts === 'function') updateCharts();
-            if (typeof updateGlobalKPIs === 'function') updateGlobalKPIs();
-        }
-        
-        // Load Voluntario profiles
-        const savedProfiles = localStorage.getItem(`VoluntarioProfiles_${monthKey}`);
-        if (savedProfiles && typeof VoluntarioProfiles !== 'undefined') {
-            VoluntarioProfiles = JSON.parse(savedProfiles);
-            if (typeof renderProfileSelector === 'function') renderProfileSelector();
-            if (typeof actualizarListavoluntarios === 'function') actualizarListavoluntarios();
-        } else if (typeof initProfileSystem === 'function') {
-            initProfileSystem();
-        }
-        
-        // Load description fields
-        const savedDesc = localStorage.getItem(`desc_${monthKey}`);
-        if (savedDesc) {
-            const desc = JSON.parse(savedDesc);
-            if (document.getElementById('scopeText')) document.getElementById('scopeText').value = desc.scope || '';
-            if (document.getElementById('difficultiesText')) document.getElementById('difficultiesText').value = desc.difficulties || '';
-            if (document.getElementById('recommendationsText')) document.getElementById('recommendationsText').value = desc.recommendations || '';
-            if (document.getElementById('impactText')) document.getElementById('impactText').value = desc.impact || '';
-        }
-        
-        console.log('✅ All data loaded from localStorage');
-    },
-    
-    // Clear current month data
-    clear: () => {
-        const monthKey = getCurrentMonthKey();
-        if (confirm('⚠️ ¿Estás segura? Esto borrará TODAS las actividades y perfiles de este mes.')) {
-            localStorage.removeItem(`activities_${monthKey}`);
-            localStorage.removeItem(`VoluntarioProfiles_${monthKey}`);
-            localStorage.removeItem(`desc_${monthKey}`);
-            
-            // Reset global arrays
-            if (typeof activities !== 'undefined') activities = [];
-            if (typeof VoluntarioProfiles !== 'undefined') {
-                VoluntarioProfiles = [{
-                    id: `Voluntario-${Date.now()}`,
-                    name: 'Usuario Principal',
-                    identidadSuffix: '',
-                    rolNombre: 'Subdirectora',
-                    totalHoras: 0,
-                    actividadesCount: 0,
-                    isPlaceholder: true,
-                    mergedFrom: []
-                }];
-            }
-            
-            // Refresh UI
-            if (typeof renderActivities === 'function') renderActivities();
-            if (typeof renderProfileSelector === 'function') renderProfileSelector();
-            if (typeof actualizarListavoluntarios === 'function') actualizarListavoluntarios();
-            if (typeof updateGlobalKPIs === 'function') updateGlobalKPIs();
-            if (typeof updateCharts === 'function') updateCharts();
-            
-            alert('🗑️ Datos del mes eliminados');
-        }
-    }
-};
-
-// Auto-save when typing (but don't double-load)
-document.addEventListener('input', state.save);
 
 // --- AUTO-SAVE PATCH ---
 document.querySelectorAll('textarea').forEach(textarea => {
     textarea.addEventListener('input', () => {
-        if (typeof saveAllToStorage === 'function') saveAllToStorage();
+        if (typeof unifiedSave === 'function') unifiedSave();
     });
 });
 
@@ -6594,7 +6354,264 @@ window.addEventListener('load', () => {
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
 });
+// ==========================================
+// UNIFIED STORAGE SYSTEM - FIXED VERSION
+// ==========================================
 
+// Single source of truth for storage
+function unifiedSave() {
+    const monthKey = getCurrentMonthKey();
+    
+    // Save activities (with validation)
+    if (typeof activities !== 'undefined' && activities !== null) {
+        localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
+    }
+    
+    // Save profiles with recalculated hours
+    if (typeof VoluntarioProfiles !== 'undefined' && VoluntarioProfiles !== null) {
+        // Recalculate hours before saving (ensure consistency)
+        VoluntarioProfiles.forEach(profile => {
+            if (typeof activities !== 'undefined' && activities) {
+                let total = 0;
+                let count = 0;
+                activities.forEach(activity => {
+                    if (activity.createdBy === profile.id) {
+                        total += activity.horas || 0;
+                        count++;
+                    } else if (activity.voluntariosParticipants && activity.voluntariosParticipants.length > 0) {
+                        const matched = activity.voluntariosParticipants.some(p => 
+                            p.identidadSuffix && normalizeName(p.identidadSuffix) === normalizeName(profile.identidadSuffix)
+                        );
+                        if (matched) {
+                            total += activity.horas || 0;
+                            count++;
+                        }
+                    } else if (profile.isPlaceholder && activity.voluntarias === 1 && !activity.voluntariosParticipants?.length) {
+                        total += activity.horas || 0;
+                        count++;
+                    }
+                });
+                profile.totalHoras = total;
+                profile.actividadesCount = count;
+            }
+        });
+        localStorage.setItem(`VoluntarioProfiles_${monthKey}`, JSON.stringify(VoluntarioProfiles));
+    }
+    
+    // Save description fields
+    const desc = {
+        scope: document.getElementById('scopeText')?.value || '',
+        difficulties: document.getElementById('difficultiesText')?.value || '',
+        recommendations: document.getElementById('recommendationsText')?.value || '',
+        impact: document.getElementById('impactText')?.value || ''
+    };
+    localStorage.setItem(`desc_${monthKey}`, JSON.stringify(desc));
+    
+    // Save current user
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        localStorage.setItem(`currentUser_${monthKey}`, currentUser.id);
+    }
+    
+    // Save backup for recovery
+    localStorage.setItem('activities_backup', JSON.stringify(activities || []));
+    localStorage.setItem('profiles_backup', JSON.stringify(VoluntarioProfiles || []));
+    
+    console.log('✅ [UNIFIED] Data saved at', new Date().toLocaleTimeString());
+}
+
+// Single source for loading
+function unifiedLoad() {
+    const monthKey = getCurrentMonthKey();
+    
+    // Load activities
+    const savedActivities = localStorage.getItem(`activities_${monthKey}`);
+    if (savedActivities) {
+        try {
+            activities = JSON.parse(savedActivities);
+            if (typeof sortActivitiesByDate === 'function') sortActivitiesByDate();
+            console.log(`✅ Loaded ${activities.length} activities`);
+        } catch(e) {
+            console.error('Failed to load activities:', e);
+            activities = [];
+        }
+    } else {
+        // Try backup
+        const backup = localStorage.getItem('activities_backup');
+        if (backup) {
+            try {
+                activities = JSON.parse(backup);
+                console.log(`⚠️ Loaded ${activities.length} activities from backup`);
+            } catch(e) {
+                activities = [];
+            }
+        } else {
+            activities = [];
+        }
+    }
+    
+    // Load profiles
+    const savedProfiles = localStorage.getItem(`VoluntarioProfiles_${monthKey}`);
+    if (savedProfiles) {
+        try {
+            VoluntarioProfiles = JSON.parse(savedProfiles);
+            console.log(`✅ Loaded ${VoluntarioProfiles.length} profiles`);
+        } catch(e) {
+            console.error('Failed to load profiles:', e);
+            VoluntarioProfiles = [];
+        }
+    } else {
+        const backupProfiles = localStorage.getItem('profiles_backup');
+        if (backupProfiles) {
+            try {
+                VoluntarioProfiles = JSON.parse(backupProfiles);
+                console.log(`⚠️ Loaded ${VoluntarioProfiles.length} profiles from backup`);
+            } catch(e) {
+                VoluntarioProfiles = [];
+            }
+        } else {
+            VoluntarioProfiles = [];
+        }
+    }
+    
+    // Load current user
+    const savedUserId = localStorage.getItem(`currentUser_${monthKey}`);
+    if (savedUserId && VoluntarioProfiles.length > 0) {
+        currentUser = VoluntarioProfiles.find(p => p.id === savedUserId) || null;
+    } else {
+        currentUser = VoluntarioProfiles[0] || null;
+    }
+    
+    // Load description fields
+    const savedDesc = localStorage.getItem(`desc_${monthKey}`);
+    if (savedDesc) {
+        try {
+            const desc = JSON.parse(savedDesc);
+            if (document.getElementById('scopeText')) document.getElementById('scopeText').value = desc.scope || '';
+            if (document.getElementById('difficultiesText')) document.getElementById('difficultiesText').value = desc.difficulties || '';
+            if (document.getElementById('recommendationsText')) document.getElementById('recommendationsText').value = desc.recommendations || '';
+            if (document.getElementById('impactText')) document.getElementById('impactText').value = desc.impact || '';
+        } catch(e) {}
+    }
+    
+    console.log('✅ [UNIFIED] Data loaded');
+}
+
+// Debounced save (prevents excessive writes)
+let saveTimeout = null;
+function debouncedSave() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        unifiedSave();
+        saveTimeout = null;
+    }, 500);
+}
+
+// Override all existing save functions to use unified system
+
+function saveProfiles() { debouncedSave(); }
+function saveData() { debouncedSave(); }
+function saveWizardState() {
+    // Only save wizard state separately
+    const wizardState = { step: wizardStep, data: wizardData, timestamp: Date.now() };
+    localStorage.setItem('wizardFullState', JSON.stringify(wizardState));
+    // Don't trigger main save
+}
+
+function deleteActivity(idx) {
+    if (typeof activities !== 'undefined' && activities[idx]) {
+        activities.splice(idx, 1);
+        renderActivities();
+        unifiedSave(); // Save immediately after deletion
+        
+        // Update profile hours
+        if (typeof actualizarListavoluntarios === 'function') {
+            actualizarListavoluntarios();
+        }
+        
+        setTimeout(() => {
+            if (typeof updateCharts === 'function') updateCharts();
+        }, 100);
+    }
+}
+
+// ==========================================
+// FIXED DOMContentLoaded
+// ==========================================
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // First, load all data
+    unifiedLoad();
+    
+    // Check month change after loading
+    await checkAndHandleMonthChange();
+    
+    const monthKey = getCurrentMonthKey();
+    updatePendingPhotoStatus();
+    
+    // Ensure activities is defined
+    if (typeof activities === 'undefined') {
+        activities = [];
+    }
+    
+    // Sort activities
+    if (typeof sortActivitiesByDate === 'function') sortActivitiesByDate();
+    
+    // Render everything
+    if (typeof renderActivities === 'function') renderActivities();
+    if (typeof initProfileSystem === 'function') initProfileSystem();
+    if (typeof updateCharts === 'function') updateCharts();
+    if (typeof updateGlobalKPIs === 'function') updateGlobalKPIs();
+    
+    // Clear wizard state on page load
+    localStorage.removeItem('wizardFullState');
+    localStorage.removeItem('wizardTimerState');
+    if (typeof wizardCompleted !== 'undefined') wizardCompleted = false;
+    if (typeof wizardSubmitting !== 'undefined') wizardSubmitting = false;
+    
+    // Update date display
+    const dateDisplay = document.getElementById('currentDateDisplay');
+    if (dateDisplay) {
+        dateDisplay.textContent = formatDateForDisplay(new Date());
+    }
+    
+    // Setup auto-save for description fields
+    const descFields = ['scopeText', 'difficultiesText', 'recommendationsText', 'impactText'];
+    descFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', () => {
+                if (typeof updateCharCounts === 'function') updateCharCounts();
+                debouncedSave();
+            });
+        }
+    });
+    
+    // jsQR check
+    setTimeout(() => {
+        if (typeof jsQR !== 'undefined') {
+            console.log('🎉 jsQR loaded');
+            window.jsQRLoaded = true;
+        } else {
+            console.error('💥 jsQR failed to load');
+            const statusDiv = document.getElementById('qrStatus');
+            if (statusDiv) {
+                statusDiv.innerHTML = '⚠️ Biblioteca QR no cargada. Verifica tu conexión.';
+            }
+        }
+    }, 3000);
+    
+    console.log('✅ App initialized with unified storage');
+});
+
+// Save before page unload
+window.addEventListener('beforeunload', () => {
+    unifiedSave();
+});
+
+// Save periodically (every 30 seconds)
+setInterval(() => {
+    unifiedSave();
+}, 30000);
 function exportToExcel(event) {
     if (event) event.preventDefault();
     
