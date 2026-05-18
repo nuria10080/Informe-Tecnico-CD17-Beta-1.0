@@ -1613,7 +1613,7 @@ const identidadSuffix = identidad
 
 // Add this at the top of your script right after your other global variables
 // Make sure this matches the CACHE_NAME in your sw.js
-const APP_VERSION = '2.0.2';
+const APP_VERSION = '2.0.5';
 
 // Then update your checkAndHandleMonthChange function:
 async function checkAndHandleMonthChange() {
@@ -6668,38 +6668,64 @@ function unifiedSave() {
 }
 
 // Single source for loading
+
 // Single source for loading
 function unifiedLoad() {
     const monthKey = getCurrentMonthKey();
     
-    // Load activities - NEVER set to empty if there's backup
+    // ==========================================
+    // LOAD ACTIVITIES - FIXED VERSION
+    // ==========================================
     const savedActivities = localStorage.getItem(`activities_${monthKey}`);
     if (savedActivities) {
         try {
-            activities = JSON.parse(savedActivities);
-            if (typeof sortActivitiesByDate === 'function') sortActivitiesByDate();
-            console.log(`✅ Loaded ${activities.length} activities for ${monthKey}`);
+            const parsed = JSON.parse(savedActivities);
+            if (Array.isArray(parsed)) {
+                activities = parsed;
+                if (typeof sortActivitiesByDate === 'function') sortActivitiesByDate();
+                console.log(`✅ Loaded ${activities.length} activities for ${monthKey}`);
+            } else {
+                console.warn('Parsed activities is not an array:', parsed);
+                activities = [];
+            }
         } catch(e) {
-            console.error('Failed to load activities:', e);
-            // Only fallback to backup if current month data is corrupted
+            console.error('JSON parse error:', e);
+            // Fallback to backup
             const backup = localStorage.getItem('activities_backup');
             if (backup) {
-                activities = JSON.parse(backup);
-                console.log(`⚠️ Loaded ${activities.length} activities from backup`);
+                try {
+                    const backupParsed = JSON.parse(backup);
+                    if (Array.isArray(backupParsed)) {
+                        activities = backupParsed;
+                        console.log(`⚠️ Loaded ${activities.length} activities from backup`);
+                    } else {
+                        activities = [];
+                    }
+                } catch(backupError) {
+                    console.error('Backup parse error:', backupError);
+                    activities = [];
+                }
             } else {
                 activities = [];
             }
         }
     } else {
-        // No saved data for this month - try backup but don't clear
+        console.log('No saved activities for this month, checking backup...');
+        // No saved data for this month - try backup
         const backup = localStorage.getItem('activities_backup');
         if (backup) {
             try {
-                activities = JSON.parse(backup);
-                console.log(`⚠️ Loaded ${activities.length} activities from backup for ${monthKey}`);
-                // Save it to current month key for next time
-                localStorage.setItem(`activities_${monthKey}`, backup);
+                const backupParsed = JSON.parse(backup);
+                if (Array.isArray(backupParsed)) {
+                    activities = backupParsed;
+                    console.log(`⚠️ Loaded ${activities.length} activities from backup for ${monthKey}`);
+                    // Save it to current month key for next time
+                    localStorage.setItem(`activities_${monthKey}`, backup);
+                } else {
+                    activities = [];
+                }
             } catch(e) {
+                console.error('Backup parse error:', e);
                 activities = [];
             }
         } else {
@@ -6707,7 +6733,9 @@ function unifiedLoad() {
         }
     }
     
-    // Load profiles
+    // ==========================================
+    // LOAD PROFILES
+    // ==========================================
     const savedProfiles = localStorage.getItem(`VoluntarioProfiles_${monthKey}`);
     if (savedProfiles) {
         try {
@@ -6738,7 +6766,9 @@ function unifiedLoad() {
         }
     }
     
-    // Load current user
+    // ==========================================
+    // LOAD CURRENT USER
+    // ==========================================
     const savedUserId = localStorage.getItem(`currentUser_${monthKey}`);
     if (savedUserId && VoluntarioProfiles.length > 0) {
         currentUser = VoluntarioProfiles.find(p => p.id === savedUserId) || null;
@@ -6748,7 +6778,9 @@ function unifiedLoad() {
         console.log(`⚠️ No saved currentUser, defaulting to: ${currentUser?.name || 'none'}`);
     }
     
-    // Load description fields
+    // ==========================================
+    // LOAD DESCRIPTION FIELDS
+    // ==========================================
     const savedDesc = localStorage.getItem(`desc_${monthKey}`);
     if (savedDesc) {
         try {
@@ -6763,8 +6795,9 @@ function unifiedLoad() {
         }
     }
     
-    console.log('✅ [UNIFIED] Data loaded complete');
+    console.log('✅ [UNIFIED] Data loaded complete - activities:', activities.length, 'profiles:', VoluntarioProfiles.length);
 }
+
 
 // Debounced save (prevents excessive writes)
 let saveTimeout = null;
