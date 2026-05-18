@@ -1611,24 +1611,150 @@ const identidadSuffix = identidad
   ? `Voluntario-${Date.now()}-${identidad}`
   : null;
 
+// Add this at the top of your script right after your other global variables
+// Make sure this matches the CACHE_NAME in your sw.js
+const APP_VERSION = '2.0.0';
 
+// Then update your checkAndHandleMonthChange function:
+async function checkAndHandleMonthChange() {
+    const currentMonthKey = getCurrentMonthKey();
+    const lastCleanedMonth = localStorage.getItem('lastCleanedMonth');
+    const lastAppVersion = localStorage.getItem('appVersion');
+    
+    // NEW: Check if app version changed - if so, preserve data and skip month check
+    if (lastAppVersion !== APP_VERSION) {
+        console.log(`🔄 App updated from ${lastAppVersion} to ${APP_VERSION} - preserving data`);
+        localStorage.setItem('appVersion', APP_VERSION);
+        // Do NOT clear any data, just update the version flag
+        return false;
+    }
+    
+    // If month has NOT changed, do nothing
+    if (lastCleanedMonth === currentMonthKey) {
+        console.log('📅 Month unchanged, preserving data');
+        return false;
+    }
+    
+    // First time user - just set the flag
+    if (lastCleanedMonth === null) {
+        localStorage.setItem('lastCleanedMonth', currentMonthKey);
+        localStorage.setItem('appVersion', APP_VERSION);
+        console.log(`📅 First time user. Set lastCleanedMonth to ${currentMonthKey}`);
+        return false;
+    }
+    
+    // If we get here, month has actually changed
+    console.log(`📅 Month changed from ${lastCleanedMonth} to ${currentMonthKey}`);
+    
+    // Check if there's data from last month to export
+    const lastMonthActivities = localStorage.getItem(`activities_${lastCleanedMonth}`);
+    const hasLastMonthData = lastMonthActivities && JSON.parse(lastMonthActivities).length > 0;
+    
+    if (hasLastMonthData) {
+        // Save current activities before switching
+        const originalActivities = [...activities];
+        const originalProfiles = [...VoluntarioProfiles];
+        const originalCurrentUser = currentUser;
+        
+        // Temporarily load last month's data for export
+        activities = JSON.parse(lastMonthActivities);
+        
+        const lastMonthProfiles = localStorage.getItem(`VoluntarioProfiles_${lastCleanedMonth}`);
+        if (lastMonthProfiles) {
+            VoluntarioProfiles = JSON.parse(lastMonthProfiles);
+        }
+        
+        const isSubdirector = currentUser && currentUser.identidadSuffix === '800744';
+        const message = isSubdirector
+            ? `📊 ¡Nuevo mes detectado! (${currentMonthKey})\n\nSe generará el INFORME MENSUAL COMPLETO antes de borrar los datos del mes anterior.\n\n¿Deseas continuar?`
+            : `📊 ¡Nuevo mes detectado! (${currentMonthKey})\n\nSe generará tu REPORTE INDIVIDUAL antes de borrar los datos del mes anterior.\n\n¿Deseas continuar?`;
+        
+        const shouldExport = confirm(message);
+        
+        if (shouldExport) {
+            showWizardLoading('Generando reporte...', 'Por favor espera');
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            if (isSubdirector) {
+                if (typeof exportToExcel === 'function') {
+                    const fakeEvent = new Event('manual');
+                    exportToExcel(fakeEvent);
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                }
+                if (typeof exportUserReport === 'function' && currentUser) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    exportUserReport(currentUser);
+                }
+            } else {
+                if (typeof exportUserReport === 'function' && currentUser) {
+                    exportUserReport(currentUser);
+                }
+            }
+            
+            localStorage.setItem('lastExportMonth', lastCleanedMonth);
+            hideWizardLoading();
+            alert(`✅ Reporte del mes ${lastCleanedMonth} descargado.`);
+        } else {
+            alert(`⚠️ Los datos del mes ${lastCleanedMonth} no fueron exportados.`);
+        }
+        
+        // Restore current month's data
+        activities = originalActivities;
+        VoluntarioProfiles = originalProfiles;
+        currentUser = originalCurrentUser;
+    }
+    
+    // IMPORTANT: Only delete data OLDER than last month, not the current month
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const oneMonthAgoKey = `${oneMonthAgo.getFullYear()}-${String(oneMonthAgo.getMonth() + 1).padStart(2, '0')}`;
+    
+    const keysToDelete = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('activities_') || 
+                    key.startsWith('VoluntarioProfiles_') || 
+                    key.startsWith('desc_') ||
+                    key.startsWith('currentUser_'))) {
+            const keyMonth = key.replace('activities_', '').replace('VoluntarioProfiles_', '').replace('desc_', '').replace('currentUser_', '');
+            // Delete only if it's NOT the current month AND older than last month
+            if (keyMonth !== currentMonthKey && keyMonth < oneMonthAgoKey) {
+                keysToDelete.push(key);
+            }
+        }
+    }
+    
+    keysToDelete.forEach(key => {
+        localStorage.removeItem(key);
+        console.log(`🗑️ Deleted old data: ${key}`);
+    });
+    
+    // Update the cleaned month flag
+    localStorage.setItem('lastCleanedMonth', currentMonthKey);
+    
+    // Reload current month's data from localStorage (should still exist)
+    unifiedLoad();
+    
+    // Refresh UI
+    if (typeof renderActivities === 'function') renderActivities();
+    if (typeof renderProfileSelector === 'function') renderProfileSelector();
+    if (typeof updateCharts === 'function') updateCharts();
+    if (typeof updateGlobalKPIs === 'function') updateGlobalKPIs();
+    
+    alert(`📱 Bienvenido a ${currentMonthKey}\n\nLos datos del mes anterior han sido archivados.`);
+    
+    return true;
+}
 const rolesDisponibles = [
     { id:'directora', nombre:'Director/a' },
-    { id:'consejo', nombre:'Miembro del Consejo' },
+    { id:'consejo', nombre:'Miembro del Consjeo' },
     { id:'subdirectora', nombre:'Subdirector/a: Profesionalización y Enseñanza' },
-    { id:'captacion_recuperacion', nombre:'Coordinador/a de Voluntariado' },
+    { id:'captacion_recuperacion', nombre:'Coordinador de Voluntariado' },
     { id:'movilizacion_logistica', nombre:'Técnico Auxiliar' },
     { id:'docente', nombre:'Instructor/a' },
-    { id:'coord_gestion_voluntarios', nombre:'Coordinador/a de Gestión y Recuperación de Voluntarios' },
-    { id:'coord_eventos', nombre:'Coordinador/a de Ferias Cívicas' },
-    { id:'coord_comunicacion', nombre:'Gestora de Articulación Interinstitucional' },
-    { id:'coord_fondos', nombre:'Coordinador/a de Recaudación de Fondos' },
-    { id:'coord_encuestas_local', nombre:'Coordinador/a de Encuestas Locales' },
-    { id:'coord_encuestas_capacitacion', nombre:'Coordinador/a de Encuestas de Capacitación' },
-    { id:'coord_observacion', nombre:'Técnico Auxiliar de Observación' },
-    { id:'tecnico_seguridad', nombre:'Técnico de Seguridad Preventiva' }
+    { id:'coord_gestion_voluntarios', nombre:'Coordinador de Voluntariado' },{ id:'coord_eventos', nombre:'Coordinadora Ferias Civicas' },
+    { id:'coord_comunicacion', nombre:'Gestora de Articulación Interinstitucional' }
 ];
-
 
 
 let searchTimeout = null;
@@ -6350,148 +6476,6 @@ function updateCharCounts() {
 }
 
 
-// Check if month has changed and offer to download appropriate report before clearing
-async function checkAndHandleMonthChange() {
-    const currentMonthKey = getCurrentMonthKey();
-    const lastCleanedMonth = localStorage.getItem('lastCleanedMonth');
-    
-    // Get last successful export month
-    const lastExportMonth = localStorage.getItem('lastExportMonth');
-    
-    // If month has changed since last cleanup
-    if (lastCleanedMonth !== currentMonthKey && lastCleanedMonth !== null) {
-        console.log(`📅 Month changed from ${lastCleanedMonth} to ${currentMonthKey}`);
-        
-        // ONLY prompt if we haven't exported this month yet
-        if (lastExportMonth !== lastCleanedMonth) {
-            // Check if there's data from last month to export
-            const lastMonthActivities = localStorage.getItem(`activities_${lastCleanedMonth}`);
-            
-            if (lastMonthActivities && JSON.parse(lastMonthActivities).length > 0) {
-                // Temporarily load last month's data
-                const originalActivities = [...activities];
-                const originalProfiles = [...VoluntarioProfiles];
-                const originalCurrentUser = currentUser;
-                
-                activities = JSON.parse(lastMonthActivities);
-                
-                // Load last month's profiles
-                const lastMonthProfiles = localStorage.getItem(`VoluntarioProfiles_${lastCleanedMonth}`);
-                if (lastMonthProfiles) {
-                    VoluntarioProfiles = JSON.parse(lastMonthProfiles);
-                }
-                
-                // Check if current user is Subdirector (800744)
-                const isSubdirector = currentUser && currentUser.identidadSuffix === '800744';
-                
-                let message = '';
-                if (isSubdirector) {
-                    message = `📊 ¡Nuevo mes detectado! (${currentMonthKey})\n\nSe eliminarán los datos del mes anterior (${lastCleanedMonth}).\n\nComo Subdirectora, se generará el INFORME MENSUAL COMPLETO antes de borrar los datos.\n\n¿Deseas continuar?`;
-                } else {
-                    message = `📊 ¡Nuevo mes detectado! (${currentMonthKey})\n\nSe eliminarán los datos del mes anterior (${lastCleanedMonth}).\n\nSe generará tu REPORTE INDIVIDUAL antes de borrar los datos.\n\n¿Deseas continuar?`;
-                }
-                
-                const shouldExport = confirm(message);
-                
-                if (shouldExport) {
-                    // Show loading message
-                    showWizardLoading('Generando reporte...', 'Por favor espera');
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    
-                    if (isSubdirector) {
-                        // Export FULL MONTHLY REPORT
-                        if (typeof exportToExcel === 'function') {
-                            const fakeEvent = new Event('manual');
-                            exportToExcel(fakeEvent);
-                            await new Promise(resolve => setTimeout(resolve, 1500));
-                        }
-                        
-                        // Also export individual report for the subdirector
-                        if (typeof exportUserReport === 'function' && currentUser) {
-                            await new Promise(resolve => setTimeout(resolve, 500));
-                            exportUserReport(currentUser);
-                            await new Promise(resolve => setTimeout(resolve, 1500));
-                        }
-                    } else {
-                        // Export ONLY individual user report
-                        if (typeof exportUserReport === 'function' && currentUser) {
-                            exportUserReport(currentUser);
-                            await new Promise(resolve => setTimeout(resolve, 1500));
-                        }
-                    }
-                    
-                    // Mark this month as exported
-                    localStorage.setItem('lastExportMonth', lastCleanedMonth);
-                    
-                    hideWizardLoading();
-                    alert(`✅ Reporte del mes ${lastCleanedMonth} descargado. Los datos locales serán borrados.`);
-                } else {
-                    alert(`⚠️ Los datos del mes ${lastCleanedMonth} serán eliminados sin guardar.`);
-                }
-                
-                // Restore current month's data after export
-                activities = originalActivities;
-                VoluntarioProfiles = originalProfiles;
-                currentUser = originalCurrentUser;
-            }
-        }
-        
-        // Delete OLD month-specific data (more than 2 months old)
-        const twoMonthsAgo = new Date();
-        twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-        const twoMonthsAgoKey = `${twoMonthsAgo.getFullYear()}-${String(twoMonthsAgo.getMonth() + 1).padStart(2, '0')}`;
-        
-        const keysToDelete = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && (key.startsWith('activities_') || 
-                        key.startsWith('VoluntarioProfiles_') || 
-                        key.startsWith('desc_') ||
-                        key.startsWith('currentUser_'))) {
-                
-                // Extract month from key
-                const keyMonth = key.replace('activities_', '').replace('VoluntarioProfiles_', '').replace('desc_', '').replace('currentUser_', '');
-                
-                // Only delete if it's NOT current month AND older than 2 months
-                if (keyMonth !== currentMonthKey && keyMonth < twoMonthsAgoKey) {
-                    keysToDelete.push(key);
-                }
-            }
-        }
-        
-        keysToDelete.forEach(key => {
-            localStorage.removeItem(key);
-            console.log(`🗑️ Deleted old data: ${key}`);
-        });
-        
-        // Mark that we've cleaned this month
-        localStorage.setItem('lastCleanedMonth', currentMonthKey);
-        
-        // DO NOT clear in-memory data - just reload current month's data
-        unifiedLoad();
-        
-        // Refresh the UI
-        if (typeof renderActivities === 'function') renderActivities();
-        if (typeof renderProfileSelector === 'function') renderProfileSelector();
-        if (typeof updateCharts === 'function') updateCharts();
-        if (typeof updateGlobalKPIs === 'function') updateGlobalKPIs();
-        
-        if (lastCleanedMonth !== currentMonthKey) {
-            alert(`📱 Bienvenido a ${currentMonthKey}\n\nLos datos de meses anteriores han sido archivados. Continúa registrando actividades para el nuevo mes.`);
-        }
-        
-        return true;
-    }
-    
-    // First time user (no lastCleanedMonth) - set it
-    if (lastCleanedMonth === null) {
-        localStorage.setItem('lastCleanedMonth', currentMonthKey);
-        console.log(`📅 First time user. Set lastCleanedMonth to ${currentMonthKey}`);
-    }
-    
-    return false;
-}
-
 
 
 document.getElementById('scopeText').addEventListener('input', function() {
@@ -6684,27 +6668,37 @@ function unifiedSave() {
 }
 
 // Single source for loading
+// Single source for loading
 function unifiedLoad() {
     const monthKey = getCurrentMonthKey();
     
-    // Load activities
+    // Load activities - NEVER set to empty if there's backup
     const savedActivities = localStorage.getItem(`activities_${monthKey}`);
     if (savedActivities) {
         try {
             activities = JSON.parse(savedActivities);
             if (typeof sortActivitiesByDate === 'function') sortActivitiesByDate();
-            console.log(`✅ Loaded ${activities.length} activities`);
+            console.log(`✅ Loaded ${activities.length} activities for ${monthKey}`);
         } catch(e) {
             console.error('Failed to load activities:', e);
-            activities = [];
+            // Only fallback to backup if current month data is corrupted
+            const backup = localStorage.getItem('activities_backup');
+            if (backup) {
+                activities = JSON.parse(backup);
+                console.log(`⚠️ Loaded ${activities.length} activities from backup`);
+            } else {
+                activities = [];
+            }
         }
     } else {
-        // Try backup
+        // No saved data for this month - try backup but don't clear
         const backup = localStorage.getItem('activities_backup');
         if (backup) {
             try {
                 activities = JSON.parse(backup);
-                console.log(`⚠️ Loaded ${activities.length} activities from backup`);
+                console.log(`⚠️ Loaded ${activities.length} activities from backup for ${monthKey}`);
+                // Save it to current month key for next time
+                localStorage.setItem(`activities_${monthKey}`, backup);
             } catch(e) {
                 activities = [];
             }
@@ -6718,17 +6712,24 @@ function unifiedLoad() {
     if (savedProfiles) {
         try {
             VoluntarioProfiles = JSON.parse(savedProfiles);
-            console.log(`✅ Loaded ${VoluntarioProfiles.length} profiles`);
+            console.log(`✅ Loaded ${VoluntarioProfiles.length} profiles for ${monthKey}`);
         } catch(e) {
             console.error('Failed to load profiles:', e);
-            VoluntarioProfiles = [];
+            const backupProfiles = localStorage.getItem('profiles_backup');
+            if (backupProfiles) {
+                VoluntarioProfiles = JSON.parse(backupProfiles);
+                console.log(`⚠️ Loaded ${VoluntarioProfiles.length} profiles from backup`);
+            } else {
+                VoluntarioProfiles = [];
+            }
         }
     } else {
         const backupProfiles = localStorage.getItem('profiles_backup');
         if (backupProfiles) {
             try {
                 VoluntarioProfiles = JSON.parse(backupProfiles);
-                console.log(`⚠️ Loaded ${VoluntarioProfiles.length} profiles from backup`);
+                console.log(`⚠️ Loaded ${VoluntarioProfiles.length} profiles from backup for ${monthKey}`);
+                localStorage.setItem(`VoluntarioProfiles_${monthKey}`, backupProfiles);
             } catch(e) {
                 VoluntarioProfiles = [];
             }
@@ -6741,8 +6742,10 @@ function unifiedLoad() {
     const savedUserId = localStorage.getItem(`currentUser_${monthKey}`);
     if (savedUserId && VoluntarioProfiles.length > 0) {
         currentUser = VoluntarioProfiles.find(p => p.id === savedUserId) || null;
+        console.log(`✅ Loaded currentUser: ${currentUser?.name || 'none'}`);
     } else {
         currentUser = VoluntarioProfiles[0] || null;
+        console.log(`⚠️ No saved currentUser, defaulting to: ${currentUser?.name || 'none'}`);
     }
     
     // Load description fields
@@ -6754,10 +6757,13 @@ function unifiedLoad() {
             if (document.getElementById('difficultiesText')) document.getElementById('difficultiesText').value = desc.difficulties || '';
             if (document.getElementById('recommendationsText')) document.getElementById('recommendationsText').value = desc.recommendations || '';
             if (document.getElementById('impactText')) document.getElementById('impactText').value = desc.impact || '';
-        } catch(e) {}
+            console.log('✅ Loaded description fields');
+        } catch(e) {
+            console.error('Failed to load descriptions:', e);
+        }
     }
     
-    console.log('✅ [UNIFIED] Data loaded');
+    console.log('✅ [UNIFIED] Data loaded complete');
 }
 
 // Debounced save (prevents excessive writes)
