@@ -1613,7 +1613,7 @@ const identidadSuffix = identidad
 
 // Add this at the top of your script right after your other global variables
 // Make sure this matches the CACHE_NAME in your sw.js
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.0.1';
 
 // Then update your checkAndHandleMonthChange function:
 async function checkAndHandleMonthChange() {
@@ -6813,7 +6813,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     unifiedLoad();
     
     // Check month change after loading
-    await checkAndHandleMonthChange();
+    //await checkAndHandleMonthChange();
     
     const monthKey = getCurrentMonthKey();
     updatePendingPhotoStatus();
