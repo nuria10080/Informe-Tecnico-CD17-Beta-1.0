@@ -1453,7 +1453,7 @@ body {
                 <div id="rolesActivosList"></div>
             </div>
         </div>
-    <div class="kpi-item"><div class="kpi-label">👥 Beneficiados</div><div class="kpi-value" id="totalBeneficiados">0</div><div class="gender-breakdown"><span class="gender-f" id="totalMujeresBen">0</span> · <span class="gender-m" id="totalHombresBen">0</span></div></div>
+    <div class="kpi-item"><div class="kpi-label">Beneficiados</div><div class="kpi-value" id="totalBeneficiados">0</div><div class="gender-breakdown"><span class="gender-f" id="totalMujeresBen">0</span> · <span class="gender-m" id="totalHombresBen">0</span></div></div>
     <div class="kpi-item"><div class="kpi-label">⏱️ Total Horas</div><div class="kpi-value" id="totalHoras">0</div>
     <div style="display: flex; gap: 15px; margin-top: 5px; font-size: 0.9rem; align-items: center; justify-content: center;">
         <div>
@@ -1544,7 +1544,7 @@ body {
 
 <!-- footer -->
 
-<div class="footer-info"><span>Comité Tecno-Cívico · IV-08  </span>Honduras<span id="footerDate"></span></div>
+<div class="footer-info"><span>Comité Tecno-Cívico · IV-08  </span>HONDURAS<span id="footerDate"></span></div>
 <div class="action-buttons">
     <button class="action-button" onclick="showImportQRModal()" style="background:var(--info);">📷 Importar QR</button>
     <button class="action-button" onclick="exportToExcel(event)" style="background:var(--success);">📊 Exportar Excel</button>
@@ -1613,7 +1613,7 @@ const identidadSuffix = identidad
 
 // Add this at the top of your script right after your other global variables
 // Make sure this matches the CACHE_NAME in your sw.js
-const APP_VERSION = '2.0.5';
+const APP_VERSION = '2.0.6';
 
 // Then update your checkAndHandleMonthChange function:
 async function checkAndHandleMonthChange() {
@@ -1747,8 +1747,8 @@ async function checkAndHandleMonthChange() {
 }
 const rolesDisponibles = [
     { id:'directora', nombre:'Director/a' },
-    { id:'consejo', nombre:'Miembro del Consjeo' },
-    { id:'subdirectora', nombre:'Subdirector/a: Profesionalización y Enseñanza' },
+    { id:'consejo', nombre:'Miembro del Consejeo' },
+    { id:'subdirectora', nombre:'Subdirector/a' },
     { id:'captacion_recuperacion', nombre:'Coordinador de Voluntariado' },
     { id:'movilizacion_logistica', nombre:'Técnico Auxiliar' },
     { id:'docente', nombre:'Instructor/a' },
@@ -2835,7 +2835,7 @@ function showAddVoluntarioModal() {
                 <select id="modalStatusSelect" class="wizard-input" style="width: 100%;">
                     <option value="A">Activo</option>
                     <option value="ACO">Activo con Observaciones</option>
-                    <option value="JD">JD - consejo Directiva</option>
+                    <option value="JD">Consejo General</option>
                 </select>
             </div>
             
@@ -3186,7 +3186,7 @@ function editVoluntarioProfile(id) {
     
     // Add status selection
     const currentStatus = voluntario.status || 'V';
-    const statusOptions = ['V - Voluntariado', 'A - Activo', 'ACO - Activo con Observaciones', 'I - Inactivo', 'JD - consejo Directiva'];
+    const statusOptions = ['V - Voluntariado', 'A - Activo', 'ACO - Activo con Observaciones', 'I - Inactivo', 'CG - Consejo General'];
     const statusPrompt = `Selecciona el estado (código para el reporte):\n\n${statusOptions.join('\n')}\n\nEstado actual: ${currentStatus}\n\nIngresa la letra (V, A, ACO, I, JD):`;
     const newStatus = prompt(statusPrompt, currentStatus);
     
@@ -3197,7 +3197,7 @@ function editVoluntarioProfile(id) {
         else if (upperStatus === 'A' || upperStatus === 'ACTIVO') finalStatus = 'A';
         else if (upperStatus === 'ACO' || upperStatus === 'ACTIVO CON OBSERVACIONES') finalStatus = 'ACO';
         else if (upperStatus === 'I' || upperStatus === 'INACTIVO') finalStatus = 'I';
-        else if (upperStatus === 'JD' || upperStatus === 'consejo DIRECTIVA') finalStatus = 'JD';
+        else if (upperStatus === 'CG' || upperStatus === 'Consejo General') finalStatus = 'CD';
         else finalStatus = currentStatus;
     }
     
@@ -3342,7 +3342,7 @@ function getStatusColor(status) {
         case 'A': return '#4CAF50'; // Verde - Activo
         case 'ACO': return '#FF9800'; // Naranja - Activo con Observaciones
         case 'I': return '#F44336'; // Rojo - Inactivo
-        case 'JD': return '#9C27B0'; // Morado - consejo Directiva
+        case 'CD': return '#9C27B0'; // Morado - Consejo General
         default: return '#2196F3'; // Azul - Voluntariado
     }
 }
@@ -3594,10 +3594,10 @@ function renderWizardStep() {
                     <div class="question-label"> ¿Qué tipo de actividad realizaste?</div>
                     <div class="modern-radio-group" id="radioTypeGroup">
                         <div class="modern-radio ${wizardData.actionType === 'filial' ? 'selected' : ''}" data-value="filial" onclick="selectWizardRadio('actionType', 'filial')">
-                            <span>🏢</span> Filial (Oficina/Base)
+                            <span>🏢</span> Virtual
                         </div>
                         <div class="modern-radio ${wizardData.actionType === 'campo' ? 'selected' : ''}" data-value="campo" onclick="selectWizardRadio('actionType', 'campo')">
-                            <span>🌐</span> Campo (Territorio/Comunidad)
+                            <span>🌐</span> Campo
                         </div>
                     </div>
                     <div class="question-label"> Selecciona la actividad principal</div>
@@ -3807,6 +3807,8 @@ function generateActivityOptions(selectedVal) {
         "Abastecimiento o Gestión de Insumos",
         "Gestión y Coordinación",
         "Informes & Reportes",
+        "Actas & Documentación",
+        "Solicitudes & Trámites",
         "Jornada de Integración",
         "Localización y Logística",
         "Mantenimiento y Adecuación",
@@ -3843,40 +3845,49 @@ function renderConditionalDetail() {
         "Abastecimiento o Gestión de Insumos": [
             "Profesionalización",
             "Documentación",
-            "Eventos",
+            "Eventos y Actividades",
             "Rendición de Cuentas",
-            "Alineamiento",
-            "Regulatorio",
+            "Gestión Regulatorio",
             "Sostenibilidad de Operaciones"
         ],
         "Observación & Estudios": [
-            "Accesibilidad",
-            "Informativos",
-            "Comunitarios",
-            "Regulatorios",
+            "Estudios de Accesibilidad",
+            "Estudios Informativos",
+            "Estudios Comunitarios",
+            "Estudios Regulatorios",
             "Sostenibilidad de Operaciones",
             "Visibilidad & Comunicación",
             
         ],
         "Gestión y Coordinación": [
-            "Alcaldía",
-            "Autoridad Competente",
-            "Departamento de Salud",
-            "Departamento de Educación",
-            "Empresa Privada",
+            "Coordinación-Alcaldía",
+            "Coordinación-Autoridad Competente",
+            "Coordinación-Departamento de Salud",
+            "Coordinación-Departamento de Educación",
+            "Gestión-Empresa Privada",
             "Institución Académica",
-            "Insumos",
             "Organización No Gubernamental",
+            "Publicidad y Difusión",
+            "Convocatorias & Eventos",
+            "Seguimiento & Asesoría",
             "Sostenibilidad de Operaciones"
         ],
         "Visita y Seguimiento": [
-            "Agendada",
-            "No Agendada"
+            "Seguimiento Agendada",
+            "Visita No Agendada",
+            "Publicidad y Comunicación",
+            "Reunion Extraordinaria",
+            "Reunion Ordinaria",
+            "Asamblea General Ordinaria",
+            "Asamblea General Extraordinaria",
+            "Convocatoria a Inducción",
+            "Convocatoria Operativa"
         ],
         "Estrategias Digitales": [
             "Creación de App",
             "Mantenimiento de App",
             "Actualización de App",
+            "Publicidad y Comunicación",
             "Campaña en Redes Sociales",
             "Difusión de Anuncios de Servicio Público",
             "Material Promocional Digital",
@@ -3885,6 +3896,7 @@ function renderConditionalDetail() {
         ],
         "Revisión & Preparación": [  
             "Inducción",
+            "Publicidad y Comunicación",
             "Profesionalización",
             "Capacitación en Higiene",
             "Convocatoria Operativa",
@@ -3899,7 +3911,9 @@ function renderConditionalDetail() {
         "Jornada de Integración",
         "Localización y Logística",
         "Planificación",
-        "Informes & Reportes"
+        "Informes & Reportes",
+          "Actas & Documentación",
+        "Solicitudes & Trámites"
     ];
     
     // Check if current activity needs a detail dropdown
@@ -4396,7 +4410,7 @@ function renderDetailedFields(col, index) {
         const personInCharge = col.personInCharge || { name: '', title: '' };
         return `
             <div class="detailed-participants" style="margin-left: 20px; margin-bottom: 12px; padding: 12px; background: var(--neutral-light); border-radius: 16px;">
-                <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;">👤 Persona a cargo de ${col.org}</div>
+                <div class="question-label" style="font-size: 0.7rem; margin-bottom: 8px;"> Persona a cargo de ${col.org}</div>
                 <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                     <input type="text" id="externalPersonName_${index}" class="wizard-input" style="flex:2; margin:0;" placeholder="Nombre completo" value="${escapeHtml(personInCharge.name || '')}" onchange="updateExternalPersonInCharge(${index}, 'name', this.value)">
                     <input type="text" id="externalPersonTitle_${index}" class="wizard-input" style="flex:1; margin:0;" placeholder="Cargo / Título" value="${escapeHtml(personInCharge.title || '')}" onchange="updateExternalPersonInCharge(${index}, 'title', this.value)">
@@ -6865,19 +6879,18 @@ function isCurrentUserInActivity(activity, currentUser) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // First, load all data
+    // First, load all data from localStorage
     unifiedLoad();
     
     // ==========================================
-    // RESTORE FROM BACKEND IF NO LOCAL ACTIVITIES
+    // ALWAYS SYNC WITH BACKEND - MERGE DATA (PRESERVES LOCAL)
     // Uses same logic as HTML page (contributingVolunteers)
     // ==========================================
     const monthKey = getCurrentMonthKey();
-    const savedActivities = localStorage.getItem(`activities_${monthKey}`);
-    const hasLocalActivities = savedActivities && JSON.parse(savedActivities).length > 0;
     
-    if (!hasLocalActivities && currentUser && currentUser.identidadSuffix) {
-        console.log('📡 No local activities found, fetching from backend for user:', currentUser.identidadSuffix);
+    // Only sync if we have a current user
+    if (currentUser && currentUser.identidadSuffix) {
+        console.log('📡 Syncing with backend for user:', currentUser.identidadSuffix);
         
         try {
             // Fetch BOTH activities and dashboard data (like HTML page does)
@@ -6897,19 +6910,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const consolidatedHours = userConsolidated?.hours || 0;
                 
                 // Filter activities using contributingVolunteers (same logic as backend)
-                const myActivities = allActivities.filter(activity => {
-                    // Check contributingVolunteers array - this is what backend uses for totals
+                const backendActivities = allActivities.filter(activity => {
                     if (activity.contributingVolunteers && activity.contributingVolunteers.includes(currentUser.identidadSuffix)) {
                         return true;
                     }
                     return false;
                 });
                 
-                if (myActivities.length > 0) {
-                    activities = myActivities;
+                // MERGE with local activities (preserve user's local data)
+                const existingActivityIds = new Set(activities.map(a => a.id));
+                let newActivitiesAdded = 0;
+                
+                backendActivities.forEach(backendAct => {
+                    if (!existingActivityIds.has(backendAct.id)) {
+                        activities.push(backendAct);
+                        newActivitiesAdded++;
+                        console.log(`➕ Added backend activity: ${backendAct.name} (${backendAct.date})`);
+                    }
+                });
+                
+                if (newActivitiesAdded > 0 || backendActivities.length > 0) {
+                    // Save merged data
                     localStorage.setItem(`activities_${monthKey}`, JSON.stringify(activities));
                     localStorage.setItem('activities_backup', JSON.stringify(activities));
-                    console.log(`✅ Loaded ${activities.length} activities (${consolidatedHours.toFixed(2)} consolidated hours) from backend`);
+                    console.log(`✅ Sync complete: ${activities.length} total activities (${newActivitiesAdded} new, ${backendActivities.length} from backend, ${consolidatedHours.toFixed(2)} consolidated hours)`);
                     
                     // Update the totalHoras display to match consolidated hours (like HTML page)
                     const totalHorasEl = document.getElementById('totalHoras');
@@ -6917,8 +6941,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         totalHorasEl.innerText = consolidatedHours.toFixed(2);
                     }
                 } else if (consolidatedHours > 0) {
-                    // No activities details, but user has consolidated hours
-                    console.log(`⚠️ User has ${consolidatedHours.toFixed(2)} consolidated hours but no activity details fetched`);
+                    // No new activities, but user has consolidated hours
+                    console.log(`📊 User has ${consolidatedHours.toFixed(2)} consolidated hours (no new activities to add)`);
                     const totalHorasEl = document.getElementById('totalHoras');
                     if (totalHorasEl) {
                         totalHorasEl.innerText = consolidatedHours.toFixed(2);
@@ -6926,7 +6950,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         } catch (error) {
-            console.error('❌ Failed to fetch from backend:', error);
+            console.error('❌ Failed to sync with backend:', error);
         }
     }
     
@@ -6989,6 +7013,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     console.log('✅ App initialized with unified storage');
 });
+
 // Save before page unload
 window.addEventListener('beforeunload', () => {
     unifiedSave();
@@ -6998,6 +7023,7 @@ window.addEventListener('beforeunload', () => {
 setInterval(() => {
     unifiedSave();
 }, 30000);
+
 
 //======USER REPORTS==
 async function exportToExcel(event) {
@@ -7050,20 +7076,20 @@ async function exportToExcel(event) {
         data.push(["Iniciativa de Voluntariado | IV-08"]);
         data.push(["Honduras"]);
         data.push([]);
-        data.push(["INFORME TÉCNICO MENSUAL - CONSOLIDADO"]);
-        data.push([`Mes de referencia: ${currentMonth} ${currentYear}`]);
-        data.push([`Fecha de emisión: ${hondurasDateTime}`]);
-        data.push([`Total de actividades: ${consolidatedActivities.length}`]);
-        data.push([`Total de voluntarias activas: ${dashboardData.totalVolunteers || 0}`]);
+        data.push(["INFORME TÉCNICO MENSUAL"]);
+        data.push([`Mes de Referencia: ${currentMonth} ${currentYear}`]);
+        data.push([`Fecha de Emisión: ${hondurasDateTime}`]);
+        data.push([`Total de Actividades: ${consolidatedActivities.length}`]);
+        data.push([`Total de Voluntarios Activos: ${dashboardData.totalVolunteers || 0}`]);
         data.push([]);
         
         // Resumen Ejecutivo
         data.push(["RESUMEN EJECUTIVO"]);
         data.push(["Indicador", "Valor"]);
-        data.push(["Total de voluntarias activas:", dashboardData.totalVolunteers || 0]);
-        data.push(["Total de horas de servicio:", (dashboardData.totalHours || 0).toFixed(2)]);
-        data.push(["Total de actividades realizadas:", dashboardData.totalActivities || 0]);
-        data.push(["Total de beneficiarios:", dashboardData.displayedBeneficiaries?.total || 0]);
+        data.push(["Total de Voluntarios Activos:", dashboardData.totalVolunteers || 0]);
+        data.push(["Total de Horas de Servicio:", (dashboardData.totalHours || 0).toFixed(2)]);
+        data.push(["Total de Actividades Realizadas:", dashboardData.totalActivities || 0]);
+        data.push(["Total de Beneficiarios:", dashboardData.displayedBeneficiaries?.total || 0]);
         data.push([]);
         
         // Feedback
@@ -7076,7 +7102,7 @@ async function exportToExcel(event) {
         data.push([]);
         
         // Activities
-        data.push(["ACTIVIDADES REALIZADAS (Según Plan de Trabajo)"]);
+        data.push(["ACTIVIDADES REALIZADAS"]);
         data.push([]);
         data.push(["N°", "FECHA", "ACTIVIDAD", "REPORTADO POR", "BENEFICIARIOS", "", "VOLUNTARIOS", "", "HORAS"]);
         data.push(["", "", "", "", "Hombres", "Mujeres", "Hombres", "Mujeres", ""]);
@@ -7137,7 +7163,7 @@ async function exportToExcel(event) {
         data.push([]);
         
         // Voluntarias participantes
-        data.push(["VOLUNTARIAS PARTICIPANTES"]);
+        data.push(["VOLUNTARIOS ACTIVOS"]);
         data.push(["ID", "NOMBRE", "ROL", "HORAS", "ACTIVIDADES"]);
         
         const sortedVolunteers = Object.entries(dashboardData.volunteers || {})
@@ -7145,7 +7171,7 @@ async function exportToExcel(event) {
         
         sortedVolunteers.forEach(([id, volunteer]) => {
             const volunteerProfile = VoluntarioProfiles.find(p => p.identidadSuffix === id);
-            const role = volunteerProfile ? volunteerProfile.rolNombre : 'Voluntaria';
+            const role = volunteerProfile ? volunteerProfile.rolNombre : 'Voluntario/a';
             
             data.push([
                 id,
@@ -7162,7 +7188,7 @@ async function exportToExcel(event) {
         data.push([]);
         
         // Colaboradores externos
-        data.push(["COLABORADORES EXTERNOS"]);
+        data.push(["COLABORADORES EXTERNOS & UNIDADES INTERNOS"]);
         data.push(["ACTIVIDAD", "INSTITUCIÓN", "REPRESENTANTE", "CARGO"]);
         
         let hasExternal = false;
@@ -7183,7 +7209,7 @@ async function exportToExcel(event) {
         });
         
         if (!hasExternal) {
-            data.push(["No hay colaboradores externos registrados", "", "", ""]);
+            data.push(["No Hay Colaboradores Externos Registrados", "", "", ""]);
         }
         data.push([]);
         
@@ -7206,23 +7232,32 @@ async function exportToExcel(event) {
         // Footer
         data.push([]);
         data.push(["DOCUMENTO GENERADO AUTOMÁTICAMENTE"]);
-        data.push([`Este documento fue generado automáticamente por el sistema de voluntariado Tecno-Cívico.`]);
-        data.push([`Fecha y hora de emisión (Honduras): ${hondurasDateTime}`]);
+        data.push([`Este documento se genera automáticamente conforme a los registros administrados por el Comité Tecno Cívico, IV-08 y se actualiza en tiempo real a través del sistema de consolidación y validación.`]);
+        data.push([`Fecha y Hora de Emisión (HONDURAS): ${hondurasDateTime}`]);
         data.push([`Generado por: ${generatedBy}`]);
         data.push([`Sitio web oficial: https://tecno-civico.org`]);
-        data.push([`Fuente: Sistema central consolidado (${consolidatedActivities.length} actividades)`]);
+        data.push([`Sistema de Trazabilidad, Control y Monitoreo Descentralizado | (${consolidatedActivities.length} Actividades Verificadas)`]);
         
+        // Build worksheet from your data
         const ws = XLSX.utils.aoa_to_sheet(data);
+
+        // Set column widths
         ws['!cols'] = [
             { wch: 8 }, { wch: 12 }, { wch: 35 }, { wch: 20 }, { wch: 12 },
             { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }
         ];
-        
+
+        // Create workbook and append sheet
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Reporte Mensual Consolidado");
-        XLSX.writeFile(wb, fileName);
+        XLSX.utils.book_append_sheet(wb, ws, "Informe Tecnico");
+
+        const reportName = `Informe-Tecnico-${hondurasDateTime}.xlsx`;
+
+        // Write file
+        XLSX.writeFile(wb, reportName);
+
         
-        alert(`✅ Informe mensual consolidado exportado exitosamente\n📊 Total: ${consolidatedActivities.length} actividades | ${totalHoras.toFixed(2)} horas | ${totalBenH + totalBenM} beneficiarios`);
+        alert(`✅ \n📊 Total: ${consolidatedActivities.length} actividades | ${totalHoras.toFixed(2)} horas | ${totalBenH + totalBenM} beneficiarios`);
         
     } catch (error) {
         console.error('Error generating monthly report:', error);
@@ -7230,13 +7265,14 @@ async function exportToExcel(event) {
         alert(`❌ Error al generar el informe: ${error.message}`);
     }
 }
+
 async function exportUserReport(user) {
     if (!user || !user.identidadSuffix) {
         alert('❌ No hay usuario seleccionado o falta ID');
         return;
     }
     
-    showWizardLoading('Verificando datos...', 'Consultando servidor central');
+    showWizardLoading('Generando reporte consolidado...', 'Obteniendo datos del servidor');
     
     try {
         const dashboardResponse = await fetch('https://api.contranormdigital.com/api/tecno-civico/dashboard');
@@ -7246,50 +7282,11 @@ async function exportUserReport(user) {
         }
         
         const dashboardData = await dashboardResponse.json();
-        const backendVolunteer = dashboardData.volunteers?.[user.identidadSuffix];
-        const backendHours = backendVolunteer?.hours || 0;
-        
-        const localActivities = getLocalUserActivities(user);
-        const localHours = localActivities.reduce((sum, act) => sum + (act.horas || 0), 0);
         
         hideWizardLoading();
         
-        const difference = Math.abs(backendHours - localHours);
-        const threshold = 0.5;
-        
-        if (difference > threshold && backendHours > localHours) {
-            const message = `📊 DIFERENCIA DETECTADA\n\n` +
-                `Horas que reportaste personalmente: ${localHours.toFixed(2)} horas\n` +
-                `Horas totales en el sistema (incluyendo cuando otros te reportaron): ${backendHours.toFixed(2)} horas\n` +
-                `Diferencia: ${(backendHours - localHours).toFixed(2)} horas adicionales\n\n` +
-                `⚠️ IMPORTANTE: El reporte "Solo MIS horas" NO es verificable por terceros.\n` +
-                `Para un reporte oficial verificable, selecciona "Reporte COMPLETO".\n\n` +
-                `¿Qué reporte deseas generar?`;
-            
-            const choice = confirm(message + '\n\n✅ "Aceptar" = Reporte COMPLETO (verificable por terceros)\n❌ "Cancelar" = Solo MIS horas (NO verificable)');
-            
-            if (choice) {
-                await generateConsolidatedUserReport(user, dashboardData);
-            } else {
-                alert('⚠️ Has seleccionado el reporte NO VERIFICABLE.\n\nEste reporte solo contiene tus propios registros y no puede ser verificado por terceros.\n\nPara un reporte oficial verificable, genera el reporte COMPLETO.');
-                generateLocalUserReport(user, localActivities);
-            }
-        } else {
-            // No difference, but still offer consolidated for verifiability
-            const message = `📊 Tus horas coinciden con el sistema: ${backendHours.toFixed(2)} horas\n\n` +
-                `⚠️ IMPORTANTE: El reporte "Solo MIS horas" NO es verificable por terceros.\n` +
-                `Para un reporte oficial verificable, selecciona "Reporte COMPLETO".\n\n` +
-                `¿Qué reporte deseas generar?`;
-            
-            const choice = confirm(message + '\n\n✅ "Aceptar" = Reporte COMPLETO (verificable por terceros)\n❌ "Cancelar" = Solo MIS horas (NO verificable)');
-            
-            if (choice) {
-                await generateConsolidatedUserReport(user, dashboardData);
-            } else {
-                alert('⚠️ Has seleccionado el reporte NO VERIFICABLE.\n\nEste reporte solo contiene tus propios registros y no puede ser verificado por terceros.\n\nPara un reporte oficial verificable, genera el reporte COMPLETO.');
-                generateLocalUserReport(user, localActivities);
-            }
-        }
+        // Always generate consolidated report (verifiable)
+        await generateConsolidatedUserReport(user, dashboardData);
         
     } catch (error) {
         console.error('Error fetching backend data:', error);
@@ -7342,23 +7339,23 @@ function generateLocalUserReport(user, userActivities) {
     // Header
     data.push(["Comité Tecno-Cívico"]);
     data.push(["Iniciativa de Voluntariado | IV-08"]);
-    data.push(["Honduras"]);
+    data.push(["HONDURAS"]);
     data.push([]);
-    data.push(["INFORME INDIVIDUAL DE VOLUNTARIA"]);
-    data.push([`Tipo: MIS ACTIVIDADES REPORTADAS (solo lo que yo registré)`]);
-    data.push([`⚠️ ESTE REPORTE NO ES VERIFICABLE POR TERCEROS ⚠️`]);
+    data.push(["INFORME INDIVIDUAL"]);
+    data.push([`ACTIVIDADES REPORTADAS`]);
+    data.push([`⚠️ ESTE REPORTE NO HA SIDO VERIFICADO POR TERCEROS ⚠️`]);
     data.push([`Período: ${currentMonth} ${currentYear}`]);
     data.push([`Reporte generado: ${hondurasDateTime}`]);
     data.push([]);
     
     // Volunteer data
-    data.push(["DATOS DE LA VOLUNTARIA"]);
+    data.push(["DATOS DE LA VOLUNTARIO/A"]);
     data.push(["Nombre:", user.name]);
     data.push(["ID:", user.identidadSuffix || 'No registrado']);
     data.push(["Rol:", user.rolNombre]);
     data.push(["Teléfono:", "_________________"]);
-    data.push(["Total Horas (mis reportes):", `${calculatedTotalHours.toFixed(2)} horas`]);
-    data.push(["Total Actividades (mis reportes):", userActivities.length]);
+    data.push(["Total Horas:", `${calculatedTotalHours.toFixed(2)} horas`]);
+    data.push(["Total Actividades:", userActivities.length]);
     data.push([]);
     
     // Feedback
@@ -7390,8 +7387,8 @@ function generateLocalUserReport(user, userActivities) {
         data.push([]);
         if (feedback.scope) data.push(["📌 Alcance / Scope:", feedback.scope]);
         if (feedback.difficulties) data.push(["⚠️ Dificultades Encontradas:", feedback.difficulties]);
-        if (feedback.recommendations) data.push(["💡 Recomendaciones:", feedback.recommendations]);
-        if (feedback.impact) data.push(["🌟 Impacto Generado:", feedback.impact]);
+        if (feedback.recommendations) data.push(["Recomendaciones:", feedback.recommendations]);
+        if (feedback.impact) data.push(["Impacto Generado:", feedback.impact]);
         data.push([]);
     }
     
@@ -7423,11 +7420,10 @@ function generateLocalUserReport(user, userActivities) {
     const totalHoursDecimal = (totalMinutes / 60).toFixed(2);
     data.push([]);
     data.push(["RESUMEN TOTAL"]);
-    data.push(["Total Actividades (mis reportes):", userActivities.length]);
-    data.push(["Total Horas (mis reportes):", `${totalMinutes} minutos (${totalHoursDecimal} horas)`]);
+    data.push(["Total Actividades:", userActivities.length]);
+    data.push(["Total Horas:", `${totalMinutes} minutos (${totalHoursDecimal} horas)`]);
     data.push([]);
-    data.push(["NOTA:", "Este reporte incluye SOLO las actividades que usted reportó personalmente."]);
-    data.push(["", "No incluye actividades donde otros voluntarios la reportaron como participante."]);
+    data.push(["NOTA:", "Este documento se genera automáticamente conforme a los registros reportado por el voluntario/a, miembro del Comite Tecno-Civico, IV-08."]);
     data.push([]);
     
     // Approval
@@ -7441,12 +7437,12 @@ function generateLocalUserReport(user, userActivities) {
     // Footer
     data.push([]);
     data.push(["DOCUMENTO GENERADO AUTOMÁTICAMENTE"]);
-    data.push([`⚠️ ESTE DOCUMENTO NO ES VERIFICABLE POR TERCEROS ⚠️`]);
-    data.push([`Para un reporte oficial verificable, genere el reporte COMPLETO.`]);
-    data.push([`Fecha y hora de emisión (Honduras): ${hondurasDateTime}`]);
+    data.push([`⚠️ ESTE DOCUMENTO NO HA SIDO VERIFICADO POR TERCEROS ⚠️`]);
+    data.push([`Para un reporte oficial verificable, asegúrese de tener conexión a internet.`]);
+    data.push([`Fecha y hora de emisión (HONDURAS): ${hondurasDateTime}`]);
     data.push([`Generado por: ${user.name} (${user.rolNombre})`]);
     data.push([`Sitio web oficial: https://tecno-civico.org`]);
-    data.push([`Fuente: Datos locales del dispositivo`]);
+    data.push([`Fuente: Datos locales registrado por del portador del dispositivo.`]);
     
     const ws = XLSX.utils.aoa_to_sheet(data);
     ws['!cols'] = [
@@ -7459,7 +7455,7 @@ function generateLocalUserReport(user, userActivities) {
     XLSX.utils.book_append_sheet(wb, ws, `Mis Reportes - ${user.name}`);
     XLSX.writeFile(wb, fileName);
     
-    alert(`✅ Reporte LOCAL generado para ${user.name}\n📊 ${userActivities.length} actividades\n⏱️ Total: ${totalMinutes} minutos (${totalHoursDecimal} horas)\n\n⚠️ Este reporte NO es verificable por terceros.`);
+    alert(`✅ Reporte LOCAL generado para ${user.name}\n📊 ${userActivities.length} actividades\n⏱️ Total: ${totalMinutes} minutos (${totalHoursDecimal} horas)\n\n⚠️ Este reporte no ha sido verificado por terceros.`);
 }
 
 async function generateConsolidatedUserReport(user, dashboardData) {
@@ -7536,7 +7532,7 @@ async function generateConsolidatedUserReport(user, dashboardData) {
         hideWizardLoading();
         
         if (consolidatedActivities.length === 0) {
-            alert(`⚠️ ${user.name} no tiene actividades registradas en el sistema central`);
+            alert(`⚠️ ${user.name} no tiene actividades registradas en el sistema.`);
             return;
         }
         
@@ -7546,23 +7542,23 @@ async function generateConsolidatedUserReport(user, dashboardData) {
         // Header
         data.push(["Comité Tecno-Cívico"]);
         data.push(["Iniciativa de Voluntariado | IV-08"]);
-        data.push(["Honduras"]);
+        data.push(["HONDURAS"]);
         data.push([]);
-        data.push(["INFORME INDIVIDUAL DE VOLUNTARIA - COMPLETO"]);
+        data.push(["INFORME INDIVIDUAL DE VOLUNTARIO/A"]);
         data.push([`Tipo: REPORTE CONSOLIDADO (incluye cuando otros te reportaron)`]);
         data.push([`✅ DOCUMENTO VERIFICABLE POR TERCEROS ✅`]);
         data.push([`Período: ${currentMonth} ${currentYear}`]);
-        data.push([`Reporte generado: ${hondurasDateTime}`]);
+        data.push([`Reporte Generado: ${hondurasDateTime}`]);
         data.push([]);
         
         // Volunteer data
-        data.push(["DATOS DE LA VOLUNTARIA"]);
+        data.push(["DATOS DE LA VOLUNTARIO/A"]);
         data.push(["Nombre:", user.name]);
         data.push(["ID:", user.identidadSuffix || 'No registrado']);
         data.push(["Rol:", user.rolNombre]);
         data.push(["Teléfono:", "_________________"]);
-        data.push(["Total Horas (consolidado):", `${totalHours.toFixed(2)} horas`]);
-        data.push(["Total Actividades (consolidado):", consolidatedActivities.length]);
+        data.push(["Total Horas:", `${totalHours.toFixed(2)} horas`]);
+        data.push(["Total Actividades:", consolidatedActivities.length]);
         
         const backendVolunteer = dashboardData.volunteers?.[user.identidadSuffix];
         if (backendVolunteer) {
@@ -7585,7 +7581,7 @@ async function generateConsolidatedUserReport(user, dashboardData) {
                 index + 1,
                 formatDateForDisplay(activity.date),
                 activity.name || '',
-                isOwnReport ? '✅ Yo misma' : `👤 ${activity.createdByName || 'Otra voluntaria'}`,
+                isOwnReport ? '' : `${activity.createdByName || 'Otra persona presente'}`,
                 activity.startTime || '—',
                 activity.endTime || '—',
                 (activity.horas || 0).toFixed(2),
@@ -7622,8 +7618,8 @@ async function generateConsolidatedUserReport(user, dashboardData) {
         // Footer with verification link
         data.push([]);
         data.push(["DOCUMENTO GENERADO AUTOMÁTICAMENTE"]);
-        data.push([`✅ Este documento es VERIFICABLE por terceros ✅`]);
-        data.push([`Fecha y hora de emisión (Honduras): ${hondurasDateTime}`]);
+        data.push([`Este documento se genera automáticamente conforme a los registros administrados por el Comité Tecno Cívico, IV-08 y se actualiza en tiempo real a través del sistema de consolidación y validación.`]);
+        data.push([`Fecha y hora de emisión (HONDURAS): ${hondurasDateTime}`]);
         data.push([`Generado por: ${user.name} (${user.rolNombre})`]);
         data.push([`Sitio web oficial: https://tecno-civico.org`]);
         
@@ -7638,7 +7634,7 @@ async function generateConsolidatedUserReport(user, dashboardData) {
             data.push([`No se pudo generar el enlace de verificación. Intente nuevamente.`]);
         }
         
-        data.push([`Fuente: Sistema central consolidado (${consolidatedActivities.length} actividades)`]);
+        data.push([` (${consolidatedActivities.length} Acividades Reportadas)`]);
         
         const ws = XLSX.utils.aoa_to_sheet(data);
         ws['!cols'] = [
@@ -7647,11 +7643,11 @@ async function generateConsolidatedUserReport(user, dashboardData) {
         ];
         
         const wb = XLSX.utils.book_new();
-        const fileName = `reporte_consolidado_${user.name.replace(/\s/g, '_')}_${currentYear}-${String(now.getMonth() + 1).padStart(2, '0')}.xlsx`;
-        XLSX.utils.book_append_sheet(wb, ws, `Reporte Consolidado - ${user.name}`);
+        const fileName = `Reporte-Individual-de-${user.name.replace(/\s/g, '_')}_${currentYear}-${String(now.getMonth() + 1).padStart(2, '0')}.xlsx`;
+        XLSX.utils.book_append_sheet(wb, ws, `${user.name}`);
         XLSX.writeFile(wb, fileName);
         
-        alert(`✅ Reporte CONSOLIDADO VERIFICABLE generado para ${user.name}\n📊 ${consolidatedActivities.length} actividades totales\n⏱️ ${totalHours.toFixed(2)} horas (${ownReports} tuyas + ${othersReports} de otras voluntarias)\n\n✅ Este reporte incluye enlace de verificación oficial.`);
+        alert(`✅ Reporte generado para ${user.name}\n📊 ${consolidatedActivities.length} actividades totales\n⏱️ ${totalHours.toFixed(2)} horas (${ownReports} tuyas + ${othersReports} de otras voluntarias)\n\n✅ Este reporte incluye enlace de verificación oficial.`);
         
     } catch (error) {
         console.error('Error generating consolidated report:', error);
